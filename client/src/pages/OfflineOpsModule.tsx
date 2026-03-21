@@ -197,6 +197,7 @@ export default function OfflineOpsModule(){
 
   // Fetch live data from Odoo via tRPC
   const [, setLocation] = useLocation();
+  const [collapsed, setCollapsed] = useState(false);
   const { data: liveData, isLoading: isLoadingData, error: dataError } = trpc.offlineOps.allData.useQuery({ limit: 200, companyId: activeOdooCompanyId }, { staleTime: 60_000, refetchOnWindowFocus: false });
 
   const[pg,setPg]=useState("dash");
@@ -369,24 +370,31 @@ export default function OfflineOpsModule(){
         {/* Sidebar + Content layout */}
         <div style={{display:"flex",minHeight:"calc(100vh - 3px)"}}>
           {/* Left Sidebar */}
-          <div style={{width:200,minWidth:200,background:"#FAFAF8",borderRight:"1.5px solid #E8E5E0",paddingTop:12,display:"flex",flexDirection:"column"}}>
-            <div style={{padding:"8px 16px 16px",fontSize:9,fontWeight:700,textTransform:"uppercase",letterSpacing:1,color:"#95A09C"}}>Navigation</div>
-            <div className={"app-sb-ni"+(pg==="dash"?" app-sb-act":"")} onClick={()=>setPg("dash")}>
-              <span style={{fontSize:16}}>📊</span><span>Dashboard</span>
+            <div style={{width:collapsed?48:190,minWidth:collapsed?48:190,background:"#fff",borderRight:"1px solid #E4E1DC",display:"flex",flexDirection:"column",transition:"width .2s, min-width .2s",marginTop:0,overflow:"hidden"}}>
+              <div onClick={()=>setCollapsed(!collapsed)} style={{padding:"9px 10px",borderBottom:"1px solid #E4E1DC",cursor:"pointer",display:"flex",alignItems:"center"}}>
+                <PlatfarmLogo height={collapsed?24:28} treeColor="#1B3A2D" textColor="#D4845F" />
+              </div>
+              <div style={{flex:1,padding:"8px 0",overflowY:"auto"}}>
+                <div className="app-sb-ni" onClick={()=>setLocation("/")} style={{marginBottom:4}}>
+                  <span style={{fontSize:15}}>🏠</span>{!collapsed&&<span>Home</span>}
+                </div>
+                <div className={"app-sb-ni"+(pg==="dash"?" app-sb-act":"")} onClick={()=>setPg("dash")}>
+                  <span style={{fontSize:13}}>📊</span>{!collapsed&&<span>Dashboard</span>}
+                </div>
+                <div className={"app-sb-ni"+(pg==="rcv"||pg==="incoming"?" app-sb-act":"")} onClick={()=>{setPg("incoming");setSr("");setSel(null);setSelType(null);}}>
+                  <ImgIcon src={ICON_PROCUREMENT} size={14} />{!collapsed&&<span>Procurement</span>}
+                </div>
+                <div className={"app-sb-ni"+(pg==="qc"?" app-sb-act":"")} onClick={()=>setPg("qc")}>
+                  <span style={{fontSize:13}}>🔍</span>{!collapsed&&<span>Double Press Quality</span>}
+                </div>
+                <div className={"app-sb-ni"+(pg==="dpr"?" app-sb-act":"")} onClick={()=>setPg("dpr")}>
+                  <ImgIcon src={ICON_PRESSING} size={14} />{!collapsed&&<span>Pressing Shifts</span>}
+                </div>
+                <div className={"app-sb-ni"+(pg==="trf"?" app-sb-act":"")} onClick={()=>setPg("trf")}>
+                  <ImgIcon src={ICON_TRANSFER} size={14} />{!collapsed&&<span>Transfers</span>}
+                </div>
+              </div>
             </div>
-            <div className={"app-sb-ni"+(pg==="rcv"||pg==="incoming"?" app-sb-act":"")} onClick={()=>{setPg("incoming");setSr("");setSel(null);setSelType(null);}}>
-              <ImgIcon src={ICON_PROCUREMENT} size={16} /><span>Procurement</span>
-            </div>
-            <div className={"app-sb-ni"+(pg==="qc"?" app-sb-act":"")} onClick={()=>setPg("qc")}>
-              <span style={{fontSize:16}}>🔍</span><span>Double Press Quality</span>
-            </div>
-            <div className={"app-sb-ni"+(pg==="dpr"?" app-sb-act":"")} onClick={()=>setPg("dpr")}>
-              <ImgIcon src={ICON_PRESSING} size={16} /><span>Pressing Shifts</span>
-            </div>
-            <div className={"app-sb-ni"+(pg==="trf"?" app-sb-act":"")} onClick={()=>setPg("trf")}>
-              <ImgIcon src={ICON_TRANSFER} size={16} /><span>Transfers</span>
-            </div>
-          </div>
           {/* Main Content */}
           <div style={{flex:1,overflow:"auto"}}>
 
