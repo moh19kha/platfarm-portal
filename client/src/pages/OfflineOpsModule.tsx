@@ -615,35 +615,42 @@ export default function OfflineOpsModule(){
 
               {/* Tabs */}
               <div style={{display:"flex",gap:0,borderBottom:"1.5px solid #E8E5E0",padding:"0 18px"}}>
-                {(selType==="rcv"?["Overview","Crew","Attachments"]:selType==="qc"?["Grades","Details"]:selType==="dpr"?["Overview","Crew","Attachments"]:selType==="trf"?["Overview","Receiving","Crew"]:["Overview","Crew","Attachments"]).map((t,i)=><button key={t} onClick={()=>setDetTab(i)} style={{padding:"8px 14px",fontSize:11,fontWeight:detTab===i?700:500,color:detTab===i?"#2D5A3D":"#95A09C",background:"none",border:"none",borderBottom:detTab===i?"2px solid #2D5A3D":"2px solid transparent",cursor:"pointer",fontFamily:"inherit"}}>{t}</button>)}
+                {(selType==="rcv"?["Timeline","Overview","Crew"]:selType==="qc"?["Grades","Details"]:selType==="dpr"?["Timeline","Overview","Crew"]:selType==="trf"?["Timeline","Overview","Receiving","Crew"]:["Overview","Crew","Attachments"]).map((t,i)=><button key={t} onClick={()=>setDetTab(i)} style={{padding:"8px 14px",fontSize:11,fontWeight:detTab===i?700:500,color:detTab===i?"#2D5A3D":"#95A09C",background:"none",border:"none",borderBottom:detTab===i?"2px solid #2D5A3D":"2px solid transparent",cursor:"pointer",fontFamily:"inherit"}}>{t}</button>)}
               </div>
             </div>
 
             <div style={{padding:"16px 18px"}}>
-              {/* RCV Overview */}
+              {/* RCV Timeline */}
               {selType==="rcv"&&detTab===0&&<div>
+                <div style={{fontSize:11,fontWeight:700,color:"#2D5A3D",marginBottom:14}}>RECORD TIMELINE</div>
+                {[{icon:"\U0001f4cb",title:"Record Created",sub:sel.date+(sel.time?" at "+sel.time:""),color:"#2D5A3D"},{icon:"\u2696\ufe0f",title:"Weighed",sub:sel.net>0?fK(sel.net)+" net ("+fK(sel.gross)+" gross \u2212 "+fK(sel.tare)+" tare)":"Pending",color:sel.net>0?"#2D5A3D":"#95A09C"},sel.hasQc?{icon:"\U0001f50d",title:"Quality Inspected",sub:(sel.qcData?.verdict||"Pending")+" \u2014 "+(sel.qcData?.finalGrade||""),color:sel.qcData?.verdict==="Approved"?"#2D5A3D":"#C94444"}:null,sel.linkedPoName?{icon:"\U0001f4e6",title:"Linked to PO",sub:sel.linkedPoName,color:"#2D5A3D"}:null,{icon:sel.sync==="synced"?"\u2601\ufe0f":"\u23f3",title:sel.sync==="synced"?"Synced to Odoo":"Pending Sync",sub:sel.sync==="synced"?"Data synchronized":"Awaiting synchronization",color:sel.sync==="synced"?"#2D5A3D":"#D4960A"}].filter(Boolean).map((ev,i)=><div key={i} style={{display:"flex",gap:12,marginBottom:0}}>
+                  <div style={{display:"flex",flexDirection:"column",alignItems:"center"}}>
+                    <div style={{width:28,height:28,borderRadius:14,background:ev.color+"18",display:"flex",alignItems:"center",justifyContent:"center",fontSize:13}}>{ev.icon}</div>
+                    {i<4&&<div style={{width:2,height:24,background:"#E8E5E0"}}/>}
+                  </div>
+                  <div style={{paddingBottom:12}}>
+                    <div style={{fontSize:12,fontWeight:600,color:"#2C3E50"}}>{ev.title}</div>
+                    <div style={{fontSize:10,color:"#95A09C",marginTop:2}}>{ev.sub}</div>
+                  </div>
+                </div>)}
+              </div>}
+
+              {/* RCV Overview */}
+              {selType==="rcv"&&detTab===1&&<div>
                 <div style={{fontSize:11,fontWeight:700,color:"#2D5A3D",marginBottom:10}}>SHIPMENT DETAILS</div>
                 {[["Supplier",sel.supplier],["Commodity",sel.commodity],["Vehicle / Plate",sel.plate],["Driver",sel.driver],["Net Weight",fK(sel.net)],["Gross",fK(sel.gross)],["Tare",fK(sel.tare)],["Bales",""+sel.bales],["Price",""+sel.price],["Site",sel.site],["Grade",sel.grade||"—"],["Date",sel.date],["Time",sel.time||"—"],["Created By",sel.createdBy||"—"],["Sync",sel.sync]].map(([l,v])=><div key={l} style={{display:"flex",justifyContent:"space-between",padding:"6px 0",borderBottom:"1px solid #F2F0EC"}}><span style={{fontSize:11,color:"#95A09C"}}>{l}</span><span className="m" style={{fontSize:11,color:"#2C3E50"}}>{v}</span></div>)}
                 {sel.hasQc&&<div style={{marginTop:16}}><div style={{fontSize:11,fontWeight:700,color:"#4A7C59",marginBottom:10}}>QUALITY ASSESSMENT</div>
                   {[["Inspector",sel.qcData?.inspector||"—"],["Verdict",sel.qcData?.verdict||"—"],["Final Grade",sel.qcData?.finalGrade||"—"],["Moisture",sel.qcData?.moisture||"—"],["G1 Bales",""+sel.qcData?.g1],["G2 Bales",""+sel.qcData?.g2],["Mix",""+sel.qcData?.mix],["Notes",sel.qcData?.notes||"—"]].map(([l,v])=><div key={l} style={{display:"flex",justifyContent:"space-between",padding:"6px 0",borderBottom:"1px solid #F2F0EC"}}><span style={{fontSize:11,color:"#95A09C"}}>{l}</span><span className="m" style={{fontSize:11,color:"#2C3E50"}}>{v}</span></div>)}
                 </div>}
+                <div style={{fontSize:11,fontWeight:700,color:"#2D5A3D",marginBottom:10,marginTop:20}}>PHOTOS & DOCUMENTS</div>
+                {(sel.att||[]).length>0?(<div style={{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:6}}>{(sel.att||[]).map((a,i)=><div key={i} style={{borderRadius:6,overflow:"hidden",border:"1px solid #E4E1DC",aspectRatio:"1",display:"flex",alignItems:"center",justifyContent:"center",background:"#F7F6F3"}}><div style={{textAlign:"center"}}><div style={{fontSize:16}}>{a.t==="photo"?"\U0001f4f7":"\U0001f4c4"}</div><div style={{fontSize:8,color:"#95A09C",marginTop:2,padding:"0 4px",lineHeight:1.3}}>{a.n}</div></div></div>)}</div>):(<div style={{padding:16,textAlign:"center",borderRadius:8,background:"#F7F6F3",border:"1px solid #E4E1DC",color:"#95A09C",fontSize:11}}>No photos uploaded</div>)}
               </div>}
 
               {/* RCV Crew */}
-              {selType==="rcv"&&detTab===1&&<div>
+              {selType==="rcv"&&detTab===2&&<div>
                 <div style={{fontSize:11,fontWeight:700,color:"#2D5A3D",marginBottom:10}}>CREW & PERSONNEL</div>
                 {(sel.crew||[]).map((g,i)=><div key={i} style={{marginBottom:14}}><div style={{fontSize:10,fontWeight:700,color:"#95A09C",marginBottom:6}}>{g.role}</div>{g.ppl.map((p,j)=><div key={j} style={{fontSize:12,padding:"4px 0",color:"#2C3E50"}}>{p}</div>)}</div>)}
                 {(!sel.crew||sel.crew.length===0)&&<div style={{color:"#95A09C",fontSize:11}}>No crew data available</div>}
-              </div>}
-
-              {/* RCV/DPR/TRF Attachments */}
-              {((selType==="rcv"&&detTab===2)||(selType==="dpr"&&detTab===2)||(selType==="trf"&&detTab===2))&&<div>
-                <div style={{fontSize:11,fontWeight:700,color:"#2D5A3D",marginBottom:10}}>ATTACHMENTS</div>
-                {(sel.att||sel.attachments||[]).map((a,i)=><div key={i} style={{display:"flex",alignItems:"center",gap:10,padding:"8px 0",borderBottom:"1px solid #F2F0EC"}}>
-                  <div style={{width:32,height:32,borderRadius:6,background:"#E4EFE6",display:"flex",alignItems:"center",justifyContent:"center",fontSize:14}}>{a.t==="photo"?"📸":"📄"}</div>
-                  <div><div style={{fontSize:11,fontWeight:600,color:"#2C3E50"}}>{a.n}</div><div style={{fontSize:9,color:"#95A09C"}}>{a.t} · {a.s}</div></div>
-                </div>)}
-                {(!(sel.att||sel.attachments)||((sel.att||sel.attachments||[]).length===0))&&<div style={{color:"#95A09C",fontSize:11}}>No attachments available</div>}
               </div>}
 
               {/* QC Grades tab */}
@@ -658,26 +665,71 @@ export default function OfflineOpsModule(){
                 {[["Reference",sel.ref],["Type",sel.type],["Inspector",sel.inspector],["Supplier",sel.supplier],["Commodity",sel.commodity],["Site",sel.site],["Net Weight",sel.netWeight?fK(sel.netWeight):"—"],["Bales",""+sel.bales],["Date",sel.date],["Sync",sel.sync]].map(([l,v])=><div key={l} style={{display:"flex",justifyContent:"space-between",padding:"6px 0",borderBottom:"1px solid #F2F0EC"}}><span style={{fontSize:11,color:"#95A09C"}}>{l}</span><span className="m" style={{fontSize:11,color:"#2C3E50"}}>{v}</span></div>)}
               </div>}
 
-              {/* DPR Overview */}
+              {/* DPR Timeline */}
               {selType==="dpr"&&detTab===0&&<div>
+                <div style={{fontSize:11,fontWeight:700,color:"#C0714A",marginBottom:14}}>PRODUCTION TIMELINE</div>
+                {[{icon:"\u25b6\ufe0f",title:"Shift Started",sub:sel.startTime||"\u2014",color:"#C0714A"},{icon:"\U0001f3ed",title:"Pressing",sub:sel.line+" \u2014 "+sel.commodity+(sel.shift?" ("+sel.shift+")":""),color:"#C0714A"},{icon:"\U0001f4e6",title:"Output",sub:sel.outBales+" bales \u2014 "+fK(sel.outWeight)+" (avg "+sel.outAvgBale+" kg)",color:"#2D5A3D"},{icon:"\u23f9\ufe0f",title:"Shift Ended",sub:sel.endTime||"\u2014",color:"#C0714A"},{icon:sel.sync==="synced"?"\u2601\ufe0f":"\u23f3",title:sel.sync==="synced"?"Synced to Odoo":"Pending Sync",sub:sel.date,color:sel.sync==="synced"?"#2D5A3D":"#D4960A"}].filter(Boolean).map((ev,i)=><div key={i} style={{display:"flex",gap:12,marginBottom:0}}>
+                  <div style={{display:"flex",flexDirection:"column",alignItems:"center"}}>
+                    <div style={{width:28,height:28,borderRadius:14,background:ev.color+"18",display:"flex",alignItems:"center",justifyContent:"center",fontSize:13}}>{ev.icon}</div>
+                    {i<4&&<div style={{width:2,height:24,background:"#E8E5E0"}}/>}
+                  </div>
+                  <div style={{paddingBottom:12}}>
+                    <div style={{fontSize:12,fontWeight:600,color:"#2C3E50"}}>{ev.title}</div>
+                    <div style={{fontSize:10,color:"#95A09C",marginTop:2}}>{ev.sub}</div>
+                  </div>
+                </div>)}
+              </div>}
+
+              {/* DPR Overview */}
+              {selType==="dpr"&&detTab===1&&<div>
                 <div style={{fontSize:11,fontWeight:700,color:"#C0714A",marginBottom:10}}>PRESSING DETAILS</div>
                 {[["Press Line",sel.line],["Batch",sel.batch],["Operator",sel.operator],["Shift",sel.shift],["Commodity",sel.commodity],["Input Bales",""+sel.inBales],["Input Weight",fK(sel.inWeight)],["Input Grade",sel.inGrade],["Output Bales",""+sel.outBales],["Output Weight",fK(sel.outWeight)],["Avg Bale",sel.outAvgBale+" kg"],["Density",sel.density],["Start",sel.startTime],["End",sel.endTime],["Fuel",sel.fuel+" L"],["Oil Temp",sel.oilTemp],["Oil Pressure",sel.oilPressure],["Sources",sel.sources],["Date",sel.date],["Sync",sel.sync]].map(([l,v])=><div key={l} style={{display:"flex",justifyContent:"space-between",padding:"6px 0",borderBottom:"1px solid #F2F0EC"}}><span style={{fontSize:11,color:"#95A09C"}}>{l}</span><span className="m" style={{fontSize:11,color:"#2C3E50"}}>{v}</span></div>)}
+
+                <div style={{fontSize:11,fontWeight:700,color:"#C0714A",marginBottom:10,marginTop:20}}>PHOTOS & DOCUMENTS</div>
+                {(sel.att||[]).length>0?(<div style={{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:6}}>{(sel.att||[]).map((a,i)=><div key={i} style={{borderRadius:6,overflow:"hidden",border:"1px solid #E4E1DC",aspectRatio:"1",display:"flex",alignItems:"center",justifyContent:"center",background:"#F7F6F3"}}><div style={{textAlign:"center"}}><div style={{fontSize:16}}>{a.t==="photo"?"\U0001f4f7":"\U0001f4c4"}</div><div style={{fontSize:8,color:"#95A09C",marginTop:2,padding:"0 4px",lineHeight:1.3}}>{a.n}</div></div></div>)}</div>):(<div style={{padding:16,textAlign:"center",borderRadius:8,background:"#F7F6F3",border:"1px solid #E4E1DC",color:"#95A09C",fontSize:11}}>No photos uploaded</div>)}
               </div>}
 
               {/* DPR Crew */}
-              {selType==="dpr"&&detTab===1&&<div>
+              {selType==="dpr"&&detTab===2&&<div>
                 <div style={{fontSize:11,fontWeight:700,color:"#C0714A",marginBottom:10}}>CREW & PERSONNEL</div>
                 {(sel.crew||[]).map((g,i)=><div key={i} style={{marginBottom:14}}><div style={{fontSize:10,fontWeight:700,color:"#95A09C",marginBottom:6}}>{g.role}</div>{g.ppl.map((p,j)=><div key={j} style={{fontSize:12,padding:"4px 0",color:"#2C3E50"}}>{p}</div>)}</div>)}
               </div>}
 
-              {/* TRF Overview */}
+              {/* TRF Timeline */}
               {selType==="trf"&&detTab===0&&<div>
-                <div style={{fontSize:11,fontWeight:700,color:"#475577",marginBottom:10}}>TRANSFER DETAILS</div>
-                {[["From",sel.from],["To",sel.to],["Commodity",sel.commodity],["Grade",sel.grade],["Press",sel.press],["Bales",""+sel.bales],["Weight",fK(sel.weight)],["Tare",fK(sel.tare)],["Plate",sel.plate],["Truck",sel.truck],["Seal",sel.seal],["Load Date",sel.loadDate],["Load Time",sel.loadTime],["ETA",sel.eta],["Arrival Date",sel.arrDate||"—"],["Arrival Time",sel.arrTime||"—"],["Condition",sel.condition||"—"],["Rcv Weight",sel.rcvWeight?fK(sel.rcvWeight):"—"],["Difference",sel.diff?fK(sel.diff):"—"],["Distance",sel.distance],["Freight",""+sel.freight],["Status",sel.status],["Sync",sel.sync]].map(([l,v])=><div key={l} style={{display:"flex",justifyContent:"space-between",padding:"6px 0",borderBottom:"1px solid #F2F0EC"}}><span style={{fontSize:11,color:"#95A09C"}}>{l}</span><span className="m" style={{fontSize:11,color:"#2C3E50"}}>{v}</span></div>)}
+                <div style={{fontSize:11,fontWeight:700,color:"#475577",marginBottom:14}}>SHIPMENT TIMELINE</div>
+                {[{icon:"\U0001f4e6",title:"Loaded at "+sel.from,sub:sel.loadDate+(sel.loadTime?" at "+sel.loadTime:""),color:"#475577"},{icon:"\U0001f69a",title:"In Transit",sub:sel.from+" \u2192 "+sel.to+" ("+sel.distance+")",color:"#475577"},sel.arrDate?{icon:"\U0001f3e2",title:"Arrived at "+sel.to,sub:sel.arrDate+(sel.arrTime?" at "+sel.arrTime:""),color:"#2D5A3D"}:{icon:"\u23f3",title:"Awaiting Arrival",sub:"ETA: "+(sel.eta||"\u2014"),color:"#D4960A"},sel.condition?{icon:sel.condition==="Intact"?"\u2705":"\u26a0\ufe0f",title:"Condition: "+sel.condition,sub:sel.rcvWeight>0?"Received "+fK(sel.rcvWeight)+(sel.diff?" (diff: "+(sel.diff>0?"+":"")+fK(sel.diff)+")":""):"Awaiting weighing",color:sel.condition==="Intact"?"#2D5A3D":"#C94444"}:null,{icon:sel.sync==="synced"?"\u2601\ufe0f":"\u23f3",title:sel.sync==="synced"?"Synced to Odoo":"Pending Sync",sub:"Status: "+sel.status,color:sel.sync==="synced"?"#2D5A3D":"#D4960A"}].filter(Boolean).map((ev,i,arr)=><div key={i} style={{display:"flex",gap:12,marginBottom:0}}>
+                  <div style={{display:"flex",flexDirection:"column",alignItems:"center"}}>
+                    <div style={{width:28,height:28,borderRadius:14,background:ev.color+"18",display:"flex",alignItems:"center",justifyContent:"center",fontSize:13}}>{ev.icon}</div>
+                    {i<arr.length-1&&<div style={{width:2,height:24,background:"#E8E5E0"}}/>}
+                  </div>
+                  <div style={{paddingBottom:12}}>
+                    <div style={{fontSize:12,fontWeight:600,color:"#2C3E50"}}>{ev.title}</div>
+                    <div style={{fontSize:10,color:"#95A09C",marginTop:2}}>{ev.sub}</div>
+                  </div>
+                </div>)}
+              </div>}
+
+              {/* TRF Overview */}
+              
+
+              {/* TRF Timeline */}
+              {selType==="trf"&&detTab===0&&<div>
+                <div style={{fontSize:11,fontWeight:700,color:"#475577",marginBottom:14}}>SHIPMENT TIMELINE</div>
+                {[{icon:"\U0001f4e6",title:"Loaded at "+sel.from,sub:sel.loadDate+(sel.loadTime?" at "+sel.loadTime:""),color:"#475577"},{icon:"\U0001f69a",title:"In Transit",sub:sel.from+" \u2192 "+sel.to+" ("+sel.distance+")",color:"#475577"},sel.arrDate?{icon:"\U0001f3e2",title:"Arrived at "+sel.to,sub:sel.arrDate+(sel.arrTime?" at "+sel.arrTime:""),color:"#2D5A3D"}:{icon:"\u23f3",title:"Awaiting Arrival",sub:"ETA: "+(sel.eta||"\u2014"),color:"#D4960A"},sel.condition?{icon:sel.condition==="Intact"?"\u2705":"\u26a0\ufe0f",title:"Condition: "+sel.condition,sub:sel.rcvWeight>0?"Received "+fK(sel.rcvWeight)+(sel.diff?" (diff: "+(sel.diff>0?"+":"")+fK(sel.diff)+")":""):"Awaiting weighing",color:sel.condition==="Intact"?"#2D5A3D":"#C94444"}:null,{icon:sel.sync==="synced"?"\u2601\ufe0f":"\u23f3",title:sel.sync==="synced"?"Synced to Odoo":"Pending Sync",sub:"Status: "+sel.status,color:sel.sync==="synced"?"#2D5A3D":"#D4960A"}].filter(Boolean).map((ev,i,arr)=><div key={i} style={{display:"flex",gap:12,marginBottom:0}}>
+                  <div style={{display:"flex",flexDirection:"column",alignItems:"center"}}>
+                    <div style={{width:28,height:28,borderRadius:14,background:ev.color+"18",display:"flex",alignItems:"center",justifyContent:"center",fontSize:13}}>{ev.icon}</div>
+                    {i<arr.length-1&&<div style={{width:2,height:24,background:"#E8E5E0"}}/>}
+                  </div>
+                  <div style={{paddingBottom:12}}>
+                    <div style={{fontSize:12,fontWeight:600,color:"#2C3E50"}}>{ev.title}</div>
+                    <div style={{fontSize:10,color:"#95A09C",marginTop:2}}>{ev.sub}</div>
+                  </div>
+                </div>)}
               </div>}
 
               {/* TRF Overview — Loading Stage */}
-              {selType==="trf"&&detTab===0&&<div>
+              {selType==="trf"&&detTab===1&&<div>
                 <div style={{fontSize:11,fontWeight:700,color:"#475577",marginBottom:10}}>ROUTE</div>
                 {[["From",sel.from],["To",sel.to],["Distance",sel.distance],["ETA",sel.eta]].filter(([,v])=>v).map(([l,v])=><div key={l} style={{display:"flex",justifyContent:"space-between",padding:"6px 0",borderBottom:"1px solid #F2F0EC"}}><span style={{fontSize:11,color:"#95A09C"}}>{l}</span><span className="m" style={{fontSize:11,color:"#2C3E50"}}>{v}</span></div>)}
                 <div style={{fontSize:11,fontWeight:700,color:"#475577",marginBottom:10,marginTop:16}}>CARGO</div>
@@ -690,7 +742,7 @@ export default function OfflineOpsModule(){
               </div>}
 
               {/* TRF Receiving — Arrival Stage */}
-              {selType==="trf"&&detTab===1&&<div>
+              {selType==="trf"&&detTab===2&&<div>
                 {sel.condition&&<div style={{display:"flex",alignItems:"center",gap:10,padding:"10px 14px",borderRadius:10,background:sel.condition==="Intact"?"#E4EFE6":"#FEF2F2",border:"1px solid "+(sel.condition==="Intact"?"#D5E5D5":"#FECACA"),marginBottom:18}}>
                   <span style={{width:32,height:32,borderRadius:16,background:sel.condition==="Intact"?"#2D5A3D":"#DC2626",color:"#fff",display:"flex",alignItems:"center",justifyContent:"center",fontSize:16,fontWeight:700}}>{sel.condition==="Intact"?"✓":"⚠"}</span>
                   <div>
@@ -711,7 +763,7 @@ export default function OfflineOpsModule(){
               </div>}
 
               {/* TRF Crew */}
-              {selType==="trf"&&detTab===2&&<div>
+              {selType==="trf"&&detTab===3&&<div>
                 <div style={{fontSize:11,fontWeight:700,color:"#475577",marginBottom:10}}>CREW & PERSONNEL</div>
                 {(sel.crew||[]).map((g,i)=><div key={i} style={{marginBottom:14}}><div style={{fontSize:10,fontWeight:700,color:"#95A09C",marginBottom:6}}>{g.role}</div>{g.ppl.map((p,j)=><div key={j} style={{fontSize:12,padding:"4px 0",color:"#2C3E50"}}>{p}</div>)}</div>)}
                 {(!sel.crew||sel.crew.length===0)&&<div style={{color:"#95A09C",fontSize:11}}>No crew data available</div>}
