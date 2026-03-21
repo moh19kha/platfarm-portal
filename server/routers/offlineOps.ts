@@ -465,11 +465,22 @@ export const offlineOpsRouter = router({
             "Bales: " + (procRec.bale_count || "N/A"),
             "Truck Plate: " + (procRec.plate_number || "N/A"),
           ].join(" | ");
-          await executeKw("purchase.order", "write", [[poId], {
+          const poWriteVals: Record<string, unknown> = {
             x_studio_procurement_ref: procRec.name || "",
             x_studio_procurement_data: procSummary,
             x_studio_procurement_id: procurementOdooId,
-          }]);
+          };
+          if (procRec.user_id) {
+            const userId = Array.isArray(procRec.user_id) ? procRec.user_id[0] : procRec.user_id;
+            if (userId) {
+              try {
+                const hrRecs = await executeKw<any[]>("hr.employee", "search_read",
+                  [[["user_id", "=", userId]]], { fields: ["id"], limit: 1 });
+                if (hrRecs.length > 0) poWriteVals.x_studio_procurement_officer = hrRecs[0].id;
+              } catch (_e) { /* ignore if employee not found */ }
+            }
+          }
+          await executeKw("purchase.order", "write", [[poId], poWriteVals]);
         }
 
               // ── Push procurement data + attachments to the receipt ──
@@ -484,6 +495,7 @@ export const offlineOpsRouter = router({
               "gross_weight", "tare_weight", "net_weight", "bale_count", "avg_bale_weight",
               "price_per_ton", "currency", "incoterm", "bale_size", "notes",
               "recorded_at", "site_id", "user_id",
+              "truck_cost", "truck_payer", "truck_included",
             ]}
           );
           if (procData?.[0]) {
@@ -504,6 +516,11 @@ export const offlineOpsRouter = router({
             const siteName = Array.isArray(p.site_id) ? p.site_id[1] : (p.site_id ? String(p.site_id) : '');
             if (siteName) { receiptVals.x_studio_source = siteName; receiptVals.x_studio_farmfield_name = siteName; }
             if (p.recorded_at) receiptVals.x_studio_loading_datetime_1 = p.recorded_at;
+            const currencyMap: Record<string, string> = { egp: 'EGP', aed: 'AED', usd: 'USD', eur: 'EUR', sdg: 'SDG' };
+            if (p.currency) receiptVals.x_studio_currency = currencyMap[p.currency] || p.currency;
+            if (p.truck_cost) receiptVals.x_studio_agreed_trucking_cost = p.truck_cost;
+            if (p.avg_bale_weight) receiptVals.x_studio_gross_weight = String(p.avg_bale_weight);
+            if (p.supplier) receiptVals.x_studio_farmfield_name = receiptVals.x_studio_farmfield_name || p.supplier;
             if (Object.keys(receiptVals).length > 0) {
               await executeKw("stock.picking", "write", [[firstReceiptId], receiptVals]);
             }
@@ -584,6 +601,7 @@ export const offlineOpsRouter = router({
               "qc_notes", "recorded_at", "user_id",
               "protein_nir", "moisture_weight_pct",
               "stack_good", "strap_good", "has_cover", "truck_clean",
+              "no_weeds", "odor", "density", "bale_height",
             ], limit: 1, order: "create_date desc" }
           );
 
@@ -607,6 +625,14 @@ export const offlineOpsRouter = router({
             if (qc.strap_good === "yes") qcVals.x_studio_proper_loadcontainer_lashing = true;
             if (qc.g1_bale_count) qcVals.x_studio_grade_1_ = qc.g1_bale_count;
             if (qc.g2_bale_count) qcVals.x_studio_grade_3_ = qc.g2_bale_count;
+            if (qc.mix_bale_count) qcVals.x_studio_standard_ = qc.mix_bale_count;
+            if (qc.no_weeds === "yes") qcVals.x_studio_good_quality_stem_size = true;
+            if (qc.avg_bale_weight) qcVals.x_studio_quality_score = qc.avg_bale_weight;
+            if (qc.moisture_weight_pct) {
+              const balesAbove = Math.round(qc.moisture_weight_pct);
+              qcVals.x_studio_bales_with_moisture_above_12 = String(balesAbove);
+            }
+            if (qc.verdict === "rejected") qcVals.x_studio_accepted_rejected = false;
             if (Object.keys(qcVals).length > 0) {
               await executeKw("stock.picking", "write", [[firstReceiptId], qcVals]);
             }
