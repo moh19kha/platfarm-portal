@@ -1,0 +1,9 @@
+{
+  "query": "\nINSERT INTO users (openId, name, email, loginMethod, role, passwordHash, status, createdAt, updatedAt, lastSignedIn)\nVALUES (\n  'local:khalil@platfarm.io',\n  'Mohamed Khalil',\n  'khalil@platfarm.io',\n  'local',\n  'admin',\n  '$2b$12$GZg7jXFAuUG7OrG3Sq7XHOOfv8wUXUAhx/gCVncRDGnuU79cTPChm',\n  'active',\n  NOW(),\n  NOW(),\n  NOW()\n);\n",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user WXqa14W8mSgTfpb.99f8bb228633 --database X5tJK2uaPFqt5EwqucHsfz --execute \nINSERT INTO users (openId, name, email, loginMethod, role, passwordHash, status, createdAt, updatedAt, lastSignedIn)\nVALUES (\n  'local:khalil@platfarm.io',\n  'Mohamed Khalil',\n  'khalil@platfarm.io',\n  'local',\n  'admin',\n  '$2b$12$GZg7jXFAuUG7OrG3Sq7XHOOfv8wUXUAhx/gCVncRDGnuU79cTPChm',\n  'active',\n  NOW(),\n  NOW(),\n  NOW()\n);\n",
+  "rows": [],
+  "messages": [],
+  "stdout": "",
+  "stderr": "",
+  "execution_time_ms": 2503
+}

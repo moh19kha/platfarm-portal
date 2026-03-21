@@ -1,0 +1,26 @@
+{
+  "query": "SELECT id, odooCompanyId, companyName, docType, expiryDate, DATEDIFF(expiryDate, CURDATE()) as daysToExpiry FROM company_documents WHERE expiryDate IS NOT NULL ORDER BY expiryDate ASC;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user WXqa14W8mSgTfpb.99f8bb228633 --database X5tJK2uaPFqt5EwqucHsfz --execute SELECT id, odooCompanyId, companyName, docType, expiryDate, DATEDIFF(expiryDate, CURDATE()) as daysToExpiry FROM company_documents WHERE expiryDate IS NOT NULL ORDER BY expiryDate ASC;",
+  "rows": [
+    {
+      "id": "2",
+      "odooCompanyId": "3",
+      "companyName": "Cairo-PLATFARM FOR AGRICULTURE CONSULTANCY",
+      "docType": "vat_registration",
+      "expiryDate": "2026-03-22",
+      "daysToExpiry": "4"
+    },
+    {
+      "id": "30007",
+      "odooCompanyId": "1",
+      "companyName": "ADGM-PLATFARM FOR AGRITECH AND AGRIBUSINESS LTD",
+      "docType": "vat_registration",
+      "expiryDate": "2028-08-21",
+      "daysToExpiry": "887"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\todooCompanyId\tcompanyName\tdocType\texpiryDate\tdaysToExpiry\n2\t3\tCairo-PLATFARM FOR AGRICULTURE CONSULTANCY\tvat_registration\t2026-03-22\t4\n30007\t1\tADGM-PLATFARM FOR AGRITECH AND AGRIBUSINESS LTD\tvat_registration\t2028-08-21\t887\n",
+  "stderr": "",
+  "execution_time_ms": 1544
+}

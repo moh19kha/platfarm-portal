@@ -1,0 +1,20 @@
+CREATE TABLE `company_documents` (
+	`id` int AUTO_INCREMENT NOT NULL,
+	`odooCompanyId` int NOT NULL,
+	`companyName` varchar(255) NOT NULL,
+	`docType` enum('company_registration','vat_registration','tax_registration','constitution_contract','owner_id','owner_passport') NOT NULL,
+	`odooDocumentId` int,
+	`documentName` varchar(512),
+	`expiryDate` date,
+	`issueDate` date,
+	`referenceNumber` varchar(255),
+	`notes` text,
+	`reminder30d` int NOT NULL DEFAULT 0,
+	`reminder14d` int NOT NULL DEFAULT 0,
+	`reminder7d` int NOT NULL DEFAULT 0,
+	`reminderExpired` int NOT NULL DEFAULT 0,
+	`updatedBy` varchar(128),
+	`createdAt` timestamp NOT NULL DEFAULT (now()),
+	`updatedAt` timestamp NOT NULL DEFAULT (now()) ON UPDATE CURRENT_TIMESTAMP,
+	CONSTRAINT `company_documents_id` PRIMARY KEY(`id`)
+);

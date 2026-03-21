@@ -1,0 +1,1061 @@
+/**
+ * Offline Operations tRPC Router
+ *
+ * Provides procedures to fetch data from the Odoo platfarm_field_ops module:
+ * - Procurement (receiving) records
+ * - Quality assessment records
+ * - Pressing shift records (with staff)
+ * - Shipping (internal transfer) records
+ * - Operational sites
+ * - Attachment metadata
+ * - Dashboard summary counts
+ *
+ * Field names verified via fields_get introspection on 2026-03-16.
+ */
+
+import { z } from "zod";
+import { publicProcedure, router } from "../_core/trpc";
+import {
+  fetchSites,
+  fetchProcurements,
+  fetchQualityRecords,
+  fetchPressingRecords,
+  fetchPressingStaff,
+  fetchShippingRecords,
+  fetchAttachments,
+  fetchRecordCounts,
+} from "../odoo-offline-ops";
+import { executeKw, createInternalTransfer, validateInternalTransfer, searchTransferProducts, fetchStockLocations, fetchWarehouses, fetchProductStockByLocation, fetchAllStockAtLocation } from "../odoo";
+
+// ─── Helper: format Odoo date string to display format ──────────────────────
+function formatDate(odooDate: string | false): string {
+  if (!odooDate) return "";
+  try {
+    const d = new Date(odooDate);
+    const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+    return `${d.getDate()} ${months[d.getMonth()]} ${d.getFullYear()}`;
+  } catch {
+    return String(odooDate);
+  }
+}
+
+function formatTime(odooDatetime: string | false): string {
+  if (!odooDatetime) return "";
+  try {
+    const d = new Date(odooDatetime);
+    return `${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`;
+  } catch {
+    return "";
+  }
+}
+
+function m2oName(val: [number, string] | false): string {
+  return val ? val[1] : "";
+}
+
+// ─── Role label mapping for staff ───────────────────────────────────────────
+const ROLE_LABELS: Record<string, string> = {
+  driver: "🚛 Drivers",
+  baling_supervisor: "👔 Baling Supervisors",
+  quality_supervisor: "🔍 Quality Supervisors",
+  baling_labor: "⚙ Baling Labors",
+  quality_labor: "👷 Quality Labors",
+  loading_crew: "👷 Loading Crew",
+  receiving_crew: "📦 Receiving Crew",
+};
+
+// ─── Transform functions: Odoo → Frontend shape ─────────────────────────────
+
+function transformProcurement(r: any, attachments: any[]): any {
+  // Match attachments by procurement_id FK or res_model/res_id
+  const recAttachments = attachments
+    .filter((a: any) => {
+      if (a.procurement_id) return a.procurement_id[0] === r.id;
+      return a.res_model === "pf.procurement" && a.res_id === r.id;
+    })
+    .map((a: any) => ({
+      n: a.photo_label || a.file_name || "Attachment",
+      t: a.photo_type === "photo" || (a.file_name || "").match(/\.(jpg|jpeg|png|webp)$/i) ? "photo" : "doc",
+      s: "✓",
+      irAttId: a.ir_attachment_id ? a.ir_attachment_id[0] : null,
+    }));
+
+  // Determine sync status from state/synced_at
+  const syncStatus = r.synced_at ? "synced" : (r.state === "draft" ? "pending" : "synced");
+
+  return {
+    id: r.name || `RCV-${String(r.id).padStart(4, "0")}`,
+    odooId: r.id,
+    supplier: r.supplier || "",
+    commodity: r.commodity || "",
+    grade: r.grade || "",
+    site: m2oName(r.site_id),
+    plate: r.plate_number || "",
+    stage: r.state || "received",
+    qcRef: "",  // Will be linked via quality source_ref
+    driver: r.driver_name || "",
+    linkedPoName: r.x_studio_linked_po || "",
+    linkedPoId: r.x_studio_linked_po_id || 0,
+    linkedReceipt: r.x_linked_receipt || "",
+    linkedReceiptId: r.x_linked_receipt_id || 0,
+    gross: r.gross_weight || 0,
+    tare: r.tare_weight || 0,
+    net: r.net_weight || 0,
+    bales: r.bale_count || 0,
+    avgBale: r.avg_bale_weight || 0,
+    price: r.price_per_ton || 0,
+    currency: r.currency || "EGP",
+    incoterm: r.incoterm || "",
+    truckInc: r.truck_included ? "Yes" : "No",
+    truckPayer: r.truck_payer || "—",
+    truckCost: r.truck_cost || 0,
+    date: formatDate(r.recorded_at || r.create_date),
+    time: formatTime(r.recorded_at || r.create_date),
+    sync: syncStatus,
+    baleSize: r.bale_size || "",
+    notes: r.notes || "",
+    createdBy: r.create_uid ? (Array.isArray(r.create_uid) ? r.create_uid[1] : String(r.create_uid)) : "",
+    att: recAttachments,
+  };
+}
+
+function transformQuality(r: any, attachments: any[]): any {
+  const recAttachments = attachments
+    .filter((a: any) => {
+      if (a.quality_id) return a.quality_id[0] === r.id;
+      return a.res_model === "pf.quality" && a.res_id === r.id;
+    })
+    .map((a: any) => ({
+      n: a.photo_label || a.file_name || "Attachment",
+      t: a.photo_type === "photo" || (a.file_name || "").match(/\.(jpg|jpeg|png|webp)$/i) ? "photo" : "doc",
+      s: "✓",
+      irAttId: a.ir_attachment_id ? a.ir_attachment_id[0] : null,
+    }));
+
+  const syncStatus = r.synced_at ? "synced" : (r.state === "draft" ? "pending" : "synced");
+  const isPressed = r.qc_type === "pressed" || !!r.pressing_id;
+  const ref = isPressed
+    ? (r.pressing_id ? m2oName(r.pressing_id) : "")
+    : (r.procurement_id ? m2oName(r.procurement_id) : "");
+
+  return {
+    id: r.name || `QC-${String(r.id).padStart(4, "0")}`,
+    odooId: r.id,
+    type: r.qc_type || "received",
+    ref: ref,
+    supplier: r.supplier || "",
+    commodity: r.commodity || "",
+    grade: r.grade || "",
+    site: m2oName(r.site_id),
+    inspector: m2oName(r.user_id),
+    bales: r.bale_count || 0,
+    netWeight: r.net_weight || 0,
+    pressLine: r.press_line || "",
+    batch: r.batch_name || "",
+    outWeight: r.out_weight || 0,
+    color: r.color || "",
+    leafRatio: r.leaf_ratio || "",
+    foreignMatter: r.foreign_matter || "",
+    odor: r.odor || "",
+    moisture: r.moisture ? `${r.moisture}%` : "",
+    moistureWeight: r.moisture_weight_pct ? `${r.moisture_weight_pct}%` : "",
+    protein: r.protein_nir ? `${r.protein_nir}%` : "",
+    density: r.density || "",
+    avgWeight: r.avg_bale_weight || 0,
+    baleHeight: r.bale_height || 0,
+    baleShape: r.bale_shape || "",
+    baleTies: r.bale_ties || "",
+    baleCode: r.bale_code || "",
+    truckClean: r.truck_clean || "",
+    hasCover: r.has_cover || "",
+    strapGood: r.strap_good || "",
+    stackGood: r.stack_good || "",
+    noWeeds: r.no_weeds || "",
+    noInsects: r.no_insects || "",
+    noBlackWood: r.no_black_wood || "",
+    verdict: r.verdict || "",
+    finalGrade: r.final_grade || "",
+    g1: r.g1_bale_count || 0,
+    g2: r.g2_bale_count || 0,
+    mix: r.mix_bale_count || 0,
+    notes: r.qc_notes || "",
+    date: formatDate(r.recorded_at || r.create_date),
+    sync: syncStatus,
+    att: recAttachments,
+  };
+}
+
+function transformPressing(r: any, staffByPressing: Map<number, any[]>, attachments: any[]): any {
+  const recAttachments = attachments
+    .filter((a: any) => {
+      if (a.pressing_id) return a.pressing_id[0] === r.id;
+      return a.res_model === "pf.pressing" && a.res_id === r.id;
+    })
+    .map((a: any) => ({
+      n: a.photo_label || a.file_name || "Attachment",
+      t: a.photo_type === "photo" || (a.file_name || "").match(/\.(jpg|jpeg|png|webp)$/i) ? "photo" : "doc",
+      s: "✓",
+      irAttId: a.ir_attachment_id ? a.ir_attachment_id[0] : null,
+    }));
+
+  // Group staff by role
+  const staffList = staffByPressing.get(r.id) || [];
+  const crewByRole = new Map<string, string[]>();
+  for (const s of staffList) {
+    const roleKey = s.role || "other";
+    const label = ROLE_LABELS[roleKey] || roleKey;
+    if (!crewByRole.has(label)) crewByRole.set(label, []);
+    crewByRole.get(label)!.push(s.name);
+  }
+  const crew = Array.from(crewByRole.entries()).map(([role, ppl]) => ({ role, ppl }));
+
+  const syncStatus = r.synced_at ? "synced" : (r.state === "draft" ? "pending" : "synced");
+
+  return {
+    id: r.name || `DPR-${String(r.id).padStart(4, "0")}`,
+    odooId: r.id,
+    site: m2oName(r.site_id),
+    line: r.press_line || "",
+    batch: r.batch_name || "",
+    shift: r.shift || "",
+    operator: r.operator || "",
+    commodity: r.commodity || "",
+    linkedMoName: r.x_studio_linked_mo || "",
+    linkedMoId: r.x_studio_linked_mo_id || 0,
+    inBales: r.in_bale_count || 0,
+    inWeight: r.in_total_weight || 0,
+    inGrade: r.in_grade || "",
+    outBales: r.out_bale_count || 0,
+    outWeight: r.out_total_weight || 0,
+    outAvgBale: r.out_bale_count ? Math.round((r.out_total_weight || 0) / r.out_bale_count) : 0,
+    density: r.out_density || "",
+    fuel: r.fuel_consumption || 0,
+    oilTemp: r.oil_temp ? `${r.oil_temp}\u00b0C` : "",
+    oilPressure: r.oil_pressure ? `${r.oil_pressure} bar` : "",
+    startTime: formatTime(r.start_datetime),
+    endTime: formatTime(r.end_datetime),
+    sources: r.source_procurement || "",
+    date: formatDate(r.recorded_at || r.create_date),
+    sync: syncStatus,
+    crew,
+    att: recAttachments,
+  };
+}
+
+function transformShipping(r: any, attachments: any[]): any {
+  const recAttachments = attachments
+    .filter((a: any) => {
+      if (a.shipping_id) return a.shipping_id[0] === r.id;
+      return a.res_model === "pf.shipping" && a.res_id === r.id;
+    })
+    .map((a: any) => ({
+      n: a.photo_label || a.file_name || "Attachment",
+      t: a.photo_type === "photo" || (a.file_name || "").match(/\.(jpg|jpeg|png|webp)$/i) ? "photo" : "doc",
+      s: "✓",
+      irAttId: a.ir_attachment_id ? a.ir_attachment_id[0] : null,
+    }));
+
+  const syncStatus = r.synced_at ? "synced" : (r.state === "draft" ? "pending" : "synced");
+
+  // pf.shipping has no origin_site_id/destination_site_id — transfers are always Dakhla→Sokhna
+  return {
+    id: r.name || `TRF-${String(r.id).padStart(4, "0")}`,
+    odooId: r.id,
+    from: "Dakhla Farm",      // Hardcoded — model has no site fields
+    to: "Ain Sokhna",         // Hardcoded — model has no site fields
+    commodity: r.commodity || "",
+    grade: "",                 // No grade field on pf.shipping
+    press: "SP",              // Default
+    bales: r.bale_count || 0,
+    weight: r.net_weight || r.gross_weight || 0,
+    tare: r.tare_weight || 0,
+    plate: r.plate_number || "",
+    crew: r.driver_name ? [{ role: "🚛 Driver", ppl: [r.driver_name] }] : [],  // Populate from driver_name
+    truck: "",                 // No truck type field
+    phone: r.driver_phone || "",
+    sources: r.source_batches || "",
+    freight: r.freight_cost || 0,
+    loadDate: formatDate(r.departure_datetime || r.recorded_at || r.create_date),
+    loadTime: formatTime(r.departure_datetime || r.recorded_at || r.create_date),
+    eta: r.eta_datetime ? `${formatDate(r.eta_datetime)} ${formatTime(r.eta_datetime)}` : "",
+    arrDate: "",               // No arrival date field
+    arrTime: "",               // No arrival time field
+    condition: "",             // No condition field
+    status: r.state || "in_transit",
+    sync: syncStatus,
+    distance: "780 km",        // Default Dakhla→Sokhna distance
+    notes: "",                 // No notes field on pf.shipping
+    seal: r.client_ref || "",  // Use client_ref as seal number
+    rcvWeight: 0,              // No received weight field
+    diff: 0,                   // No weight difference field
+    date: formatDate(r.recorded_at || r.create_date),
+    att: recAttachments,
+  };
+}
+
+// ─── Router ─────────────────────────────────────────────────────────────────
+
+export const offlineOpsRouter = router({
+  /**
+   * Fetch operational sites.
+   */
+  sites: publicProcedure.query(async () => {
+    return fetchSites();
+  }),
+
+  attachmentImage: publicProcedure
+    .input(z.object({ irAttachmentId: z.number() }))
+    .query(async ({ input }) => {
+      const { irAttachmentId } = input;
+      const records = await executeKw<{ id: number; datas: string | false; mimetype: string; name: string }[]>(
+        "ir.attachment", "read", [[irAttachmentId]],
+        { fields: ["datas", "mimetype", "name"] }
+      );
+      if (!records?.length || !records[0].datas) return { data: null, mimetype: "image/jpeg", name: "" };
+      return { data: records[0].datas, mimetype: records[0].mimetype, name: records[0].name };
+    }),
+
+  /**
+   * Fetch dashboard summary counts.
+   */
+  summary: publicProcedure.query(async () => {
+    return fetchRecordCounts();
+  }),
+
+  /**
+   * Fetch all offline operations data in one call (for the dashboard).
+   * Returns transformed data matching the frontend's expected shape.
+   */
+  allData: publicProcedure
+    .input(
+      z.object({
+        siteId: z.number().optional(),
+        companyId: z.number().optional(),
+        limit: z.number().default(200),
+      }).optional()
+    )
+    .query(async ({ input }) => {
+      const siteId = input?.siteId;
+      const companyId = input?.companyId;
+      const limit = input?.limit ?? 200;
+
+      // Fetch all four record types in parallel
+      const [rawProcurements, rawQuality, rawPressing, rawShipping] = await Promise.all([
+        fetchProcurements(siteId, limit, companyId),
+        fetchQualityRecords(siteId, undefined, limit, companyId),
+        fetchPressingRecords(siteId, limit, companyId),
+        fetchShippingRecords(limit, companyId),
+      ]);
+
+      // Fetch staff for pressing records (shipping has no staff model)
+      const pressingIds = rawPressing.map((r) => r.id);
+      const pressingStaff = await fetchPressingStaff(pressingIds);
+
+      // Group staff by parent record
+      const staffByPressing = new Map<number, any[]>();
+      for (const s of pressingStaff) {
+        const pid = s.pressing_id ? s.pressing_id[0] : 0;
+        if (!staffByPressing.has(pid)) staffByPressing.set(pid, []);
+        staffByPressing.get(pid)!.push(s);
+      }
+
+      // Fetch attachments for all records in parallel
+      const [procAttachments, qcAttachments, pressAttachments, shipAttachments] = await Promise.all([
+        fetchAttachments("pf.procurement", rawProcurements.map((r) => r.id)),
+        fetchAttachments("pf.quality", rawQuality.map((r) => r.id)),
+        fetchAttachments("pf.pressing", rawPressing.map((r) => r.id)),
+        fetchAttachments("pf.shipping", rawShipping.map((r) => r.id)),
+      ]);
+
+      // Link QC refs AND full QC data to procurement records via procurement_id
+      const qcByProcId = new Map<number, string>();
+      const qcDataByProcId = new Map<number, any>();
+      for (const q of rawQuality) {
+        if (q.procurement_id) {
+          const procId = Array.isArray(q.procurement_id) ? q.procurement_id[0] : q.procurement_id;
+          if (q.name) qcByProcId.set(procId, q.name);
+          // Store full transformed QC data for pre-filling the shipment wizard
+          qcDataByProcId.set(procId, transformQuality(q, qcAttachments));
+        }
+      }
+
+      // Transform to frontend shape
+      const RCV = rawProcurements.map((r) => {
+        const transformed = transformProcurement(r, procAttachments);
+        // Link QC reference if available
+        const qcRef = qcByProcId.get(r.id);
+        if (qcRef) transformed.qcRef = qcRef;
+        // Attach full QC data for shipment wizard pre-fill
+        const qcData = qcDataByProcId.get(r.id);
+        if (qcData) transformed.qcData = qcData;
+        return transformed;
+      });
+      const QC = rawQuality.map((r) => transformQuality(r, qcAttachments));
+      const DPR = rawPressing.map((r) => transformPressing(r, staffByPressing, pressAttachments));
+      const TRF = rawShipping.map((r) => transformShipping(r, shipAttachments));
+
+      return { RCV, QC, DPR, TRF };
+    }),
+
+  /**
+   * After creating a PO from a procurement record, write the PO name back
+   * to pf.procurement.notes so the record is marked as converted.
+   * Also stores the PO ID for the badge display.
+   */
+  linkProcurementToPO: publicProcedure
+    .input(
+      z.object({
+        procurementOdooId: z.number(),
+        poId: z.number(),
+        poName: z.string(),
+      })
+    )
+    .mutation(async ({ input }) => {
+      const { procurementOdooId, poId, poName } = input;
+
+      // ── Fetch receipt (stock.picking) references from the PO ──
+      let receiptNames: string[] = [];
+      let receiptIds: number[] = [];
+      try {
+        const poRecords = await executeKw<{ id: number; picking_ids: number[] }[]>(
+          "purchase.order", "read", [[poId]], { fields: ["picking_ids"] }
+        );
+        const pickingIds = poRecords?.[0]?.picking_ids || [];
+        if (pickingIds.length > 0) {
+          const pickings = await executeKw<{ id: number; name: string }[]>(
+            "stock.picking", "read", [pickingIds], { fields: ["id", "name"] }
+          );
+          receiptNames = pickings.map(p => p.name);
+          receiptIds = pickings.map(p => p.id);
+        }
+      } catch (err: any) {
+        console.error(`[linkProcurementToPO] Failed to fetch receipts for PO ${poId}: ${err.message}`);
+      }
+
+      // Read current notes so we can append rather than overwrite
+      const records = await executeKw<{ id: number; notes: string | false }[]>(
+        "pf.procurement",
+        "search_read",
+        [[["id", "=", procurementOdooId]]],
+        { fields: ["id", "notes"] }
+      );
+      const currentNotes = records[0]?.notes || "";
+      const poTag = `[Converted to ${poName} | PO ID: ${poId}]`;
+      const receiptTag = receiptNames.length > 0
+        ? `[Receipt: ${receiptNames.join(", ")} | Picking IDs: ${receiptIds.join(", ")}]`
+        : "";
+      // Only append if not already tagged
+      let newNotes = currentNotes;
+      if (!newNotes.includes(poTag)) {
+        newNotes = newNotes ? `${newNotes}\n${poTag}` : poTag;
+      }
+      if (receiptTag && !newNotes.includes(receiptTag)) {
+        newNotes = `${newNotes}\n${receiptTag}`;
+      }
+
+      // Write notes + dedicated linked PO fields (authoritative source for badge display)
+      const writeVals: Record<string, unknown> = {
+        notes: newNotes,
+        x_studio_linked_po: poName,
+        x_studio_linked_po_id: poId,
+      };
+      if (receiptNames.length > 0) {
+        writeVals.x_linked_receipt = receiptNames.join(", ");
+        writeVals.x_linked_receipt_id = receiptIds[0];
+      }
+      await executeKw(
+        "pf.procurement",
+        "write",
+        [[procurementOdooId], writeVals]
+      );
+
+      // ── Push procurement data + attachments to the receipt ──
+      if (receiptIds.length > 0) {
+        const firstReceiptId = receiptIds[0];
+        try {
+          // Read procurement fields to push to receipt
+          const procData = await executeKw<any[]>(
+            "pf.procurement", "read", [[procurementOdooId]],
+            { fields: [
+              "supplier", "commodity", "grade", "driver_name", "plate_number",
+              "gross_weight", "tare_weight", "bale_count", "avg_bale_weight",
+              "price_per_ton", "currency", "incoterm", "bale_size", "notes",
+            ]}
+          );
+          if (procData?.[0]) {
+            const p = procData[0];
+            const receiptVals: Record<string, unknown> = {};
+            if (p.driver_name) receiptVals.x_studio_driver_name = p.driver_name;
+            if (p.gross_weight) receiptVals.x_studio_gross_weight_in_tons = p.gross_weight / 1000;
+            if (p.tare_weight) receiptVals.x_studio_tare_weight_in_tons = p.tare_weight / 1000;
+            const net = (p.gross_weight || 0) - (p.tare_weight || 0);
+            if (net > 0) receiptVals.x_studio_net_weight_in_tons = net / 1000;
+            if (p.bale_count) receiptVals.x_studio_total_number_of_received_bales = String(p.bale_count);
+            if (p.bale_count) receiptVals.x_studio_bales = String(p.bale_count);
+            if (Object.keys(receiptVals).length > 0) {
+              await executeKw("stock.picking", "write", [[firstReceiptId], receiptVals]);
+            }
+          }
+
+          // Copy procurement attachments to receipt
+          const procAtts = await executeKw<{
+            id: number;
+            ir_attachment_id: [number, string] | false;
+            file_name: string | false;
+            photo_label: string | false;
+          }[]>(
+            "pf.attachment", "search_read",
+            [[["procurement_id", "=", procurementOdooId]]],
+            { fields: ["id", "ir_attachment_id", "file_name", "photo_label"] }
+          );
+          for (const pfa of procAtts) {
+            if (!pfa.ir_attachment_id) continue;
+            try {
+              const irAtt = await executeKw<any[]>(
+                "ir.attachment", "read", [[pfa.ir_attachment_id[0]]],
+                { fields: ["datas", "name", "mimetype"] }
+              );
+              if (irAtt?.[0]?.datas) {
+                const label = pfa.photo_label || pfa.file_name || pfa.ir_attachment_id[1] || "Procurement_photo";
+                await executeKw("ir.attachment", "create", [{
+                  name: `[Procurement] ${label}`,
+                  datas: irAtt[0].datas,
+                  mimetype: irAtt[0].mimetype || "image/jpeg",
+                  res_model: "stock.picking",
+                  res_id: firstReceiptId,
+                }]);
+              }
+            } catch (e: any) {
+              console.error(`[linkProcurementToPO] Failed to copy proc attachment ${pfa.id} to receipt: ${e.message}`);
+            }
+          }
+        } catch (e: any) {
+          console.error(`[linkProcurementToPO] Failed to push data to receipt ${firstReceiptId}: ${e.message}`);
+        }
+      }
+
+      return {
+        success: true,
+        poName,
+        poId,
+        receiptNames,
+        receiptIds,
+      };
+    }),
+
+  /**
+   * Copy attachments from a pf.quality record to a purchase.order.
+   * Reads pf.attachment records linked to the quality assessment and creates
+   * new ir.attachment records linked to the PO, reusing the same binary data.
+   */
+  copyQualityAttachments: publicProcedure
+    .input(
+      z.object({
+        qualityOdooId: z.number(),
+        poId: z.number(),
+      })
+    )
+    .mutation(async ({ input }) => {
+      const { qualityOdooId, poId } = input;
+
+      // 1. Get pf.attachment records for this quality record
+      const pfAttachments = await executeKw<{
+        id: number;
+        ir_attachment_id: [number, string] | false;
+        file_name: string | false;
+        photo_label: string | false;
+        photo_type: string | false;
+      }[]>(
+        "pf.attachment",
+        "search_read",
+        [[["quality_id", "=", qualityOdooId]]],
+        { fields: ["id", "ir_attachment_id", "file_name", "photo_label", "photo_type"] }
+      );
+
+      if (!pfAttachments.length) return { copied: 0 };
+
+      let copied = 0;
+      for (const pfa of pfAttachments) {
+        if (!pfa.ir_attachment_id) continue;
+        const irId = pfa.ir_attachment_id[0];
+        try {
+          const originals = await executeKw<{
+            id: number;
+            name: string;
+            datas: string | false;
+            mimetype: string;
+          }[]>(
+            "ir.attachment",
+            "search_read",
+            [[["id", "=", irId]]],
+            { fields: ["id", "name", "datas", "mimetype"] }
+          );
+          if (!originals.length || !originals[0].datas) continue;
+          const orig = originals[0];
+          await executeKw(
+            "ir.attachment",
+            "create",
+            [{
+              name: `[QC] ${pfa.photo_label || pfa.file_name || orig.name}`,
+              datas: orig.datas,
+              mimetype: orig.mimetype,
+              res_model: "purchase.order",
+              res_id: poId,
+              description: `Copied from quality assessment ${qualityOdooId} (pf.attachment #${pfa.id})`,
+            }]
+          );
+          copied++;
+        } catch (err: any) {
+          console.error(`[copyQualityAttachments] Failed to copy attachment ${pfa.id}: ${err.message}`);
+        }
+      }
+
+      return { copied };
+    }),
+
+  /**
+   * Copy attachments from a pf.procurement record to a purchase.order.
+   * Reads pf.attachment records linked to the procurement and creates
+   * new ir.attachment records linked to the PO, reusing the same binary data.
+   */
+  copyProcurementAttachments: publicProcedure
+    .input(
+      z.object({
+        procurementOdooId: z.number(),
+        poId: z.number(),
+      })
+    )
+    .mutation(async ({ input }) => {
+      const { procurementOdooId, poId } = input;
+
+      // 1. Get pf.attachment records for this procurement
+      const pfAttachments = await executeKw<{
+        id: number;
+        ir_attachment_id: [number, string] | false;
+        file_name: string | false;
+        photo_label: string | false;
+        photo_type: string | false;
+      }[]>(
+        "pf.attachment",
+        "search_read",
+        [[["procurement_id", "=", procurementOdooId]]],
+        { fields: ["id", "ir_attachment_id", "file_name", "photo_label", "photo_type"] }
+      );
+
+      if (!pfAttachments.length) return { copied: 0 };
+
+      // 2. For each pf.attachment that has an ir.attachment, read the binary data
+      //    and create a new ir.attachment linked to the PO
+      let copied = 0;
+      for (const pfa of pfAttachments) {
+        if (!pfa.ir_attachment_id) continue;
+        const irId = pfa.ir_attachment_id[0];
+        try {
+          // Read the original ir.attachment
+          const originals = await executeKw<{
+            id: number;
+            name: string;
+            datas: string | false;
+            mimetype: string;
+          }[]>(
+            "ir.attachment",
+            "search_read",
+            [[["id", "=", irId]]],
+            { fields: ["id", "name", "datas", "mimetype"] }
+          );
+          if (!originals.length || !originals[0].datas) continue;
+          const orig = originals[0];
+          // Create a new ir.attachment linked to the PO
+          await executeKw(
+            "ir.attachment",
+            "create",
+            [{
+              name: pfa.photo_label || pfa.file_name || orig.name,
+              datas: orig.datas,
+              mimetype: orig.mimetype,
+              res_model: "purchase.order",
+              res_id: poId,
+              description: `Copied from procurement ${procurementOdooId} (pf.attachment #${pfa.id})`,
+            }]
+          );
+          copied++;
+        } catch (err: any) {
+          console.error(`[copyProcurementAttachments] Failed to copy attachment ${pfa.id}: ${err.message}`);
+        }
+      }
+
+      return { copied };
+    }),
+
+  /**
+   * After creating a Manufacturing Order from a press operation record,
+   * write the MO name back to pf.pressing.notes so the record is marked as converted.
+   * Also stores the MO ID for the badge display.
+   */
+  linkPressingToMO: publicProcedure
+    .input(
+      z.object({
+        pressingOdooId: z.number(),
+        moId: z.number(),
+        moName: z.string(),
+      })
+    )
+    .mutation(async ({ input }) => {
+      const { pressingOdooId, moId, moName } = input;
+      // Read current notes so we can append rather than overwrite
+      const records = await executeKw<{ id: number; notes: string | false }[]>(
+        "pf.pressing",
+        "search_read",
+        [[["id", "=", pressingOdooId]]],
+        { fields: ["id", "notes"] }
+      );
+      const existing = records[0]?.notes || "";
+      const tag = `[Converted to ${moName} | MO ID: ${moId}]`;
+      const newNotes = existing ? `${existing}\n${tag}` : tag;
+      // Write notes + dedicated linked MO fields (authoritative source for badge display)
+      await executeKw("pf.pressing", "write", [[[pressingOdooId], {
+        notes: newNotes,
+        x_studio_linked_mo: moName,
+        x_studio_linked_mo_id: moId,
+      }]]);
+      return { success: true, moId, moName };
+    }),
+
+  /**
+   * Copy attachments from a pf.pressing record to a mrp.production order.
+   * Reads pf.attachment records linked to the pressing and creates
+   * new ir.attachment records linked to the MO, reusing the same binary data.
+   */
+  copyPressingAttachments: publicProcedure
+    .input(
+      z.object({
+        pressingOdooId: z.number(),
+        moId: z.number(),
+      })
+    )
+    .mutation(async ({ input }) => {
+      const { pressingOdooId, moId } = input;
+
+      // 1. Get pf.attachment records for this pressing
+      const pfAttachments = await executeKw<{
+        id: number;
+        ir_attachment_id: [number, string] | false;
+        file_name: string | false;
+        photo_label: string | false;
+        photo_type: string | false;
+      }[]>(
+        "pf.attachment",
+        "search_read",
+        [[["pressing_id", "=", pressingOdooId]]],
+        { fields: ["id", "ir_attachment_id", "file_name", "photo_label", "photo_type"] }
+      );
+
+      if (!pfAttachments.length) return { copied: 0 };
+
+      let copied = 0;
+      for (const pfa of pfAttachments) {
+        if (!pfa.ir_attachment_id) continue;
+        const irId = pfa.ir_attachment_id[0];
+        try {
+          const originals = await executeKw<{
+            id: number;
+            name: string;
+            datas: string | false;
+            mimetype: string;
+          }[]>(
+            "ir.attachment",
+            "search_read",
+            [[["id", "=", irId]]],
+            { fields: ["id", "name", "datas", "mimetype"] }
+          );
+          if (!originals.length || !originals[0].datas) continue;
+          const orig = originals[0];
+          await executeKw(
+            "ir.attachment",
+            "create",
+            [{
+              name: pfa.photo_label || pfa.file_name || orig.name,
+              datas: orig.datas,
+              mimetype: orig.mimetype,
+              res_model: "mrp.production",
+              res_id: moId,
+              description: `Copied from pressing ${pressingOdooId} (pf.attachment #${pfa.id})`,
+            }]
+          );
+          copied++;
+        } catch (err: any) {
+          console.error(`[copyPressingAttachments] Failed to copy attachment ${pfa.id}: ${err.message}`);
+        }
+      }
+
+      return { copied };
+    }),
+
+  // ─── Internal Transfer (Odoo stock.picking) ─────────────────────────────────
+
+  /**
+   * Search products for the transfer wizard.
+   * Returns products available in the given company with UoM info.
+   */
+  searchProducts: publicProcedure
+    .input(z.object({
+      search: z.string().default(""),
+      companyId: z.number().default(3),
+      limit: z.number().default(30),
+    }))
+    .query(async ({ input }) => {
+      return searchTransferProducts(input.search, input.companyId, input.limit);
+    }),
+
+  /**
+   * Fetch warehouses and their locations for the transfer form.
+   * Returns warehouses with nested locations for company 3 (Cairo).
+   */
+  transferLocations: publicProcedure
+    .input(z.object({ companyId: z.number().default(3) }).optional())
+    .query(async ({ input }) => {
+      const companyId = input?.companyId ?? 3;
+      const [warehouses, locations] = await Promise.all([
+        fetchWarehouses(companyId),
+        fetchStockLocations(companyId),
+      ]);
+
+      // Group locations by warehouse
+      const warehouseData = warehouses.map((wh) => {
+        const whLocations = locations.filter(
+          (loc) => loc.warehouse_id && loc.warehouse_id[0] === wh.id
+        );
+        // Also include orphan locations matching warehouse code prefix
+        const orphanLocations = locations.filter(
+          (loc) => !loc.warehouse_id && loc.complete_name.startsWith(wh.code + "/")
+        );
+        return {
+          id: wh.id,
+          name: wh.name,
+          code: wh.code,
+          locations: [...whLocations, ...orphanLocations].map((loc) => ({
+            id: loc.id,
+            name: loc.name,
+            completeName: loc.complete_name,
+          })),
+        };
+      });
+
+      return warehouseData;
+    }),
+
+  /**
+   * Create an internal transfer in Odoo using the standard stock.picking workflow.
+   * Odoo handles all stock moves, accounting entries, and valuations.
+   *
+   * Workflow: create picking → create move lines → action_confirm
+   */
+  createTransfer: publicProcedure
+    .input(z.object({
+      sourceLocationId: z.number(),
+      destLocationId: z.number(),
+      pickingTypeId: z.number().default(66),
+      companyId: z.number().default(3),
+      origin: z.string().optional(),
+      scheduledDate: z.string().optional(),
+      lines: z.array(z.object({
+        productId: z.number(),
+        quantity: z.number().positive(),
+        uomId: z.number().default(12),
+        bales: z.number().optional(),
+      })).min(1),
+      autoConfirm: z.boolean().default(true),
+    }))
+    .mutation(async ({ input }) => {
+      // ── Server-side stock availability check ──
+      const productIds = input.lines.map(l => l.productId);
+      const stockData = await fetchProductStockByLocation(productIds, input.sourceLocationId);
+      const insufficientStock: { productId: number; requested: number; available: number }[] = [];
+      for (const line of input.lines) {
+        const stock = stockData.find(s => s.productId === line.productId);
+        const available = stock?.availableQuantity || 0;
+        if (line.quantity > available) {
+          insufficientStock.push({ productId: line.productId, requested: line.quantity, available });
+        }
+      }
+      if (insufficientStock.length > 0) {
+        const details = insufficientStock.map(s => `Product ${s.productId}: requested ${s.requested} kg, available ${s.available} kg`).join("; ");
+        throw new Error(`Insufficient stock at source location. ${details}`);
+      }
+
+      const result = await createInternalTransfer({
+        pickingTypeId: input.pickingTypeId,
+        locationId: input.sourceLocationId,
+        locationDestId: input.destLocationId,
+        companyId: input.companyId,
+        scheduledDate: input.scheduledDate,
+        origin: input.origin || "Platfarm Portal — Dakhla → Sokhna Transfer",
+        lines: input.lines,
+        autoConfirm: input.autoConfirm,
+      });
+
+      return {
+        success: true,
+        pickingId: result.pickingId,
+        pickingName: result.pickingName,
+        state: result.state,
+      };
+    }),
+
+  /**
+   * Browse all products with positive stock at a specific location.
+   * Returns product list with qty, reserved, available, and UoM.
+   */
+
+  pushQualityToReceipt: publicProcedure
+    .input(
+      z.object({
+        qualityOdooId: z.number(),
+        receiptId: z.number(),
+      })
+    )
+    .mutation(async ({ input }) => {
+      const { qualityOdooId, receiptId } = input;
+
+      const qcRecords = await executeKw<any[]>(
+        "pf.quality", "read", [[qualityOdooId]],
+        { fields: [
+          "moisture", "moisture_weight_pct", "protein_nir",
+          "final_grade", "verdict", "color", "leaf_ratio",
+          "foreign_matter", "odor", "bale_shape", "bale_ties",
+          "truck_clean", "has_cover", "strap_good", "stack_good",
+          "no_weeds", "no_insects", "no_black_wood",
+          "g1_bale_count", "g2_bale_count", "mix_bale_count",
+          "avg_bale_weight", "bale_height",
+          "qc_notes", "name",
+        ]}
+      );
+      if (!qcRecords || qcRecords.length === 0) {
+        throw new Error("Quality record not found");
+      }
+      const qc = qcRecords[0];
+
+      const isYes = (v: any) => v === "yes" || v === "good" || v === true;
+      const gradeMap: Record<string, string> = {
+        "Premium": "Premium", "premium": "Premium",
+        "grade_1": "Grade 1", "G1": "Grade 1", "Grade 1": "Grade 1",
+        "grade_2": "Grade 2", "G2": "Grade 2", "Grade 2": "Grade 2",
+        "grade_3": "Grade 3", "G3": "Grade 3", "Grade 3": "Grade 3",
+        "Standard": "Standard", "standard": "Standard",
+        "Supreme": "Supreme", "supreme": "Supreme",
+      };
+
+      const writeVals: Record<string, unknown> = {};
+      if (qc.moisture) writeVals.x_studio_moisture_ = qc.moisture;
+      if (qc.protein_nir) writeVals.x_studio_crude_protein_dry_matter_ = qc.protein_nir;
+      if (qc.final_grade) {
+        const mapped = gradeMap[qc.final_grade] || qc.final_grade;
+        writeVals.x_studio_overall_received_grade_as_per_quality_assessment = mapped;
+      }
+      if (qc.verdict) writeVals.x_studio_accepted_rejected = qc.verdict === "accepted" || qc.verdict === "Approved";
+      writeVals.x_studio_good_quality_green_color = isYes(qc.color);
+      writeVals.x_studio_good_quality_absence_of_foreign_material = isYes(qc.foreign_matter) || qc.foreign_matter === "none";
+      writeVals.x_studio_good_quality_absence_of_insects = isYes(qc.no_insects);
+      writeVals.x_studio_good_quality_bale_ties = isYes(qc.bale_ties);
+      writeVals.x_studio_good_quality_uniformity_of_bale_shape = isYes(qc.bale_shape);
+      writeVals.x_studio_presence_of_truck_cover = isYes(qc.has_cover);
+      writeVals.x_studio_loadcontainer_cleanliness = isYes(qc.truck_clean);
+      writeVals.x_studio_proper_loadcontainer_stacking = isYes(qc.stack_good);
+      writeVals.x_studio_proper_loadcontainer_lashing = isYes(qc.strap_good);
+      const totalBales = (qc.g1_bale_count || 0) + (qc.g2_bale_count || 0) + (qc.mix_bale_count || 0);
+      if (totalBales > 0) writeVals.x_studio_total_number_of_received_bales = String(totalBales);
+
+      await executeKw("stock.picking", "write", [[receiptId], writeVals]);
+
+      const pfAttachments = await executeKw<{
+        id: number;
+        ir_attachment_id: [number, string] | false;
+        file_name: string | false;
+        photo_label: string | false;
+        photo_type: string | false;
+      }[]>(
+        "pf.attachment", "search_read",
+        [[["quality_id", "=", qualityOdooId]]],
+        { fields: ["id", "ir_attachment_id", "file_name", "photo_label", "photo_type"] }
+      );
+      let copiedAttachments = 0;
+      for (const pfa of pfAttachments) {
+        if (!pfa.ir_attachment_id) continue;
+        const irId = pfa.ir_attachment_id[0];
+        try {
+          const irAtt = await executeKw<any[]>(
+            "ir.attachment", "read", [[irId]],
+            { fields: ["datas", "name", "mimetype"] }
+          );
+          if (irAtt?.[0]?.datas) {
+            const label = pfa.photo_label || pfa.file_name || pfa.ir_attachment_id[1] || "QC_photo";
+            await executeKw("ir.attachment", "create", [{
+              name: `[QC] ${label}`,
+              datas: irAtt[0].datas,
+              mimetype: irAtt[0].mimetype || "image/jpeg",
+              res_model: "stock.picking",
+              res_id: receiptId,
+            }]);
+            copiedAttachments++;
+          }
+        } catch (e: any) {
+          console.error(`[pushQualityToReceipt] Failed to copy attachment ${pfa.id}: ${e.message}`);
+        }
+      }
+
+      return {
+        success: true,
+        receiptId,
+        fieldsWritten: Object.keys(writeVals).length,
+        attachmentsCopied: copiedAttachments,
+        qcName: qc.name || "",
+      };
+    }),
+
+    browseStockAtLocation: publicProcedure
+    .input(z.object({
+      locationId: z.number(),
+    }))
+    .query(async ({ input }) => {
+      return fetchAllStockAtLocation(input.locationId);
+    }),
+
+  /**
+   * Check available stock for a product at a specific location.
+   * Returns total qty, reserved qty, and available (unreserved) qty.
+   */
+  checkStockAvailability: publicProcedure
+    .input(z.object({
+      productId: z.number(),
+      locationId: z.number(),
+    }))
+    .query(async ({ input }) => {
+      const results = await fetchProductStockByLocation(
+        [input.productId],
+        input.locationId
+      );
+      const match = results.find(r => r.productId === input.productId && r.locationId === input.locationId);
+      return {
+        productId: input.productId,
+        locationId: input.locationId,
+        locationName: match?.locationName || "—",
+        quantity: match?.quantity || 0,
+        reservedQuantity: match?.reservedQuantity || 0,
+        availableQuantity: match?.availableQuantity || 0,
+      };
+    }),
+
+  /**
+   * Validate (process) a confirmed transfer.
+   * Only call when the physical transfer is complete.
+   */
+  validateTransfer: publicProcedure
+    .input(z.object({
+      pickingId: z.number(),
+      companyId: z.number().default(3),
+    }))
+    .mutation(async ({ input }) => {
+      const result = await validateInternalTransfer(input.pickingId, input.companyId);
+      return { success: true, state: result.state };
+    }),
+});

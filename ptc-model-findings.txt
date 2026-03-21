@@ -1,0 +1,65 @@
+=== pf.petty.cash FIELDS ===
+Key business fields:
+- name: char "Reference" (REQUIRED)
+- employee_id: many2one → hr.employee (REQUIRED)
+- transaction_type: selection "Type" [top_up, expense_deduction, adjustment] (REQUIRED)
+- amount: float "Amount" (REQUIRED)
+- state: selection "Status" [draft, confirmed]
+- date: date "Date" (REQUIRED)
+- balance_after: float "Balance After"
+- topup_request_id: many2one → pf.petty.cash.request "Top-Up Request"
+- expense_sheet_id: many2one → hr.expense.sheet "Expense Report"
+- currency_id: many2one → res.currency
+- notes: text "Notes"
+- reference: char "Reference Note"
+- created_by: many2one → res.users
+- user_id: many2one → res.users
+- NO company_id field!
+- NO petty_cash_request_id field (it's topup_request_id)
+
+=== pf.petty.cash.request FIELDS ===
+Key business fields:
+- name: char "Reference" (REQUIRED)
+- employee_id: many2one → hr.employee (REQUIRED)
+- requested_amount: float "Requested Amount" (REQUIRED)
+- approved_amount: float "Approved Amount"
+- state: selection "Status" [submitted, approved, refused] (REQUIRED)
+- reason: text "Reason" (REQUIRED)
+- rejection_reason: text "Rejection Reason"
+- petty_cash_id: many2one → pf.petty.cash "Resulting Transaction"
+- reviewed_by: many2one → res.users
+- reviewed_date: datetime
+- user_id: many2one → res.users "Related User"
+- NO company_id field (company comes from employee)
+
+KEY FINDINGS:
+1. pf.petty.cash has 3 transaction types: top_up, expense_deduction, adjustment
+2. pf.petty.cash has expense_sheet_id linking to hr.expense.sheet — expense deductions relate to expense reports
+3. pf.petty.cash.request state: [submitted, approved, refused] — NO draft
+4. pf.petty.cash state: [draft, confirmed]
+5. pf.petty.cash has topup_request_id linking to pf.petty.cash.request
+6. The model ALREADY supports expense management via transaction_type='expense_deduction'
+7. Neither model has company_id — company is derived from employee
+
+DESIGN IMPLICATIONS:
+- Petty Cash Top-Ups: pf.petty.cash.request (submitted→approved→refused) creates pf.petty.cash (type=top_up)
+- Expense Deductions: pf.petty.cash (type=expense_deduction) links to hr.expense.sheet via expense_sheet_id
+- The relationship is: employee gets top-up → balance increases → expense deduction → balance decreases
+- We can use pf.petty.cash directly for expense claims without hr.expense.sheet
+
+=== EXISTING pf.petty.cash RECORDS ===
+PTC-00002: type=top_up, amount=700, state=confirmed, balance=1200, emp=Administrator, ref=PCREQ-00003, currency=AED
+PTC-00001: type=top_up, amount=500, state=confirmed, balance=500, emp=Administrator, ref=PCREQ-00001, currency=AED
+
+=== pf.petty.cash METHODS ===
+action_confirm: NOT FOUND
+action_draft: NOT FOUND
+action_cancel: NOT FOUND
+(No action methods — state changes via direct write only)
+
+IMPLEMENTATION PLAN:
+1. Expenses page will show pf.petty.cash records where transaction_type='expense_deduction'
+2. To create an expense claim: write a new pf.petty.cash record with type=expense_deduction
+3. State management via direct write (draft → confirmed)
+4. Balance is auto-calculated by Odoo (balance_after field)
+5. Remove all hr.expense.sheet references from the portal

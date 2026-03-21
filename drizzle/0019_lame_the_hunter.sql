@@ -1,0 +1,22 @@
+CREATE TABLE `document_renewals` (
+	`id` int AUTO_INCREMENT NOT NULL,
+	`companyDocumentId` int NOT NULL,
+	`odooCompanyId` int NOT NULL,
+	`companyName` varchar(255) NOT NULL,
+	`docType` varchar(64) NOT NULL,
+	`oldOdooDocumentId` int,
+	`oldDocumentName` varchar(512),
+	`oldExpiryDate` date,
+	`oldIssueDate` date,
+	`oldReferenceNumber` varchar(255),
+	`newOdooDocumentId` int,
+	`newDocumentName` varchar(512),
+	`newExpiryDate` date,
+	`newIssueDate` date,
+	`newReferenceNumber` varchar(255),
+	`notes` text,
+	`renewedBy` varchar(128),
+	`renewedAt` timestamp NOT NULL DEFAULT (now()),
+	`createdAt` timestamp NOT NULL DEFAULT (now()),
+	CONSTRAINT `document_renewals_id` PRIMARY KEY(`id`)
+);

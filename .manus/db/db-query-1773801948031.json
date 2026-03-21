@@ -1,0 +1,15 @@
+{
+  "query": "SELECT COUNT(*) as total, SUM(CASE WHEN odooDocumentId IS NOT NULL THEN 1 ELSE 0 END) as linked, SUM(CASE WHEN odooDocumentId IS NULL THEN 1 ELSE 0 END) as unlinked FROM company_documents;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user WXqa14W8mSgTfpb.99f8bb228633 --database X5tJK2uaPFqt5EwqucHsfz --execute SELECT COUNT(*) as total, SUM(CASE WHEN odooDocumentId IS NOT NULL THEN 1 ELSE 0 END) as linked, SUM(CASE WHEN odooDocumentId IS NULL THEN 1 ELSE 0 END) as unlinked FROM company_documents;",
+  "rows": [
+    {
+      "total": "52",
+      "linked": "1",
+      "unlinked": "51"
+    }
+  ],
+  "messages": [],
+  "stdout": "total\tlinked\tunlinked\n52\t1\t51\n",
+  "stderr": "",
+  "execution_time_ms": 1514
+}

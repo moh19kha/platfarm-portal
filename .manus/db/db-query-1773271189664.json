@@ -1,0 +1,9 @@
+{
+  "query": "CREATE TABLE IF NOT EXISTS `email_alert_recipients` (`id` int AUTO_INCREMENT NOT NULL, `email` varchar(320) NOT NULL, `name` varchar(128), `active` int NOT NULL DEFAULT 1, `addedBy` varchar(128), `createdAt` timestamp NOT NULL DEFAULT (now()), `updatedAt` timestamp NOT NULL DEFAULT (now()) ON UPDATE CURRENT_TIMESTAMP, CONSTRAINT `email_alert_recipients_id` PRIMARY KEY(`id`));",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user WXqa14W8mSgTfpb.99f8bb228633 --database X5tJK2uaPFqt5EwqucHsfz --execute CREATE TABLE IF NOT EXISTS `email_alert_recipients` (`id` int AUTO_INCREMENT NOT NULL, `email` varchar(320) NOT NULL, `name` varchar(128), `active` int NOT NULL DEFAULT 1, `addedBy` varchar(128), `createdAt` timestamp NOT NULL DEFAULT (now()), `updatedAt` timestamp NOT NULL DEFAULT (now()) ON UPDATE CURRENT_TIMESTAMP, CONSTRAINT `email_alert_recipients_id` PRIMARY KEY(`id`));",
+  "rows": [],
+  "messages": [],
+  "stdout": "",
+  "stderr": "",
+  "execution_time_ms": 1510
+}

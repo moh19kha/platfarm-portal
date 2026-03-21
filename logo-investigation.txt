@@ -1,0 +1,5 @@
+The checkpoint screenshot shows the HOME page header (top-left navbar) still displays "DF PLENERS" instead of "PLATFARM".
+The Login page was fixed (uses shared PlatfarmLogo from @/components/PlatfarmLogo.tsx).
+But the navbar/header component is using a DIFFERENT logo source - need to check where the header logo comes from.
+The shared PlatfarmLogo component renders the correct "PLATFARM" text.
+The header/navbar likely uses a different component or the VITE_APP_LOGO env variable.

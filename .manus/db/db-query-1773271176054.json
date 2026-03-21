@@ -1,0 +1,9 @@
+{
+  "query": "CREATE TABLE IF NOT EXISTS `document_alert_log` (`id` int AUTO_INCREMENT NOT NULL, `alertDate` varchar(10) NOT NULL, `shipmentNames` json NOT NULL, `shipmentCount` int NOT NULL, `notified` int NOT NULL DEFAULT 0, `createdAt` timestamp NOT NULL DEFAULT (now()), CONSTRAINT `document_alert_log_id` PRIMARY KEY(`id`));",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user WXqa14W8mSgTfpb.99f8bb228633 --database X5tJK2uaPFqt5EwqucHsfz --execute CREATE TABLE IF NOT EXISTS `document_alert_log` (`id` int AUTO_INCREMENT NOT NULL, `alertDate` varchar(10) NOT NULL, `shipmentNames` json NOT NULL, `shipmentCount` int NOT NULL, `notified` int NOT NULL DEFAULT 0, `createdAt` timestamp NOT NULL DEFAULT (now()), CONSTRAINT `document_alert_log_id` PRIMARY KEY(`id`));",
+  "rows": [],
+  "messages": [],
+  "stdout": "",
+  "stderr": "",
+  "execution_time_ms": 1609
+}

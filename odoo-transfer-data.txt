@@ -1,0 +1,45 @@
+ODOO TRANSFER DATA DISCOVERY
+=============================
+
+WAREHOUSES (Cairo company = 3):
+  WH 6: Main Warehouse Cairo Platform - Sokhna (MWCP) company=3
+  WH 13: Secondary Warehouse Cairo Platform -Dakhla (CWDAK) company=3
+
+INTERNAL TRANSFER PICKING TYPES:
+  PT 7: Internal Transfers company=3 warehouse=MWCP(6) src=MWCP/Stock dest=MWCP/Stock
+  PT 125: Internal Transfers company=3 warehouse=CWDAK(13) src=CWDAK/Stock dest=CWDAK/Stock
+
+KEY LOCATIONS (Cairo company=3):
+  Dakhla (CWDAK):
+    LOC 123: CWDAK/Stock (warehouse=13)
+    LOC 131: CWDAK/Finished Goods-Dakhla (warehouse=false)
+    LOC 132: CWDAK/Fuel-Dakhla
+    LOC 133: CWDAK/Oil-Dakhla
+    LOC 130: CWDAK/Raw Material-Dakhla
+    LOC 134: CWDAK/Sleeve Bags-Dakhla
+    LOC 135: CWDAK/Spare Parts-Dakhla
+
+  Sokhna (MWCP):
+    LOC 115: MWCP/Finished Goods-Sokhna (warehouse=6)
+    LOC 68: MWCP/Fuel-Sokhna
+    LOC 117: MWCP/Oil-Sokhna
+    LOC 114: MWCP/Raw Material-Sokhna
+    LOC 112: MWCP/Sleeve Bags-Sokhna
+    LOC 113: MWCP/Spare Parts-Sokhna
+
+DEFAULTS FOR DAKHLA → SOKHNA TRANSFER:
+  Source warehouse: CWDAK (13)
+  Source location: CWDAK/Finished Goods-Dakhla (131)
+  Dest warehouse: MWCP (6)
+  Dest location: MWCP/Finished Goods-Sokhna (115)
+  Picking type: PT 66 (Internal Transfers, MWCP warehouse, company 3)
+  Alt picking type: PT 125 (Internal Transfers, CWDAK warehouse, company 3)
+  Company: 3 (Cairo-PLATFARM FOR AGRICULTURE CONSULTANCY)
+  Products UoM: kg (id=12)
+
+ODOO STANDARD TRANSFER WORKFLOW:
+  1. Create stock.picking with picking_type_id, location_id (source), location_dest_id (dest)
+  2. Create stock.move lines with product_id, product_uom_qty, product_uom, location_id, location_dest_id
+  3. Call action_confirm on the picking to confirm it
+  4. Call button_validate to validate/process the transfer
+  This ensures Odoo handles all stock moves, accounting entries, and valuations properly.

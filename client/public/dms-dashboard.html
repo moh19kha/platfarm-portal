@@ -1,0 +1,2026 @@
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Platfarm — Document Management</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet"/>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'DM Sans',system-ui,sans-serif;background:#F7F6F3;color:#2C3E50;min-height:100vh;overflow:hidden}
+:root{
+  --forest:#2D5A3D;--sage:#4A7C59;--terra:#C0714A;
+  --dark:#2C3E50;--gray:#64706C;--light:#95A09C;--muted:#B0BAB6;
+  --pageBg:#F7F6F3;--card:#FFFFFF;--border:#E4E1DC;--inputBdr:#D2CEC7;
+  --gBg:#F2F7F3;--gBg2:#E4EFE6;--gBdr:#CDDDD1;--gBdr2:#B8D0BD;
+  --tBg:#FDF7F3;--tBg2:#FBF0E8;--tBdr:#F0D5C4;
+  --rBg:#FDF0F0;--rBdr:#F5C4C4;
+  --amber:#D4960A;--red:#C94444;--blue:#3B7DD8;--white:#FFFFFF;
+}
+.mn{font-family:'JetBrains Mono',monospace;font-weight:600}
+.sl{font-size:9px;font-weight:700;text-transform:uppercase;color:var(--sage);letter-spacing:.5px;margin-bottom:6px}
+.sv{font-family:'JetBrains Mono',monospace;font-size:20px;font-weight:700;color:var(--forest)}
+.ss{font-size:10px;color:var(--light);margin-top:3px}
+.bp{display:inline-flex;align-items:center;gap:6px;padding:7px 16px;background:var(--forest);color:#fff;border:none;border-radius:6px;font-family:inherit;font-size:12px;font-weight:600;cursor:pointer;transition:background .15s}
+.bp:hover{background:#3A7350}
+.bp:disabled{opacity:.5;cursor:not-allowed}
+.bg{display:inline-flex;align-items:center;gap:5px;padding:6px 12px;background:transparent;color:var(--gray);border:1px solid var(--border);border-radius:6px;font-family:inherit;font-size:11px;font-weight:500;cursor:pointer;transition:all .15s}
+.bg:hover{border-color:var(--sage);color:var(--forest)}
+.sc{background:#fff;border:1px solid var(--gBdr);border-radius:9px;padding:16px;transition:border-color .2s}
+.sc:hover{border-color:var(--sage)}
+.xc{background:#fff;border:1px solid var(--border);border-radius:9px;overflow:hidden;margin-bottom:16px}
+.xh{background:var(--forest);padding:10px 16px;display:flex;align-items:center;justify-content:space-between}
+.xh h3{font-size:13px;font-weight:600;color:#fff}
+.vtog{display:flex;border:1px solid var(--border);border-radius:6px;overflow:hidden}
+.vtog-btn{padding:5px 10px;font-size:10px;font-weight:600;cursor:pointer;border:none;font-family:inherit;background:#fff;color:var(--gray);transition:all .15s}
+.vtog-btn.act{background:var(--forest);color:#fff}
+.fc{background:#fff;border:1px solid var(--border);border-radius:9px;cursor:pointer;transition:all .2s;overflow:hidden}
+.fc:hover{border-color:var(--sage);box-shadow:0 4px 16px rgba(45,90,61,.06);transform:translateY(-1px)}
+.fc.sel{border-color:var(--forest);box-shadow:0 0 0 2px rgba(45,90,61,.15)}
+.fr{display:flex;align-items:center;padding:8px 14px;border-bottom:1px solid #F2F0EC;cursor:pointer;gap:10px;transition:background .1s}
+.fr:hover{background:#FAFAF8}
+.fr.sel{background:var(--gBg2)}
+.dp{width:310px;background:#fff;border-left:1px solid var(--border);overflow-y:auto;flex-shrink:0}
+.tag{display:inline-flex;padding:2px 8px;border-radius:99px;font-size:9px;font-weight:600;cursor:pointer;transition:all .15s}
+.np{padding:7px 14px;border-radius:7px;font-size:11px;font-weight:500;cursor:pointer;color:var(--gray);display:flex;align-items:center;gap:8px;transition:all .15s}
+.np:hover{background:var(--gBg)}
+.np.act{background:var(--gBg2);color:var(--forest);font-weight:600}
+.ws{background:#fff;border:1px solid var(--border);border-radius:10px;padding:18px;cursor:pointer;transition:all .2s}
+.ws:hover{border-color:var(--sage);box-shadow:0 6px 20px rgba(45,90,61,.06);transform:translateY(-2px)}
+.modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.35);backdrop-filter:blur(4px);z-index:300;display:flex;align-items:center;justify-content:center}
+.modal-card{background:#fff;border-radius:12px;box-shadow:0 20px 60px rgba(0,0,0,.22);width:500px;max-height:85vh;overflow-y:auto}
+.company-btn{display:flex;align-items:center;gap:6px;padding:5px 10px;border-radius:7px;border:1px solid var(--gBdr);background:var(--gBg);cursor:pointer;font-family:inherit;font-size:11px;font-weight:600;color:var(--forest);transition:all .15s}
+.company-btn:hover{border-color:var(--sage);background:var(--gBg2)}
+.company-dd{position:absolute;top:calc(100% + 4px);right:0;width:280px;background:#fff;border:1px solid var(--border);border-radius:8px;box-shadow:0 8px 24px rgba(0,0,0,.12);z-index:200;overflow:hidden}
+.company-item{display:flex;align-items:center;gap:8px;padding:8px 12px;cursor:pointer;transition:background .1s}
+.company-item:hover{background:var(--gBg)}
+.company-item.active{background:var(--gBg2)}
+.loading-spinner{display:flex;align-items:center;justify-content:center;padding:60px;color:var(--muted);font-size:14px}
+.toast{position:fixed;bottom:20px;right:20px;padding:12px 16px 12px 20px;border-radius:8px;font-size:12px;font-weight:500;z-index:400;animation:slideIn .3s ease;box-shadow:0 4px 16px rgba(0,0,0,.08);background:#fff;color:var(--dark);border:1px solid var(--border);border-left:4px solid var(--forest);min-width:260px;max-width:380px;display:flex;align-items:center;gap:10px}
+.toast.success{border-left-color:var(--forest)}
+.toast.error{border-left-color:var(--red)}
+.toast.info{border-left-color:var(--blue)}
+@keyframes slideIn{from{transform:translateY(20px);opacity:0}to{transform:translateY(0);opacity:1}}
+@keyframes fadeOut{from{opacity:1}to{opacity:0}}
+::-webkit-scrollbar{width:5px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px}
+::-webkit-scrollbar-thumb:hover{background:var(--muted)}
+</style>
+</head>
+<body>
+<!-- Canonical redirect removed: dashboard is always served via /api/* inside an iframe; the React shell handles canonical domain enforcement -->
+<div id="app"></div>
+<script>
+// ═══════════════════════════════════════════════════════════════════════════
+// PLATFARM DMS DASHBOARD — Document Management System
+// Connected to live Odoo Documents API via tRPC
+// ═══════════════════════════════════════════════════════════════════════════
+
+const C={forest:"#2D5A3D",sage:"#4A7C59",terra:"#C0714A",forestHov:"#3A7350",terraHov:"#A8613F",dark:"#2C3E50",gray:"#64706C",light:"#95A09C",muted:"#B0BAB6",pageBg:"#F7F6F3",card:"#FFFFFF",border:"#E4E1DC",inputBdr:"#D2CEC7",gBg:"#F2F7F3",gBg2:"#E4EFE6",gBdr:"#CDDDD1",gBdr2:"#B8D0BD",tBg:"#FDF7F3",tBg2:"#FBF0E8",tBdr:"#F0D5C4",aBg:"#FDF6EC",aBdr:"#F5DDB8",rBg:"#FDF0F0",rBdr:"#F5C4C4",amber:"#D4960A",red:"#C94444",blue:"#3B7DD8",white:"#FFFFFF"};
+const FONT="'DM Sans',system-ui,sans-serif";
+const MONO="'JetBrains Mono',monospace";
+
+// ─── Helpers ─────────────────────────────────────────────────────────────
+const fmtSize=(b)=>{if(!b)return"0 B";const k=1024;const s=["B","KB","MB","GB"];const i=Math.floor(Math.log(b)/Math.log(k));return parseFloat((b/Math.pow(k,i)).toFixed(1))+" "+s[i];};
+const fmtDate=(d)=>{if(!d)return"—";try{const dt=new Date(d);return dt.toLocaleDateString("en-GB",{day:"2-digit",month:"short",year:"numeric"});}catch{return d;}};
+const fmtTimeAgo=(d)=>{if(!d)return"";try{const dt=new Date(d);const now=new Date();const diff=now-dt;const mins=Math.floor(diff/60000);if(mins<60)return mins+"m ago";const hrs=Math.floor(mins/60);if(hrs<24)return hrs+"h ago";const days=Math.floor(hrs/24);if(days<30)return days+"d ago";return fmtDate(d);}catch{return"";}};
+const tagColorMap={0:"#B0BAB6",1:"#F06050",2:"#F4A460",3:"#F7CD1F",4:"#6CC1ED",5:"#814968",6:"#EB7E7F",7:"#2C8397",8:"#475577",9:"#D6145F",10:"#30C381",11:"#00B3A4"};
+const extFromName=(name)=>{const parts=(name||"").split(".");return parts.length>1?parts[parts.length-1].toLowerCase():"";};
+const extFromMime=(mime)=>{if(!mime)return"";const map={"application/pdf":"pdf","application/vnd.openxmlformats-officedocument.spreadsheetml.sheet":"xlsx","application/vnd.ms-excel":"xls","application/vnd.openxmlformats-officedocument.wordprocessingml.document":"docx","application/msword":"doc","image/jpeg":"jpg","image/png":"png","image/gif":"gif","text/plain":"txt"};return map[mime]||"";};
+const extIcons={pdf:"📄",doc:"📝",docx:"📝",xls:"📊",xlsx:"📊",jpg:"🖼",jpeg:"🖼",png:"🖼",gif:"🖼",dwg:"📐",txt:"📃",csv:"📊",zip:"📦",rar:"📦"};
+const extColors={pdf:"#C94444",docx:"#2C8397",doc:"#2C8397",xlsx:"#30C381",xls:"#30C381",jpg:"#C0714A",jpeg:"#C0714A",png:"#C0714A",gif:"#C0714A",dwg:"#814968",txt:"#95A09C",csv:"#30C381",zip:"#475577"};
+const wsIcons=["🏢","🏭","🏗","⚓","🏠","📁"];
+const wsColors=["#2D5A3D","#C0714A","#4A7C59","#7A9E7E","#3B7DD8","#814968"];
+
+// ─── Companies (matching other modules) ──────────────────────────────────
+// companyObjects are dynamically populated from the Odoo API at load time
+let companyObjects=[
+  {id:"ALL",odooId:null,name:"All Companies",abbr:"ALL",currency:"",country:"HQ consolidated view"},
+];
+
+// Fetch companies from Odoo API and build companyObjects dynamically
+async function loadCompanyObjects() {
+  try {
+    const companies = await trpcQuery("odoo.companies");
+    if (companies && Array.isArray(companies)) {
+      const dynamicCompanies = companies.map(c => ({
+        id: c.name,
+        odooId: c.id,
+        name: c.name || c.displayName,
+        abbr: (c.name || "").substring(0, 2).toUpperCase(),
+        currency: c.currency || "",
+        country: c.country || "",
+      }));
+      companyObjects = [
+        {id:"ALL",odooId:null,name:"All Companies",abbr:"ALL",currency:"",country:"HQ consolidated view"},
+        ...dynamicCompanies,
+      ];
+    }
+  } catch (e) {
+    console.warn("Failed to load companies from Odoo API, using fallback", e);
+    // Fallback to hardcoded values if API fails
+    companyObjects = [
+      {id:"ALL",odooId:null,name:"All Companies",abbr:"ALL",currency:"",country:"HQ consolidated view"},
+      {id:"ADGM-PLATFARM FOR AGRITECH AND AGRIBUSINESS LTD",odooId:1,name:"ADGM-PLATFARM FOR AGRITECH AND AGRIBUSINESS LTD",abbr:"AD",currency:"AED",country:"United Arab Emirates"},
+      {id:"ABU DHABI-PLATFARM FOR AGRITECH AND AGRIBUSINESS LTD",odooId:2,name:"ABU DHABI-PLATFARM FOR AGRITECH AND AGRIBUSINESS LTD",abbr:"AB",currency:"AED",country:"United Arab Emirates"},
+      {id:"Cairo-PLATFARM FOR AGRICULTURE CONSULTANCY",odooId:3,name:"Cairo-PLATFARM FOR AGRICULTURE CONSULTANCY",abbr:"CA",currency:"EGP",country:"Egypt"},
+      {id:"Sokhna-PLATFARM FOR AGRIBUSINESS",odooId:4,name:"Sokhna-PLATFARM FOR AGRIBUSINESS",abbr:"SO",currency:"EGP",country:"Egypt"},
+      {id:"Cairo-AlfaGlobal Agribusiness (The Platform for Smart Solutions)",odooId:5,name:"Cairo-AlfaGlobal Agribusiness (The Platform for Smart Solutions)",abbr:"CA",currency:"EGP",country:"Egypt"},
+    ];
+  }
+}
+
+// ─── tRPC API Client ─────────────────────────────────────────────────────
+// Use parent window origin for API calls since this page is loaded inside an iframe
+let API_BASE = window.location.origin;
+try { if (window.parent !== window) API_BASE = window.parent.location.origin; } catch(e) {}
+
+async function trpcQuery(proc, input) {
+  const params = input !== undefined
+    ? `&input=${encodeURIComponent(JSON.stringify({"0":{"json":input}}))}`
+    : `&input=${encodeURIComponent(JSON.stringify({"0":{"json":{}}}))}` ;
+  const url = `${API_BASE}/api/trpc/${proc}?batch=1${params}`;
+  const res = await fetch(url, { credentials: "include" });
+  const json = await res.json();
+  if (json[0]?.error) { console.error(`tRPC error [${proc}]:`, json[0].error); throw new Error(json[0].error.message || "API error"); }
+  return json[0]?.result?.data?.json;
+}
+
+async function trpcMutate(proc, input) {
+  const res = await fetch(`${API_BASE}/api/trpc/${proc}?batch=1`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    credentials: "include",
+    body: JSON.stringify({"0": {"json": input}}),
+  });
+  const json = await res.json();
+  if (json[0]?.error) { console.error(`tRPC mutation error [${proc}]:`, json[0].error); throw new Error(json[0].error.message || "API error"); }
+  return json[0]?.result?.data?.json;
+}
+
+// ─── Toast ───────────────────────────────────────────────────────────────
+function showToast(msg, type="success") {
+  const el = document.createElement("div");
+  el.className = "toast " + type;
+  const icons = { success: "✓", error: "✗", info: "ℹ" };
+  const iconEl = document.createElement("span");
+  iconEl.style.cssText = "font-size:14px;font-weight:700;flex-shrink:0;color:" + (type==="error"?"#C94444":type==="info"?"#3B7DD8":"#2D5A3D");
+  iconEl.textContent = icons[type] || icons.success;
+  el.appendChild(iconEl);
+  const txtEl = document.createElement("span");
+  txtEl.textContent = msg;
+  el.appendChild(txtEl);
+  document.body.appendChild(el);
+  setTimeout(() => { el.style.animation = "fadeOut .3s ease forwards"; setTimeout(() => el.remove(), 300); }, 3500);
+}
+
+function extractOdooError(err) {
+  if (!err) return "Unknown error";
+  const msg = err.message || String(err);
+  const m = msg.match(/Odoo error:([^\n]+)/i) || msg.match(/"message":\s*"([^"]+)"/) || msg.match(/Error:\s*(.*)/);
+  return m ? m[1].trim() : msg;
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// STATE — Live data loaded from Odoo
+// ═══════════════════════════════════════════════════════════════════════════
+let state = {
+  page: "dashboard",
+  selFolder: null,
+  selFile: null,
+  viewMode: "list",
+  search: "",
+  sortBy: "date",
+  exp: {},
+  modal: null,
+  renameDocId: null,
+  renameDocName: "",
+  renameValue: "",
+  tagFilter: null,
+  showFavs: false,
+  activeCompany: localStorage.getItem("platfarm_active_company") || "ALL",
+  activeOdooId: null, // numeric Odoo company ID sent from parent shell
+  companyDropdownOpen: false,
+  // Live data
+  folders: [],
+  documents: [],
+  tags: [],
+  activity: [],
+  loading: true,
+  uploading: false,
+  // Mandatory company documents
+  mandatoryDocs: [],
+  mandatorySummary: null,
+  // Upload state
+  uploadFiles: [],
+  uploadTags: [],
+  // Folder create
+  newFolderName: "",
+  // Mandatory doc edit/link modal
+  mandEditDoc: null,        // the doc being edited { id, odooCompanyId, companyName, docType, ... }
+  mandEditForm: { expiryDate: "", issueDate: "", referenceNumber: "", notes: "", documentName: "" },
+  mandEditError: "",
+  mandEditSaving: false,
+  mandShowEditModal: false,
+  mandShowLinkModal: false,
+  mandLinkSearch: "",
+  mandLinkFolderId: null,
+  mandLinkFolderPath: [],
+  mandFolderDropdownOpen: false,
+  mandFolderTree: null,
+  mandFolderTreeLoading: false,
+  mandLinkDocs: null,
+  mandLinkDocsLoading: false,
+  mandLinkSubfolders: [],
+  // Renewal history
+  mandRenewMode: false,
+  mandRenewalHistory: [],
+  mandRenewalLoading: false,
+};
+
+// ─── Derived data structures ─────────────────────────────────────────────
+let folderById = {};
+let childrenOf = {};
+let flatTree = [];
+let tagMap = {};
+
+function buildFolderTree() {
+  folderById = {};
+  childrenOf = {};
+  state.folders.forEach(f => { folderById[f.id] = f; });
+  state.folders.forEach(f => {
+    if (f.parentId) {
+      if (!childrenOf[f.parentId]) childrenOf[f.parentId] = [];
+      childrenOf[f.parentId].push(f);
+    }
+  });
+
+  // Build flat tree with depth
+  flatTree = [];
+  const roots = state.folders.filter(f => !f.parentId).sort((a, b) => a.name.localeCompare(b.name));
+  function walk(folder, depth) {
+    const hc = (childrenOf[folder.id] || []).length > 0;
+    flatTree.push({ id: folder.id, name: folder.name, pid: folder.parentId, d: depth, hc, company: folder.companyName || null, companyId: folder.companyId });
+    (childrenOf[folder.id] || []).sort((a, b) => a.name.localeCompare(b.name)).forEach(c => walk(c, depth + 1));
+  }
+  roots.forEach(r => walk(r, 0));
+
+  // Build tag map
+  tagMap = {};
+  state.tags.forEach(t => { tagMap[t.id] = t; });
+
+  // Set default folder if none selected
+  if (!state.selFolder && flatTree.length > 0) {
+    state.selFolder = flatTree[0].id;
+    state.exp[flatTree[0].id] = true;
+  }
+  // Auto-expand root folders
+  flatTree.filter(f => f.d === 0).forEach(f => {
+    if (state.exp[f.id] === undefined) state.exp[f.id] = true;
+  });
+}
+
+function getBread(id) {
+  const p = [];
+  let cur = id;
+  while (cur) {
+    const f = folderById[cur];
+    if (f) { p.unshift(f); cur = f.parentId; } else break;
+  }
+  return p;
+}
+
+function getDescIds(id) {
+  const ids = [id];
+  const q = [id];
+  while (q.length) {
+    const cur = q.shift();
+    (childrenOf[cur] || []).forEach(c => { ids.push(c.id); q.push(c.id); });
+  }
+  return ids;
+}
+
+function getRootWorkspace(id) {
+  let cur = id;
+  while (cur) {
+    const f = folderById[cur];
+    if (!f) break;
+    if (!f.parentId) return f;
+    cur = f.parentId;
+  }
+  return null;
+}
+
+// ─── Computed ────────────────────────────────────────────────────────────
+function getFilteredFolderTree() {
+  if (state.activeCompany === "ALL") return flatTree;
+  const activeLC = state.activeCompany.toLowerCase();
+  const rootIds = flatTree.filter(f => f.d === 0 && f.company && (f.company.toLowerCase() === activeLC || f.company.toLowerCase().includes(activeLC) || activeLC.includes(f.company.toLowerCase()))).map(f => f.id);
+  if (rootIds.length === 0) return flatTree;
+  const allIds = new Set();
+  rootIds.forEach(rid => { getDescIds(rid).forEach(id => allIds.add(id)); });
+  return flatTree.filter(f => allIds.has(f.id));
+}
+
+function getWorkspaces() {
+  const roots = flatTree.filter(f => f.d === 0);
+  return roots.map((r, i) => {
+    const descIds = getDescIds(r.id);
+    const docs = state.documents.filter(d => descIds.includes(d.folderId));
+    const subfolders = descIds.length - 1;
+    const size = docs.reduce((s, d) => s + (d.fileSize || 0), 0);
+    return { id: r.id, name: r.name, icon: wsIcons[i % wsIcons.length], color: wsColors[i % wsColors.length], files: docs.length, folders: subfolders, size, company: r.company };
+  });
+}
+
+function getFilteredWorkspaces() {
+  const ws = getWorkspaces();
+  if (state.activeCompany === "ALL") return ws;
+  const activeLC = state.activeCompany.toLowerCase();
+  return ws.filter(w => w.company && (w.company.toLowerCase() === activeLC || w.company.toLowerCase().includes(activeLC) || activeLC.includes(w.company.toLowerCase())));
+}
+
+function getFilteredFiles() {
+  let filtered;
+  const filteredTree = getFilteredFolderTree();
+  const validFolderIds = new Set(filteredTree.map(f => f.id));
+
+  if (state.search) {
+    filtered = state.documents.filter(x => (x.name || "").toLowerCase().includes(state.search.toLowerCase()));
+    if (state.activeCompany !== "ALL") filtered = filtered.filter(f => validFolderIds.has(f.folderId));
+  } else if (state.showFavs) {
+    filtered = state.documents.filter(x => x.isFavorited);
+    if (state.activeCompany !== "ALL") filtered = filtered.filter(f => validFolderIds.has(f.folderId));
+  } else {
+    const folderIds = getDescIds(state.selFolder);
+    filtered = state.documents.filter(x => folderIds.includes(x.folderId));
+  }
+  if (state.tagFilter) filtered = filtered.filter(x => (x.tagIds || []).includes(state.tagFilter));
+  const sortFn = (a, b) => state.sortBy === "name" ? (a.name || "").localeCompare(b.name || "") : state.sortBy === "size" ? (b.fileSize || 0) - (a.fileSize || 0) : new Date(b.writeDate || 0) - new Date(a.writeDate || 0);
+  return [...filtered].sort(sortFn);
+}
+
+function isVisible(f) {
+  if (f.d === 0) return true;
+  let cur = f.pid;
+  while (cur !== null && cur !== undefined) {
+    if (!state.exp[cur]) return false;
+    const p = folderById[cur]; if (!p) break; cur = p.parentId;
+  }
+  return true;
+}
+
+function setState(patch) {
+  // Save focus state before re-render
+  const activeEl = document.activeElement;
+  const wasFocused = activeEl && activeEl.tagName === "INPUT";
+  const selStart = wasFocused ? activeEl.selectionStart : null;
+  const selEnd = wasFocused ? activeEl.selectionEnd : null;
+  const focusPlaceholder = wasFocused ? activeEl.placeholder : null;
+
+  Object.assign(state, patch);
+  render();
+
+  // Restore focus after re-render
+  if (wasFocused && focusPlaceholder) {
+    const newInput = document.querySelector('input[placeholder="' + focusPlaceholder + '"]');
+    if (newInput) {
+      newInput.focus();
+      if (selStart !== null) {
+        try { newInput.setSelectionRange(selStart, selEnd); } catch(e) {}
+      }
+    }
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// DATA LOADING — Fetch from Odoo via tRPC
+// ═══════════════════════════════════════════════════════════════════════════
+async function loadAllData() {
+  setState({ loading: true });
+  try {
+    const [folders, tagsData, documents, activity, mandatoryDocsResult, mandatorySummary] = await Promise.all([
+      trpcQuery("dms.getFolders"),
+      trpcQuery("dms.getTags"),
+      trpcQuery("dms.getAllDocuments"),
+      trpcQuery("dms.getActivity").catch(() => []),
+      trpcQuery("companyDocs.list").catch(() => ({ documents: [] })),
+      trpcQuery("companyDocs.expirySummary").catch(() => null),
+    ]);
+
+    state.folders = folders || [];
+    state.tags = Array.isArray(tagsData) ? tagsData : (tagsData && tagsData.tags) || [];
+    state.documents = (documents || []).map(d => ({
+      ...d,
+      ext: d.ext || extFromName(d.name) || extFromMime(d.mimetype),
+    }));
+    state.activity = (activity || []).map(a => ({
+      id: a.id,
+      text: a.body ? a.body.replace(/<[^>]*>/g, "").trim() : "Activity",
+      time: fmtTimeAgo(a.date),
+      user: a.authorName || "System",
+      icon: "📝",
+    }));
+    state.mandatoryDocs = (mandatoryDocsResult && mandatoryDocsResult.documents) || [];
+    state.mandatorySummary = mandatorySummary;
+
+    // Auto-initialize mandatory docs for ALL companies (creates missing doc types per company)
+    // This handles both new companies AND existing companies that need new country-specific doc types
+    const realCompanies = companyObjects.filter(c => c.odooId !== null);
+    if (realCompanies.length > 0) {
+      try {
+        const results = await Promise.all(realCompanies.map(c =>
+          trpcMutate("companyDocs.initializeCompany", { odooCompanyId: c.odooId, companyName: c.name })
+        ));
+        // Only reload if any new docs were created
+        const anyCreated = results.some(r => r && r.created > 0);
+        if (anyCreated) {
+          const refreshed = await trpcQuery("companyDocs.list").catch(() => ({ documents: [] }));
+          state.mandatoryDocs = (refreshed && refreshed.documents) || [];
+          const refreshedSummary = await trpcQuery("companyDocs.expirySummary").catch(() => null);
+          state.mandatorySummary = refreshedSummary;
+        }
+      } catch (e) {
+        console.warn("Failed to auto-initialize some companies:", e);
+      }
+    }
+
+    state.loading = false;
+    buildFolderTree();
+    render();
+  } catch (err) {
+    console.error("Failed to load DMS data:", err);
+    state.loading = false;
+    render();
+    showToast("Failed to load documents: " + err.message, "error");
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// ACTIONS — Mutations via tRPC
+// ═══════════════════════════════════════════════════════════════════════════
+async function doUpload(fileObj, folderId, tagIds) {
+  setState({ uploading: true });
+  try {
+    const base64 = await new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(reader.result.split(",")[1]);
+      reader.onerror = reject;
+      reader.readAsDataURL(fileObj);
+    });
+    await trpcMutate("dms.upload", { name: fileObj.name, folderId, data: base64, tagIds });
+    showToast("Uploaded " + fileObj.name);
+    setState({ modal: null, uploading: false, uploadFiles: [], uploadTags: [] });
+    await loadAllData();
+  } catch (err) {
+    setState({ uploading: false });
+    showToast("Upload failed: " + err.message, "error");
+  }
+}
+
+async function doCreateFolder(name, parentId) {
+  try {
+    await trpcMutate("dms.createFolder", { name, parentFolderId: parentId || undefined });
+    showToast("Folder created: " + name);
+    setState({ modal: null, newFolderName: "" });
+    await loadAllData();
+  } catch (err) {
+    showToast("Create folder failed: " + err.message, "error");
+  }
+}
+
+async function doDownload(docId, docName) {
+  try {
+    showToast("Downloading " + docName + "...");
+    const result = await trpcQuery("dms.proxyDownload", { documentId: docId });
+    if (result && result.data) {
+      const blob = new Blob([Uint8Array.from(atob(result.data), c => c.charCodeAt(0))], { type: result.mimetype || "application/octet-stream" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url; a.download = result.filename || docName; a.click();
+      URL.revokeObjectURL(url);
+      showToast("Downloaded " + docName);
+    }
+  } catch (err) {
+    showToast("Download failed: " + err.message, "error");
+  }
+}
+
+async function doToggleFavorite(docId) {
+  try {
+    await trpcMutate("dms.toggleFavorite", { documentId: docId });
+    await loadAllData();
+  } catch (err) {
+    showToast("Failed: " + err.message, "error");
+  }
+}
+
+async function doToggleLock(docId, lock) {
+  try {
+    await trpcMutate("dms.toggleLock", { documentId: docId, lock });
+    showToast(lock ? "Document locked" : "Document unlocked");
+    await loadAllData();
+  } catch (err) {
+    showToast("Failed: " + err.message, "error");
+  }
+}
+
+async function doRename(docId, newName) {
+  setState({ modal: null });
+  try {
+    await trpcMutate("dms.rename", { documentId: docId, newName });
+    showToast("Renamed to “" + newName + "”");
+    await loadAllData();
+  } catch (err) {
+    showToast("Rename failed: " + err.message, "error");
+  }
+}
+
+let _deletePendingId = null;
+async function doDelete(docId) {
+  if (_deletePendingId !== docId) {
+    _deletePendingId = docId;
+    showToast("⚠ Click Delete again to confirm permanent deletion", "info");
+    setTimeout(() => { if (_deletePendingId === docId) _deletePendingId = null; }, 4000);
+    return;
+  }
+  _deletePendingId = null;
+  try {
+    await trpcMutate("dms.delete", { documentId: docId });
+    showToast("Document deleted");
+    setState({ selFile: null });
+    await loadAllData();
+  } catch (err) {
+    showToast("Delete failed: " + err.message, "error");
+  }
+}
+
+async function doMove(docId, folderId) {
+  try {
+    await trpcMutate("dms.move", { documentId: docId, folderId });
+    showToast("Document moved");
+    await loadAllData();
+  } catch (err) {
+    showToast("Move failed: " + err.message, "error");
+  }
+}
+
+// ─── Mandatory Doc Actions ──────────────────────────────────────────────
+function mandOpenEdit(doc, companyId, companyName, docType) {
+  setState({
+    mandEditDoc: { ...(doc || {}), odooCompanyId: companyId, companyName, docType },
+    mandEditForm: {
+      expiryDate: doc?.expiryDate ? doc.expiryDate.split("T")[0] : "",
+      issueDate: doc?.issueDate ? doc.issueDate.split("T")[0] : "",
+      referenceNumber: doc?.referenceNumber || "",
+      notes: doc?.notes || "",
+      documentName: doc?.documentName || "",
+    },
+    mandEditError: "",
+    mandShowEditModal: true,
+    mandRenewalHistory: [],
+    mandRenewalLoading: true,
+  });
+  // Load renewal history for this document
+  if (doc?.id) {
+    trpcQuery("companyDocs.renewalHistory", { companyDocumentId: doc.id })
+      .then(history => setState({ mandRenewalHistory: history || [], mandRenewalLoading: false }))
+      .catch(() => setState({ mandRenewalHistory: [], mandRenewalLoading: false }));
+  } else {
+    setState({ mandRenewalHistory: [], mandRenewalLoading: false });
+  }
+}
+
+async function mandRenewDoc() {
+  const doc = state.mandEditDoc;
+  if (!doc?.id || !doc.odooDocumentId) return;
+  // Open the link modal — when user selects a new doc, it will be treated as a renewal
+  setState({ mandRenewMode: true });
+  mandOpenLink();
+}
+
+async function mandCompleteRenewal(newOdooDocId, newDocName) {
+  const doc = state.mandEditDoc;
+  if (!doc?.id) return;
+  setState({ mandEditSaving: true });
+  try {
+    await trpcMutate("companyDocs.renew", {
+      companyDocumentId: doc.id,
+      newOdooDocumentId: newOdooDocId,
+      newDocumentName: newDocName || "Document #" + newOdooDocId,
+      newExpiryDate: null,
+      newIssueDate: null,
+      newReferenceNumber: null,
+    });
+    showToast("Document renewed successfully! Please update the new expiry date.");
+    setState({ mandShowLinkModal: false, mandRenewMode: false, mandEditSaving: false });
+    await loadAllData();
+    // Reopen the edit modal with refreshed data
+    const refreshed = state.mandDocs?.find(d => d.id === doc.id);
+    if (refreshed) mandOpenEdit(refreshed, doc.odooCompanyId, doc.companyName, doc.docType);
+  } catch (err) {
+    setState({ mandEditSaving: false });
+    showToast("Renewal failed: " + err.message, "error");
+  }
+}
+
+async function mandSave() {
+  const doc = state.mandEditDoc;
+  const form = state.mandEditForm;
+  if (!doc) return;
+  if (!form.expiryDate) { setState({ mandEditError: "Expiry date is required" }); return; }
+  setState({ mandEditSaving: true, mandEditError: "" });
+  try {
+    await trpcMutate("companyDocs.upsert", {
+      id: doc.id || undefined,
+      odooCompanyId: doc.odooCompanyId,
+      companyName: doc.companyName,
+      docType: doc.docType,
+      odooDocumentId: doc.odooDocumentId || null,
+      documentName: form.documentName || null,
+      expiryDate: form.expiryDate || null,
+      issueDate: form.issueDate || null,
+      referenceNumber: form.referenceNumber || null,
+      notes: form.notes || null,
+    });
+    showToast("Document saved");
+    setState({ mandShowEditModal: false, mandEditDoc: null, mandEditSaving: false });
+    await loadAllData();
+  } catch (err) {
+    setState({ mandEditSaving: false });
+    showToast("Save failed: " + err.message, "error");
+  }
+}
+
+function mandOpenLink() {
+  setState({
+    mandShowLinkModal: true,
+    mandLinkSearch: "",
+    mandLinkFolderId: null,
+    mandLinkFolderPath: [],
+    mandFolderDropdownOpen: false,
+    mandLinkDocs: null,
+    mandLinkSubfolders: [],
+  });
+  mandLoadFolderTree();
+  mandSearchDocs();
+}
+
+async function mandLoadFolderTree() {
+  setState({ mandFolderTreeLoading: true });
+  try {
+    const tree = await trpcQuery("companyDocs.getFolderTree");
+    setState({ mandFolderTree: tree, mandFolderTreeLoading: false });
+  } catch (err) {
+    setState({ mandFolderTreeLoading: false });
+    console.error("Failed to load folder tree:", err);
+  }
+}
+
+async function mandSearchDocs() {
+  setState({ mandLinkDocsLoading: true });
+  try {
+    const result = await trpcQuery("companyDocs.searchOdooDocuments", {
+      query: state.mandLinkSearch || undefined,
+      companyId: state.mandEditDoc?.odooCompanyId || undefined,
+      folderId: state.mandLinkFolderId || undefined,
+    });
+    setState({
+      mandLinkDocs: result?.documents || [],
+      mandLinkSubfolders: result?.subfolders || [],
+      mandLinkDocsLoading: false,
+    });
+  } catch (err) {
+    setState({ mandLinkDocsLoading: false });
+    console.error("Failed to search docs:", err);
+  }
+}
+
+async function mandLinkDocument(odooDoc) {
+  const doc = state.mandEditDoc;
+  if (!doc?.id) return;
+  // If in renewal mode, use the renewal flow instead of regular link
+  if (state.mandRenewMode) {
+    return mandCompleteRenewal(odooDoc.id, odooDoc.name);
+  }
+  try {
+    await trpcMutate("companyDocs.linkOdooDocument", {
+      id: doc.id,
+      odooDocumentId: odooDoc.id,
+      documentName: odooDoc.name,
+    });
+    showToast("Document linked: " + odooDoc.name);
+    setState({
+      mandShowLinkModal: false,
+      mandEditDoc: { ...doc, odooDocumentId: odooDoc.id, documentName: odooDoc.name },
+      mandEditForm: { ...state.mandEditForm, documentName: odooDoc.name },
+    });
+    await loadAllData();
+  } catch (err) {
+    showToast("Link failed: " + err.message, "error");
+  }
+}
+
+function mandNavigateToFolder(folderId, folderName) {
+  state.mandLinkFolderId = folderId;
+  state.mandLinkFolderPath = [...state.mandLinkFolderPath, { id: folderId, name: folderName }];
+  state.mandLinkSearch = "";
+  render();
+  mandSearchDocs();
+}
+
+function mandNavigateBreadcrumb(index) {
+  if (index < 0) {
+    state.mandLinkFolderId = null;
+    state.mandLinkFolderPath = [];
+  } else {
+    const target = state.mandLinkFolderPath[index];
+    state.mandLinkFolderId = target.id;
+    state.mandLinkFolderPath = state.mandLinkFolderPath.slice(0, index + 1);
+  }
+  render();
+  mandSearchDocs();
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// RENDER HELPERS
+// ═══════════════════════════════════════════════════════════════════════════
+function h(tag, attrs, ...children) {
+  const el = document.createElement(tag);
+  if (attrs) {
+    for (const [k, v] of Object.entries(attrs)) {
+      if (k === "style" && typeof v === "object") Object.assign(el.style, v);
+      else if (k.startsWith("on")) el.addEventListener(k.slice(2).toLowerCase(), v);
+      else if (k === "className") el.className = v;
+      else if (k === "innerHTML") el.innerHTML = v;
+      else if (typeof v === "boolean") { if (v) el.setAttribute(k, ""); else el.removeAttribute(k); }
+      else el.setAttribute(k, v);
+    }
+  }
+  children.flat(Infinity).forEach(c => {
+    if (c == null || c === false) return;
+    if (typeof c === "string" || typeof c === "number") el.appendChild(document.createTextNode(c));
+    else if (c instanceof Node) el.appendChild(c);
+  });
+  return el;
+}
+
+function MiniBar(value, max, color = "#2D5A3D", height = 5) {
+  const pct = max ? Math.min(value / max * 100, 100) : 0;
+  return h("div", { style: { width: "100%", height: height + "px", borderRadius: height + "px", background: "#E4E1DC", overflow: "hidden" } },
+    h("div", { style: { height: "100%", borderRadius: height + "px", background: color, width: pct + "%", transition: "width .6s cubic-bezier(.16,1,.3,1)" } })
+  );
+}
+
+function Ring(value, total, size = 64, stroke = 6, color = "#2D5A3D") {
+  const r = (size - stroke) / 2; const c = 2 * Math.PI * r; const pct = total ? value / total : 0;
+  const svg = `<svg width="${size}" height="${size}" style="transform:rotate(-90deg)"><circle cx="${size / 2}" cy="${size / 2}" r="${r}" fill="none" stroke="#E4E1DC" stroke-width="${stroke}"/><circle cx="${size / 2}" cy="${size / 2}" r="${r}" fill="none" stroke="${color}" stroke-width="${stroke}" stroke-dasharray="${pct * c} ${c}" stroke-linecap="round"/></svg>`;
+  return h("div", { style: { position: "relative", width: size + "px", height: size + "px" } },
+    h("div", { innerHTML: svg }),
+    h("div", { style: { position: "absolute", inset: "0", display: "flex", alignItems: "center", justifyContent: "center" } },
+      h("span", { className: "mn", style: { fontSize: "14px", fontWeight: "700", color } }, Math.round(pct * 100) + "%")
+    )
+  );
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// COMPANY SELECTOR (Global style — matching CompanySelector.tsx)
+// ═══════════════════════════════════════════════════════════════════════════
+function renderCompanySelector() {
+  const activeObj = companyObjects.find(c => c.id === state.activeCompany) || companyObjects[0];
+  const avatarInitials = activeObj.id === "ALL" ? "⊕" : (activeObj.abbr || "??");
+  const companyLabel = activeObj.id === "ALL" ? "All Companies" : activeObj.name.split("-").slice(0, 2).join("-");
+  const subLabel = activeObj.id === "ALL" ? "" : [activeObj.currency, activeObj.country].filter(Boolean).join(" · ");
+
+  const wrapper = h("div", { style: { position: "relative" } });
+  const btn = h("button", {
+    style: {
+      display: "flex", alignItems: "center", gap: "6px",
+      padding: "4px 10px 4px 6px",
+      background: state.companyDropdownOpen ? C.gBg2 : C.gBg,
+      border: "1px solid " + (state.companyDropdownOpen ? C.sage : C.gBdr),
+      borderRadius: "6px", cursor: "pointer", transition: "all .15s",
+      minWidth: "160px", maxWidth: "240px", fontFamily: FONT,
+    },
+    onClick: (e) => { e.stopPropagation(); setState({ companyDropdownOpen: !state.companyDropdownOpen }); }
+  },
+    h("div", { style: { width: "22px", height: "22px", borderRadius: "4px", background: activeObj.id === "ALL" ? C.forest : C.sage, display: "flex", alignItems: "center", justifyContent: "center", fontSize: "9px", fontWeight: "700", color: C.white, flexShrink: "0" } }, avatarInitials),
+    h("div", { style: { flex: "1", minWidth: "0", textAlign: "left" } },
+      h("div", { style: { fontSize: "11px", fontWeight: "600", color: C.dark, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" } }, companyLabel),
+      subLabel ? h("div", { style: { fontSize: "8px", color: C.muted, lineHeight: "1.2" } }, subLabel) : null
+    ),
+    h("span", { innerHTML: '<svg width="10" height="6" viewBox="0 0 10 6" fill="none"><path d="M1 1L5 5L9 1" stroke="' + C.gray + '" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>', style: { transform: state.companyDropdownOpen ? "rotate(180deg)" : "", transition: "transform .2s", flexShrink: "0" } })
+  );
+  wrapper.appendChild(btn);
+
+  if (state.companyDropdownOpen) {
+    const dd = h("div", { style: { position: "absolute", top: "calc(100% + 4px)", right: "0", minWidth: "260px", background: C.card, border: "1px solid " + C.border, borderRadius: "8px", boxShadow: "0 8px 24px rgba(0,0,0,0.12)", zIndex: "300", overflow: "hidden" } });
+    dd.appendChild(h("div", { style: { padding: "8px 12px", borderBottom: "1px solid " + C.border, background: C.gBg } },
+      h("div", { style: { fontSize: "9px", fontWeight: "700", color: C.sage, textTransform: "uppercase", letterSpacing: "0.8px" } }, "SWITCH COMPANY")
+    ));
+    companyObjects.forEach(co => {
+      const isActive = state.activeCompany === co.id;
+      const coInitials = co.id === "ALL" ? "⊕" : (co.abbr || "??");
+      const coLabel = co.id === "ALL" ? "All Companies" : co.name.split("-").slice(0, 2).join("-");
+      const coSub = co.id === "ALL" ? "HQ consolidated view" : [co.currency, co.country].filter(Boolean).join(" · ");
+      const item = h("div", {
+        style: {
+          display: "flex", alignItems: "center", gap: "8px",
+          padding: "8px 12px", cursor: "pointer",
+          background: isActive ? C.gBg2 : "transparent",
+          borderBottom: "1px solid " + C.border,
+          transition: "background .1s",
+        },
+        onMouseEnter: (e) => { if (!isActive) e.currentTarget.style.background = C.gBg; },
+        onMouseLeave: (e) => { e.currentTarget.style.background = isActive ? C.gBg2 : "transparent"; },
+        onClick: (e) => {
+          e.stopPropagation();
+          localStorage.setItem("platfarm_active_company", co.id);
+          if (co.id !== "ALL") {
+            const filteredTree = flatTree.filter(f => f.d === 0 && f.company === co.id);
+            if (filteredTree.length > 0) setState({ activeCompany: co.id, activeOdooId: co.odooId || null, companyDropdownOpen: false, selFolder: filteredTree[0].id, selFile: null });
+            else setState({ activeCompany: co.id, activeOdooId: co.odooId || null, companyDropdownOpen: false });
+          } else {
+            setState({ activeCompany: co.id, activeOdooId: null, companyDropdownOpen: false, selFolder: flatTree.length > 0 ? flatTree[0].id : null });
+          }
+        }
+      },
+        h("div", { style: { width: "26px", height: "26px", borderRadius: "4px", background: co.id === "ALL" ? C.forest : C.sage, display: "flex", alignItems: "center", justifyContent: "center", fontSize: "10px", fontWeight: "700", color: C.white, flexShrink: "0" } }, coInitials),
+        h("div", { style: { flex: "1", minWidth: "0" } },
+          h("div", { style: { fontSize: "11.5px", fontWeight: "600", color: C.dark } }, coLabel),
+          coSub ? h("div", { style: { fontSize: "9px", color: C.muted } }, coSub) : null
+        ),
+        isActive ? h("span", { style: { fontSize: "11px", color: C.forest, fontWeight: "700" } }, "✓") : null
+      );
+      dd.appendChild(item);
+    });
+    wrapper.appendChild(dd);
+  }
+  return wrapper;
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// RENDER — HEADER
+// ═══════════════════════════════════════════════════════════════════════════
+function renderHeader() {
+  return h("div", { style: { display: "flex", alignItems: "center", justifyContent: "space-between", padding: "8px 18px", background: C.card, borderBottom: "1px solid " + C.border } },
+    h("div", { style: { display: "flex", alignItems: "center", gap: "10px" } }
+      /* Company selector is now in the outer DMSHome.tsx header */
+    ),
+    h("div", { style: { display: "flex", alignItems: "center", gap: "10px" } },
+      h("div", { style: { position: "relative" } },
+        h("input", { value: state.search, placeholder: "Search documents...", style: { width: "240px", height: "32px", padding: "0 12px 0 30px", border: "1px solid " + C.border, borderRadius: "7px", fontFamily: FONT, fontSize: "12px", outline: "none" }, onInput: (e) => {
+          const val = e.target.value;
+          const patch = { search: val };
+          if (val && state.page === "dashboard") patch.page = "browse";
+          setState(patch);
+        } }),
+        h("span", { style: { position: "absolute", left: "10px", top: "8px", fontSize: "13px" } }, "🔍")
+      ),
+      h("button", { className: "bg", onClick: () => setState({ modal: "folder" }) }, "+\u00A0Folder"),
+      h("button", { className: "bp", onClick: () => setState({ modal: "upload" }) }, "↑\u00A0Upload"),
+      h("span", { className: "mn", style: { fontSize: "10px", color: C.muted } }, new Date().toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" }))
+    )
+  );
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// RENDER — LEFT SIDEBAR (Folder Tree)
+// ═══════════════════════════════════════════════════════════════════════════
+function renderLeftSidebar() {
+  const filteredTree = getFilteredFolderTree();
+  const totalSize = state.documents.reduce((s, f) => s + (f.fileSize || 0), 0);
+  const favFiles = state.documents.filter(f => f.isFavorited);
+
+  const sidebar = h("div", { style: { width: "240px", minWidth: "240px", background: C.card, borderRight: "1px solid " + C.border, overflowY: "auto", display: "flex", flexDirection: "column" } });
+
+  const navSection = h("div", { style: { padding: "10px 8px", borderBottom: "1px solid " + C.border } });
+  navSection.appendChild(h("div", { className: "np" + (state.page === "dashboard" ? " act" : ""), onClick: () => setState({ page: "dashboard", search: "", showFavs: false }) }, "📊\u00A0Dashboard"));
+  navSection.appendChild(h("div", { className: "np" + (state.page === "browse" && !state.showFavs ? " act" : ""), onClick: () => setState({ page: "browse", showFavs: false, search: "" }) }, "📂\u00A0All Documents"));
+  sidebar.appendChild(navSection);
+
+  const treeSection = h("div", { style: { flex: "1", overflowY: "auto", padding: "6px 0" } });
+  treeSection.appendChild(h("div", { style: { padding: "6px 14px 4px", fontSize: "9px", fontWeight: "700", color: C.sage, textTransform: "uppercase", letterSpacing: "0.5px" } }, "Workspaces"));
+
+  filteredTree.filter(isVisible).forEach(f => {
+    const isSel = state.selFolder === f.id && state.page === "browse" && !state.showFavs;
+    const row = h("div", { style: { display: "flex", alignItems: "center", gap: "4px", padding: "5px 8px", paddingLeft: (10 + f.d * 14) + "px", borderRadius: "6px", cursor: "pointer", background: isSel ? C.gBg2 : "transparent", color: isSel ? C.forest : C.dark, fontWeight: isSel ? "600" : "400", fontSize: "11.5px", margin: "1px 4px", transition: "background .1s" }, onClick: () => {
+      setState({ selFolder: f.id, selFile: null, search: "", showFavs: false, page: "browse" });
+    } });
+    if (f.hc) {
+      const arrow = h("span", { innerHTML: '<svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M9 18l6-6-6-6"/></svg>', style: { display: "flex", flexShrink: "0", transform: state.exp[f.id] ? "rotate(90deg)" : "", transition: "transform .15s", cursor: "pointer" }, onClick: (e) => {
+        e.stopPropagation();
+        const newExp = { ...state.exp }; newExp[f.id] = !newExp[f.id]; setState({ exp: newExp });
+      } });
+      row.appendChild(arrow);
+    } else {
+      row.appendChild(h("div", { style: { width: "9px" } }));
+    }
+    row.appendChild(h("span", { style: { fontSize: f.d === 0 ? "13px" : "11px" } }, f.d === 0 ? "🏢" : "📁"));
+    row.appendChild(h("span", { style: { overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" } }, f.name));
+    treeSection.appendChild(row);
+  });
+  sidebar.appendChild(treeSection);
+
+  const storageSection = h("div", { style: { padding: "12px 14px", borderTop: "1px solid " + C.border, background: "#FAFAF8" } });
+  const storageHeader = h("div", { style: { display: "flex", justifyContent: "space-between", marginBottom: "6px" } });
+  storageHeader.appendChild(h("span", { style: { fontSize: "9px", fontWeight: "700", color: C.sage, textTransform: "uppercase" } }, "Storage"));
+  storageHeader.appendChild(h("span", { className: "mn", style: { fontSize: "9px", color: C.muted } }, fmtSize(totalSize)));
+  storageSection.appendChild(storageHeader);
+  storageSection.appendChild(MiniBar(totalSize, 2e9, C.forest, 4));
+  storageSection.appendChild(h("div", { style: { fontSize: "9px", color: C.muted, marginTop: "4px" } }, state.documents.length + " files"));
+  sidebar.appendChild(storageSection);
+
+  return sidebar;
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// RENDER — DASHBOARD PAGE
+// ═══════════════════════════════════════════════════════════════════════════
+function renderDashboard() {
+  const allWS = getFilteredWorkspaces();
+  // Filter out empty workspaces (0 files AND 0 subfolders)
+  const filteredWS = allWS.filter(ws => ws.files > 0 || ws.folders > 0);
+
+  const page = h("div", { style: { flex: "1", overflowY: "auto", padding: "20px" } });
+
+  // ── Mandatory Company Documents Summary ──────────────────────────────────────
+  const allMandDocs = state.mandatoryDocs || [];
+  // Compute summary stats based on active company filter
+  let filteredMandDocs = allMandDocs;
+  if (state.activeCompany !== "ALL") {
+    // Priority 1: use activeOdooId (numeric ID sent from parent shell) — most reliable
+    if (state.activeOdooId !== null && state.activeOdooId !== undefined) {
+      filteredMandDocs = allMandDocs.filter(d => d.odooCompanyId === state.activeOdooId);
+    } else {
+      // Priority 2: match by companyObjects odooId
+      const activeObj = companyObjects.find(c => c.id === state.activeCompany);
+      if (activeObj && activeObj.odooId !== null) {
+        filteredMandDocs = allMandDocs.filter(d => d.odooCompanyId === activeObj.odooId);
+      } else {
+        // Priority 3: fallback to name matching
+        const activeLC = state.activeCompany.toLowerCase();
+        filteredMandDocs = allMandDocs.filter(d => {
+          const dn = (d.companyName || "").toLowerCase();
+          return dn === activeLC || dn.includes(activeLC) || activeLC.includes(dn);
+        });
+      }
+    }
+  }
+  const computedSummary = { total: filteredMandDocs.length, valid: 0, expiringSoon: 0, expired: 0 };
+  const now = new Date();
+  const in30Days = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000);
+  filteredMandDocs.forEach(d => {
+    if (d.expiryDate) {
+      const exp = new Date(d.expiryDate);
+      if (exp < now) computedSummary.expired++;
+      else if (exp <= in30Days) computedSummary.expiringSoon++;
+      else computedSummary.valid++;
+    }
+  });
+  // Always show mandatory docs section on dashboard
+  {
+    page.appendChild(h("div", { className: "sl" }, "Mandatory Company Documents"));
+    const summaryRow = h("div", { style: { display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: "10px", marginBottom: "20px" } });
+    const summaryItems = [
+      { label: "Total Documents", value: computedSummary.total, bg: C.gBg, color: C.forest },
+      { label: "Valid", value: computedSummary.valid, bg: "#ECFDF5", color: "#065F46" },
+      { label: "Expiring Soon", value: computedSummary.expiringSoon, bg: "#FFFBEB", color: "#92400E" },
+      { label: "Expired", value: computedSummary.expired, bg: "#FEF2F2", color: "#991B1B" },
+    ];
+    summaryItems.forEach(item => {
+      summaryRow.appendChild(h("div", { style: { background: item.bg, borderRadius: "10px", padding: "14px 16px", border: "1px solid " + item.color + "20" } },
+        h("div", { className: "mn", style: { fontSize: "22px", fontWeight: "700", color: item.color } }, String(item.value)),
+        h("div", { style: { fontSize: "10px", color: item.color, marginTop: "2px", fontWeight: "500" } }, item.label)
+      ));
+    });
+    page.appendChild(summaryRow);
+  }
+
+  // ── Per-Company Mandatory Docs Cards ──────────────────────────────────────
+  const mandDocs = state.mandatoryDocs || [];
+  if (mandDocs.length > 0) {
+    const DOC_TYPE_LABELS = {
+      company_registration: "Company Registration",
+      vat_registration: "VAT Registration",
+      tax_registration: "Tax Registration",
+      constitution_contract: "Constitution Contract",
+      owner_id: "Owner ID",
+      owner_passport: "Owner Passport",
+      office_lease_contract: "Office Lease Contract",
+      medical_insurance_policy: "Medical Insurance Policy",
+      export_certificate: "Export Certificate",
+      tax_portal_registration: "Tax Portal Registration",
+      social_insurance: "Social Insurance",
+      company_establishment_card: "Company Establishment Card",
+      housing_lease_contract: "Housing Lease Contract",
+      civil_defense: "Civil Defense",
+    };
+    const DOC_TYPE_ICONS = {
+      company_registration: "\ud83c\udfe2",
+      vat_registration: "\ud83d\udccb",
+      tax_registration: "\ud83e\uddfe",
+      constitution_contract: "\ud83d\udcdc",
+      owner_id: "\ud83e\udeaa",
+      owner_passport: "\ud83d\udec2",
+      office_lease_contract: "\ud83c\udfe0",
+      medical_insurance_policy: "\ud83c\udfe5",
+      export_certificate: "\ud83d\udce6",
+      tax_portal_registration: "\ud83d\udcbb",
+      social_insurance: "\ud83d\udee1\ufe0f",
+      company_establishment_card: "\ud83c\udff7\ufe0f",
+      housing_lease_contract: "\ud83c\udfda\ufe0f",
+      civil_defense: "\ud83d\udee1\ufe0f",
+    };
+    // Country-specific doc types
+    const BASE_DOC_TYPES = ["company_registration", "vat_registration", "tax_registration", "constitution_contract", "owner_id", "owner_passport", "office_lease_contract", "medical_insurance_policy"];
+    const EGYPT_DOC_TYPES = ["export_certificate", "tax_portal_registration", "social_insurance"];
+    const UAE_DOC_TYPES = ["company_establishment_card"];
+    const ADGM_DOC_TYPES = ["housing_lease_contract"];
+    const SOKHNA_DOC_TYPES = ["civil_defense"];
+    const EGYPT_IDS = [3, 4, 5];
+    const UAE_IDS = [1, 2];
+    const ADGM_ID = 1;
+    const SOKHNA_ID = 4;
+    function getDocTypesForCompany(companyId) {
+      const types = [...BASE_DOC_TYPES];
+      if (EGYPT_IDS.includes(companyId)) types.push(...EGYPT_DOC_TYPES);
+      if (companyId === SOKHNA_ID) types.push(...SOKHNA_DOC_TYPES);
+      if (UAE_IDS.includes(companyId)) types.push(...UAE_DOC_TYPES);
+      if (companyId === ADGM_ID) types.push(...ADGM_DOC_TYPES);
+      return types;
+    }
+
+    // Group by company
+    const byCompany = {};
+    mandDocs.forEach(doc => {
+      if (!byCompany[doc.odooCompanyId]) byCompany[doc.odooCompanyId] = { name: doc.companyName, docs: {} };
+      byCompany[doc.odooCompanyId].docs[doc.docType] = doc;
+    });
+
+    // Filter by active company if not ALL
+    let companyIds = Object.keys(byCompany);
+    if (state.activeCompany !== "ALL") {
+      // Priority 1: use activeOdooId (numeric ID sent from parent shell) — most reliable
+      if (state.activeOdooId !== null && state.activeOdooId !== undefined) {
+        companyIds = companyIds.filter(cid => Number(cid) === state.activeOdooId);
+      } else {
+        // Priority 2: match by companyObjects odooId
+        const activeObj = companyObjects.find(c => c.id === state.activeCompany);
+        if (activeObj && activeObj.odooId !== null) {
+          companyIds = companyIds.filter(cid => Number(cid) === activeObj.odooId);
+        } else {
+          // Priority 3: fallback to name matching
+          const activeLC = state.activeCompany.toLowerCase();
+          companyIds = companyIds.filter(cid => {
+            const docName = (byCompany[cid].name || "").toLowerCase();
+            return docName === activeLC || docName.includes(activeLC) || activeLC.includes(docName);
+          });
+        }
+      }
+    }
+
+    if (companyIds.length > 0) {
+      const mandGrid = h("div", { style: { display: "grid", gridTemplateColumns: "1fr", gap: "14px", marginBottom: "24px" } });
+      companyIds.forEach(cid => {
+        const co = byCompany[cid];
+        const shortName = co.name.split("-").slice(0, 2).join("-");
+        const coCard = h("div", { style: { background: "#fff", border: "1px solid " + C.border, borderRadius: "10px", overflow: "hidden" } });
+
+        // Company header
+        const coHeader = h("div", { style: { display: "flex", alignItems: "center", gap: "10px", padding: "12px 16px", borderBottom: "1px solid " + C.border } });
+        coHeader.appendChild(h("div", { style: { width: "32px", height: "32px", borderRadius: "8px", background: C.gBg, display: "flex", alignItems: "center", justifyContent: "center", fontSize: "14px", fontWeight: "700", color: C.forest } }, shortName.substring(0, 1)));
+        const coInfo = h("div", { style: { flex: "1" } });
+        coInfo.appendChild(h("div", { style: { fontSize: "13px", fontWeight: "700", color: C.dark } }, shortName));
+        const companyDocTypes = getDocTypesForCompany(Number(cid));
+        const docsWithExpiry = companyDocTypes.filter(dt => co.docs[dt] && co.docs[dt].expiryDate).length;
+        coInfo.appendChild(h("div", { style: { fontSize: "10px", color: C.muted } }, docsWithExpiry + " / " + companyDocTypes.length + " documents with expiry dates"));
+        coHeader.appendChild(coInfo);
+        coCard.appendChild(coHeader);
+
+        // Document type grid
+        const docGrid = h("div", { style: { display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "8px", padding: "12px 16px" } });
+        companyDocTypes.forEach(dt => {
+          const doc = co.docs[dt];
+          let statusBg = "#F9FAFB"; let statusColor = "#6B7280"; let statusBorder = "#E5E7EB"; let statusLabel = "Not Set";
+          if (doc && doc.expiryDate) {
+            const now = new Date();
+            const expiry = new Date(doc.expiryDate);
+            const in30Days = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000);
+            if (expiry < now) { statusBg = "#FEF2F2"; statusColor = "#991B1B"; statusBorder = "#FECACA"; statusLabel = "Expired"; }
+            else if (expiry <= in30Days) { statusBg = "#FFFBEB"; statusColor = "#92400E"; statusBorder = "#FDE68A"; statusLabel = "Expiring Soon"; }
+            else { statusBg = "#ECFDF5"; statusColor = "#065F46"; statusBorder = "#A7F3D0"; statusLabel = "Valid"; }
+          } else if (doc) {
+            statusBg = "#EBF4FF"; statusColor = "#2B6CB0"; statusBorder = "#BFDBFE"; statusLabel = "No Expiry Set";
+          }
+
+          const docCard = h("div", {
+            style: { background: statusBg, border: "1px solid " + statusBorder, borderRadius: "8px", padding: "10px 12px", display: "flex", alignItems: "center", gap: "8px", cursor: "pointer", transition: "all .15s" },
+            onClick: () => mandOpenEdit(doc, Number(cid), co.name, dt),
+            onMouseEnter: (e) => { e.currentTarget.style.transform = "translateY(-1px)"; e.currentTarget.style.boxShadow = "0 4px 12px rgba(0,0,0,0.08)"; },
+            onMouseLeave: (e) => { e.currentTarget.style.transform = ""; e.currentTarget.style.boxShadow = ""; },
+          });
+          docCard.appendChild(h("span", { style: { fontSize: "18px" } }, DOC_TYPE_ICONS[dt] || "\ud83d\udcc4"));
+          const docInfo = h("div", { style: { flex: "1", minWidth: "0" } });
+          docInfo.appendChild(h("div", { style: { fontSize: "11px", fontWeight: "600", color: C.dark } }, DOC_TYPE_LABELS[dt]));
+          docInfo.appendChild(h("div", { style: { fontSize: "9px", fontWeight: "600", color: statusColor, marginTop: "2px" } }, statusLabel));
+          if (doc && doc.expiryDate) {
+            docInfo.appendChild(h("div", { style: { fontSize: "8px", color: C.muted, marginTop: "1px" } }, fmtDate(doc.expiryDate)));
+          }
+          if (doc && doc.referenceNumber) {
+            docInfo.appendChild(h("div", { style: { fontSize: "8px", color: C.muted, marginTop: "1px" } }, "Ref: " + doc.referenceNumber));
+          }
+          if (doc && doc.documentName) {
+            docInfo.appendChild(h("div", { style: { fontSize: "8px", color: C.sage, marginTop: "1px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" } }, "\ud83d\udcce " + doc.documentName));
+          }
+          docCard.appendChild(docInfo);
+          docGrid.appendChild(docCard);
+        });
+        coCard.appendChild(docGrid);
+        mandGrid.appendChild(coCard);
+      });
+      page.appendChild(mandGrid);
+    }
+  }
+
+  // ── Workspaces ────────────────────────────────────────────────────────────
+  if (filteredWS.length > 0) {
+    page.appendChild(h("div", { className: "sl" }, "Workspaces"));
+    const cols = filteredWS.length >= 4 ? 4 : Math.max(filteredWS.length, 1);
+    const wsGrid = h("div", { style: { display: "grid", gridTemplateColumns: "repeat(" + cols + ",1fr)", gap: "12px", marginBottom: "24px" } });
+    filteredWS.forEach(ws => {
+      const card = h("div", { className: "ws", onClick: () => setState({ selFolder: ws.id, selFile: null, search: "", showFavs: false, page: "browse" }) });
+      const top = h("div", { style: { display: "flex", alignItems: "center", gap: "10px", marginBottom: "12px" } });
+      top.appendChild(h("div", { style: { width: "40px", height: "40px", borderRadius: "8px", background: ws.color + "15", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "20px" } }, ws.icon));
+      const info = h("div", {});
+      info.appendChild(h("div", { style: { fontSize: "14px", fontWeight: "700", color: C.dark } }, ws.name));
+      info.appendChild(h("div", { style: { fontSize: "10px", color: C.light } }, ws.files + " files \u00b7 " + ws.folders + " folders"));
+      top.appendChild(info);
+      card.appendChild(top);
+      card.appendChild(MiniBar(ws.size, 500e6, ws.color, 4));
+      card.appendChild(h("div", { style: { fontSize: "9px", color: C.muted, marginTop: "6px" } }, fmtSize(ws.size)));
+      wsGrid.appendChild(card);
+    });
+    page.appendChild(wsGrid);
+  }
+
+  // ── Recent Files + Activity ──────────────────────────────────────────────
+  const row1 = h("div", { style: { display: "grid", gridTemplateColumns: "1fr 1fr", gap: "16px", marginBottom: "16px" } });
+
+  // Recent Files
+  const recentCard = h("div", { className: "xc" });
+  const recentHdr = h("div", { className: "xh" }); recentHdr.appendChild(h("h3", {}, "\ud83d\udd50 Recent Files")); recentCard.appendChild(recentHdr);
+  const recentDocs = [...state.documents].sort((a, b) => new Date(b.writeDate || 0) - new Date(a.writeDate || 0)).slice(0, 5);
+  if (recentDocs.length === 0) {
+    recentCard.appendChild(h("div", { style: { padding: "20px", textAlign: "center", color: C.muted, fontSize: "12px" } }, "No documents yet"));
+  }
+  recentDocs.forEach(f => {
+    const ext = f.ext || "";
+    const row = h("div", { style: { display: "flex", alignItems: "center", gap: "10px", padding: "9px 14px", borderBottom: "1px solid #F2F0EC", cursor: "pointer" }, onClick: () => setState({ selFile: f, selFolder: f.folderId, page: "browse", showFavs: false, search: "" }) });
+    row.appendChild(h("div", { style: { width: "32px", height: "32px", borderRadius: "6px", background: (extColors[ext] || "#95A09C") + "12", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "15px" } }, extIcons[ext] || "\ud83d\udcc4"));
+    const info = h("div", { style: { flex: "1", minWidth: "0" } });
+    info.appendChild(h("div", { style: { fontSize: "11.5px", fontWeight: "500", color: C.dark, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", direction: "auto" } }, f.name));
+    info.appendChild(h("div", { style: { fontSize: "9px", color: C.muted } }, fmtDate(f.writeDate) + " \u00b7 " + fmtSize(f.fileSize)));
+    row.appendChild(info);
+    row.appendChild(h("span", { style: { fontSize: "7px", fontWeight: "700", textTransform: "uppercase", padding: "2px 5px", borderRadius: "3px", background: extColors[ext] || "#95A09C", color: "#fff" } }, ext || "?"));
+    recentCard.appendChild(row);
+  });
+  row1.appendChild(recentCard);
+
+  // Activity
+  const actCard = h("div", { className: "xc" });
+  const actHdr = h("div", { className: "xh" }); actHdr.appendChild(h("h3", {}, "\ud83d\udcdd Activity")); actCard.appendChild(actHdr);
+  if (state.activity.length === 0) {
+    actCard.appendChild(h("div", { style: { padding: "20px", textAlign: "center", color: C.muted, fontSize: "12px" } }, "No recent activity"));
+  }
+  state.activity.slice(0, 5).forEach(a => {
+    const row = h("div", { style: { display: "flex", alignItems: "flex-start", gap: "10px", padding: "9px 14px", borderBottom: "1px solid #F2F0EC" } });
+    row.appendChild(h("div", { style: { width: "28px", height: "28px", borderRadius: "6px", background: C.gBg, display: "flex", alignItems: "center", justifyContent: "center", fontSize: "13px" } }, a.icon));
+    const info = h("div", {});
+    info.appendChild(h("div", { style: { fontSize: "11px", color: C.dark, direction: "auto" } }, a.text || "Activity"));
+    info.appendChild(h("div", { style: { fontSize: "9px", color: C.muted, marginTop: "2px" } }, a.user + " \u00b7 " + a.time));
+    row.appendChild(info);
+    actCard.appendChild(row);
+  });
+  row1.appendChild(actCard);
+  page.appendChild(row1);
+
+  return page;
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// RENDER — BROWSE PAGE
+// ═══════════════════════════════════════════════════════════════════════════
+function renderBrowse() {
+  const filtered = getFilteredFiles();
+  const bread = getBread(state.selFolder);
+  const subfolders = childrenOf[state.selFolder] || [];
+  const usedTagIds = [...new Set(state.documents.flatMap(f => f.tagIds || []))];
+
+  const container = h("div", { style: { flex: "1", display: "flex", minWidth: "0" } });
+  const mainCol = h("div", { style: { flex: "1", overflowY: "auto", display: "flex", flexDirection: "column" } });
+
+  // Toolbar
+  const toolbar = h("div", { style: { padding: "8px 16px", borderBottom: "1px solid " + C.border, display: "flex", alignItems: "center", justifyContent: "space-between", background: C.card } });
+  const breadcrumbs = h("div", { style: { display: "flex", alignItems: "center", gap: "6px" } });
+  if (state.search) {
+    breadcrumbs.appendChild(h("span", { style: { fontSize: "12px", color: C.gray }, innerHTML: 'Results for "<strong>' + state.search + '</strong>"' }));
+  } else if (state.showFavs) {
+    breadcrumbs.appendChild(h("span", { style: { fontSize: "12px", fontWeight: "600", color: C.amber } }, "⭐ Favorites"));
+  } else {
+    bread.forEach((b, i) => {
+      if (i > 0) breadcrumbs.appendChild(h("span", { style: { color: C.muted } }, "›"));
+      const isLast = i === bread.length - 1;
+      breadcrumbs.appendChild(h("span", { style: { fontSize: "12px", color: isLast ? C.forest : C.gray, fontWeight: isLast ? "600" : "400", cursor: "pointer" }, onClick: () => setState({ selFolder: b.id, selFile: null, search: "", showFavs: false }) }, (i === 0 ? "🏢 " : "") + b.name));
+    });
+  }
+  breadcrumbs.appendChild(h("span", { style: { fontSize: "10px", color: C.muted, marginLeft: "6px" } }, String(filtered.length)));
+  toolbar.appendChild(breadcrumbs);
+
+  const toolbarRight = h("div", { style: { display: "flex", alignItems: "center", gap: "8px" } });
+  const sortSelect = h("select", { style: { height: "30px", padding: "0 8px", border: "1px solid " + C.border, borderRadius: "5px", fontFamily: FONT, fontSize: "10px", color: C.gray, outline: "none" }, onChange: (e) => setState({ sortBy: e.target.value }) });
+  ["date", "name", "size"].forEach(v => { const opt = h("option", { value: v }, v.charAt(0).toUpperCase() + v.slice(1)); if (v === state.sortBy) opt.selected = true; sortSelect.appendChild(opt); });
+  toolbarRight.appendChild(sortSelect);
+  const viewTog = h("div", { className: "vtog" });
+  viewTog.appendChild(h("button", { className: "vtog-btn" + (state.viewMode === "grid" ? " act" : ""), onClick: () => setState({ viewMode: "grid" }) }, "◻"));
+  viewTog.appendChild(h("button", { className: "vtog-btn" + (state.viewMode === "list" ? " act" : ""), onClick: () => setState({ viewMode: "list" }) }, "☰"));
+  toolbarRight.appendChild(viewTog);
+  toolbar.appendChild(toolbarRight);
+  mainCol.appendChild(toolbar);
+
+  // Tag filter bar
+  const tagBar = h("div", { style: { padding: "6px 16px", borderBottom: "1px solid " + C.border, display: "flex", gap: "4px", flexWrap: "wrap", background: "#FAFAF8", alignItems: "center" } });
+  tagBar.appendChild(h("span", { style: { fontSize: "9px", fontWeight: "700", color: C.sage, textTransform: "uppercase", marginRight: "4px" } }, "Filter"));
+  tagBar.appendChild(h("span", { className: "tag", style: { background: !state.tagFilter ? C.gBg2 : "#fff", color: !state.tagFilter ? C.forest : C.gray, border: "1px solid " + (!state.tagFilter ? C.gBdr2 : C.border) }, onClick: () => setState({ tagFilter: null }) }, "All"));
+  usedTagIds.forEach(tid => {
+    const t = tagMap[tid]; if (!t) return;
+    const isActive = state.tagFilter === tid;
+    const tColor = tagColorMap[t.color] || "#B0BAB6";
+    tagBar.appendChild(h("span", { className: "tag", style: { background: tColor + (isActive ? "30" : "12"), color: tColor, border: "1px solid " + tColor + (isActive ? "60" : "20") }, onClick: () => setState({ tagFilter: isActive ? null : tid }) }, t.name));
+  });
+  mainCol.appendChild(tagBar);
+
+  // Subfolders
+  if (!state.search && !state.showFavs && subfolders.length > 0) {
+    const subRow = h("div", { style: { padding: "10px 16px 0", display: "flex", gap: "6px", flexWrap: "wrap" } });
+    subfolders.forEach(sub => {
+      subRow.appendChild(h("div", { style: { display: "flex", alignItems: "center", gap: "6px", padding: "6px 12px", background: C.card, border: "1px solid " + C.border, borderRadius: "7px", cursor: "pointer", fontSize: "11.5px", fontWeight: "500", color: C.dark, transition: "all .15s" }, onClick: () => setState({ selFolder: sub.id, selFile: null, search: "", showFavs: false }), onMouseEnter: (e) => { e.currentTarget.style.borderColor = C.sage; }, onMouseLeave: (e) => { e.currentTarget.style.borderColor = C.border; } }, "📁 " + sub.name));
+    });
+    mainCol.appendChild(subRow);
+  }
+
+  // Files
+  const filesArea = h("div", { style: { padding: "10px 16px", flex: "1" } });
+  if (filtered.length === 0) {
+    const empty = h("div", { style: { textAlign: "center", padding: "60px", color: C.muted } });
+    empty.appendChild(h("div", { style: { fontSize: "36px", marginBottom: "10px" } }, state.search ? "🔍" : "📂"));
+    empty.appendChild(h("div", { style: { fontSize: "14px", fontWeight: "600", color: C.dark } }, state.search ? "No results" : "Empty folder"));
+    empty.appendChild(h("div", { style: { fontSize: "12px", color: C.muted, marginTop: "4px" } }, state.search ? "Try different terms" : "Upload files to get started"));
+    filesArea.appendChild(empty);
+  } else if (state.viewMode === "grid") {
+    const grid = h("div", { style: { display: "grid", gridTemplateColumns: "repeat(auto-fill,minmax(170px,1fr))", gap: "10px" } });
+    filtered.forEach(f => {
+      const ext = f.ext || "";
+      const isSel = state.selFile && state.selFile.id === f.id;
+      const card = h("div", { className: "fc" + (isSel ? " sel" : ""), onClick: () => setState({ selFile: isSel ? null : f }) });
+      const preview = h("div", { style: { height: "76px", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "30px", background: "#FAFAF8", borderBottom: "1px solid #F2F0EC", position: "relative" } });
+      preview.appendChild(document.createTextNode(extIcons[ext] || "📄"));
+      preview.appendChild(h("span", { style: { position: "absolute", top: "6px", right: "6px", fontSize: "7px", fontWeight: "700", textTransform: "uppercase", padding: "2px 6px", borderRadius: "4px", background: extColors[ext] || "#95A09C", color: "#fff" } }, ext || "?"));
+      if (f.isFavorited) preview.appendChild(h("span", { style: { position: "absolute", top: "6px", left: "6px", fontSize: "11px" } }, "⭐"));
+      if (f.isLocked) preview.appendChild(h("span", { style: { position: "absolute", bottom: "6px", right: "6px", fontSize: "10px" } }, "🔒"));
+      card.appendChild(preview);
+      const body = h("div", { style: { padding: "10px 12px" } });
+      body.appendChild(h("div", { style: { fontSize: "11.5px", fontWeight: "600", color: C.dark, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", direction: "auto" } }, f.name));
+      body.appendChild(h("div", { style: { fontSize: "9px", color: C.muted, display: "flex", gap: "6px", marginTop: "3px" } }, h("span", { className: "mn" }, fmtSize(f.fileSize)), h("span", {}, fmtDate(f.writeDate))));
+      if ((f.tagIds || []).length > 0) {
+        const tagRow = h("div", { style: { display: "flex", gap: "3px", marginTop: "4px" } });
+        f.tagIds.slice(0, 2).forEach(tid => { const t = tagMap[tid]; if (t) { const tColor = tagColorMap[t.color] || "#B0BAB6"; tagRow.appendChild(h("span", { className: "tag", style: { background: tColor + "18", color: tColor, fontSize: "8px" } }, t.name)); } });
+        body.appendChild(tagRow);
+      }
+      card.appendChild(body);
+      grid.appendChild(card);
+    });
+    filesArea.appendChild(grid);
+  } else {
+    // List view
+    const list = h("div", { style: { background: C.card, borderRadius: "9px", border: "1px solid " + C.border, overflow: "hidden" } });
+    filtered.forEach(f => {
+      const ext = f.ext || "";
+      const isSel = state.selFile && state.selFile.id === f.id;
+      const row = h("div", { className: "fr" + (isSel ? " sel" : ""), onClick: () => setState({ selFile: isSel ? null : f }) });
+      row.appendChild(h("div", { style: { width: "30px", height: "30px", borderRadius: "6px", background: (extColors[ext] || "#95A09C") + "12", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "14px", flexShrink: "0" } }, extIcons[ext] || "📄"));
+      const nameCol = h("div", { style: { flex: "1", minWidth: "0", display: "flex", alignItems: "center", gap: "6px" } });
+      nameCol.appendChild(h("span", { style: { fontSize: "11.5px", fontWeight: "500", color: C.dark, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", direction: "auto" } }, f.name));
+      if (f.isLocked) nameCol.appendChild(h("span", { style: { fontSize: "9px" } }, "🔒"));
+      if (f.isFavorited) nameCol.appendChild(h("span", { style: { fontSize: "9px" } }, "⭐"));
+      row.appendChild(nameCol);
+      row.appendChild(h("span", { className: "mn", style: { width: "70px", fontSize: "10px", color: C.gray } }, fmtSize(f.fileSize)));
+      row.appendChild(h("span", { className: "mn", style: { width: "90px", fontSize: "10px", color: C.muted } }, fmtDate(f.writeDate)));
+      row.appendChild(h("span", { style: { width: "90px", fontSize: "10px", color: C.gray, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" } }, f.ownerName || "—"));
+      if ((f.tagIds || []).length > 0) {
+        const tagCol = h("div", { style: { width: "80px", display: "flex", gap: "3px" } });
+        f.tagIds.slice(0, 1).forEach(tid => { const t = tagMap[tid]; if (t) { const tColor = tagColorMap[t.color] || "#B0BAB6"; tagCol.appendChild(h("span", { className: "tag", style: { background: tColor + "18", color: tColor, fontSize: "8px" } }, t.name)); } });
+        row.appendChild(tagCol);
+      } else {
+        row.appendChild(h("div", { style: { width: "80px" } }));
+      }
+      list.appendChild(row);
+    });
+    filesArea.appendChild(list);
+  }
+  mainCol.appendChild(filesArea);
+  container.appendChild(mainCol);
+
+  // Detail panel
+  if (state.selFile) {
+    const f = state.selFile;
+    const ext = f.ext || "";
+    const panel = h("div", { className: "dp" });
+
+    const previewArea = h("div", { style: { height: "160px", background: "#FAFAF8", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", borderBottom: "1px solid " + C.border, position: "relative" } });
+    previewArea.appendChild(h("span", { style: { fontSize: "48px" } }, extIcons[ext] || "📄"));
+    previewArea.appendChild(h("span", { style: { marginTop: "6px", fontSize: "8px", fontWeight: "700", textTransform: "uppercase", padding: "2px 8px", borderRadius: "4px", background: extColors[ext] || "#95A09C", color: "#fff" } }, ext + " · " + fmtSize(f.fileSize)));
+    previewArea.appendChild(h("button", { style: { position: "absolute", top: "8px", right: "8px", background: "none", border: "none", fontSize: "14px", color: C.muted, cursor: "pointer" }, onClick: () => setState({ selFile: null }) }, "✕"));
+    panel.appendChild(previewArea);
+
+    const nameSection = h("div", { style: { padding: "12px 16px", borderBottom: "1px solid " + C.border } });
+    nameSection.appendChild(h("div", { style: { fontSize: "14px", fontWeight: "700", color: C.dark, direction: "auto", lineHeight: "1.4", marginBottom: "8px" } }, f.name));
+    const actions = h("div", { style: { display: "flex", gap: "5px", flexWrap: "wrap" } });
+    actions.appendChild(h("button", { className: "bp", style: { fontSize: "10px", padding: "5px 12px" }, onClick: () => doDownload(f.id, f.name) }, "↓ Download"));
+    actions.appendChild(h("button", { className: "bg", style: { fontSize: "10px" }, onClick: () => {
+      setState({ modal: "rename", renameDocId: f.id, renameDocName: f.name, renameValue: f.name });
+    } }, "Rename"));
+    actions.appendChild(h("button", { className: "bg", style: { fontSize: "10px" }, onClick: () => showToast("Move: select destination folder", "success") }, "Move"));
+    nameSection.appendChild(actions);
+    panel.appendChild(nameSection);
+
+    // Metadata
+    const metaSection = h("div", { style: { padding: "4px 0", borderBottom: "1px solid " + C.border } });
+    const folderName = f.folderName || (folderById[f.folderId] ? folderById[f.folderId].name : "—");
+    [["Type", (ext || "?").toUpperCase()], ["Size", fmtSize(f.fileSize)], ["Modified", fmtDate(f.writeDate)], ["Created", fmtDate(f.createDate)], ["Owner", f.ownerName || "—"], ["Folder", folderName], ["Locked", f.isLocked ? "Yes" : "No"], ["Company", f.companyName || "—"]].forEach(([label, val]) => {
+      const row = h("div", { style: { display: "flex", justifyContent: "space-between", padding: "7px 16px", fontSize: "11px" } });
+      row.appendChild(h("span", { style: { color: C.gray } }, label));
+      row.appendChild(h("span", { style: { color: C.dark, fontWeight: "600" } }, val));
+      metaSection.appendChild(row);
+    });
+    panel.appendChild(metaSection);
+
+    // Tags
+    const tagsSection = h("div", { style: { padding: "10px 16px", borderBottom: "1px solid " + C.border } });
+    tagsSection.appendChild(h("div", { style: { fontSize: "9px", fontWeight: "700", color: C.sage, textTransform: "uppercase", marginBottom: "6px" } }, "Tags"));
+    const tagRow = h("div", { style: { display: "flex", gap: "4px", flexWrap: "wrap" } });
+    if ((f.tagIds || []).length > 0) {
+      f.tagIds.forEach(tid => { const t = tagMap[tid]; if (t) { const tColor = tagColorMap[t.color] || "#B0BAB6"; tagRow.appendChild(h("span", { className: "tag", style: { background: tColor + "20", color: tColor, padding: "3px 10px" } }, t.name)); } });
+    } else {
+      tagRow.appendChild(h("span", { style: { fontSize: "10px", color: C.muted } }, "No tags"));
+    }
+    tagsSection.appendChild(tagRow);
+    panel.appendChild(tagsSection);
+
+    // Actions list
+    const actionsSection = h("div", { style: { padding: "10px 16px" } });
+    actionsSection.appendChild(h("div", { style: { fontSize: "9px", fontWeight: "700", color: C.sage, textTransform: "uppercase", marginBottom: "6px" } }, "Actions"));
+    const actionItems = [
+      ["↓", "Download", () => doDownload(f.id, f.name)],
+      [f.isLocked ? "🔓" : "🔒", f.isLocked ? "Unlock" : "Lock", () => doToggleLock(f.id, !f.isLocked)],
+      ["⭐", f.isFavorited ? "Remove Favorite" : "Add Favorite", () => doToggleFavorite(f.id)],
+      ["✏️", "Rename", () => setState({ modal: "rename", renameDocId: f.id, renameDocName: f.name, renameValue: f.name })],
+      ["🗑", "Delete", () => doDelete(f.id)],
+    ];
+    actionItems.forEach(([icon, label, handler]) => {
+      actionsSection.appendChild(h("div", { style: { display: "flex", alignItems: "center", gap: "8px", padding: "7px 8px", borderRadius: "6px", cursor: "pointer", fontSize: "11px", color: label === "Delete" ? C.red : C.dark, transition: "background .1s" }, onClick: handler, onMouseEnter: (e) => { e.currentTarget.style.background = C.gBg; }, onMouseLeave: (e) => { e.currentTarget.style.background = "transparent"; } }, icon + " " + label));
+    });
+    panel.appendChild(actionsSection);
+    container.appendChild(panel);
+  }
+
+  return container;
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// RENDER — MODAL (Upload + Create Folder)
+// ═══════════════════════════════════════════════════════════════════════════
+function renderModal() {
+  if (!state.modal) return null;
+
+  // ── Rename modal ─────────────────────────────────────────────────
+  if (state.modal === "rename") {
+    const overlay = h("div", { className: "modal-bg" });
+    const card = h("div", { style: { background: C.card, borderRadius: "12px", padding: "24px", width: "420px", boxShadow: "0 12px 40px rgba(0,0,0,.15)" } });
+    card.appendChild(h("div", { style: { fontSize: "14px", fontWeight: "700", color: C.dark, marginBottom: "16px" } }, "Rename Document"));
+    const inp = h("input", { type: "text", value: state.renameValue, style: { width: "100%", padding: "8px 12px", border: "1px solid " + C.inputBdr, borderRadius: "6px", fontSize: "12px", fontFamily: "inherit", outline: "none" },
+      onInput: (e) => setState({ renameValue: e.target.value }),
+      onKeyDown: (e) => { if (e.key === "Enter") { if (state.renameValue && state.renameValue !== state.renameDocName) doRename(state.renameDocId, state.renameValue); else setState({ modal: null }); } if (e.key === "Escape") setState({ modal: null }); }
+    });
+    card.appendChild(inp);
+    const footer = h("div", { style: { display: "flex", gap: "8px", justifyContent: "flex-end", marginTop: "16px" } });
+    footer.appendChild(h("button", { className: "bg", onClick: () => setState({ modal: null }) }, "Cancel"));
+    footer.appendChild(h("button", { className: "bp", onClick: () => { if (state.renameValue && state.renameValue !== state.renameDocName) doRename(state.renameDocId, state.renameValue); else setState({ modal: null }); } }, "Rename"));
+    card.appendChild(footer);
+    overlay.appendChild(card);
+    // Focus input after render
+    setTimeout(() => { const i = overlay.querySelector("input"); if (i) { i.focus(); i.select(); } }, 50);
+    return overlay;
+  }
+  const curFolder = folderById[state.selFolder];
+  const curName = curFolder ? curFolder.name : "Root";
+
+  const bg = h("div", { className: "modal-bg" });
+  const card = h("div", { className: "modal-card", onClick: (e) => e.stopPropagation() });
+
+  const header = h("div", { style: { padding: "16px", borderBottom: "1px solid " + C.border, display: "flex", justifyContent: "space-between" } });
+  header.appendChild(h("h3", { style: { fontSize: "16px", fontWeight: "700", color: C.dark } }, state.modal === "upload" ? "Upload Files" : "New Folder"));
+  header.appendChild(h("button", { style: { background: "none", border: "none", fontSize: "18px", color: C.muted, cursor: "pointer" }, onClick: () => setState({ modal: null, uploadFiles: [], uploadTags: [] }) }, "✕"));
+  card.appendChild(header);
+
+  const body = h("div", { style: { padding: "20px" } });
+
+  if (state.modal === "upload") {
+    // File input (hidden)
+    const fileInput = h("input", { type: "file", multiple: true, style: { display: "none" }, onChange: (e) => {
+      setState({ uploadFiles: Array.from(e.target.files) });
+    } });
+    body.appendChild(fileInput);
+
+    const dropzone = h("div", { style: { border: "2px dashed " + C.gBdr, borderRadius: "10px", padding: "32px", textAlign: "center", background: "#FAFAF8", cursor: "pointer" }, onClick: () => fileInput.click() });
+    dropzone.addEventListener("dragover", (e) => { e.preventDefault(); dropzone.style.borderColor = C.forest; dropzone.style.background = C.gBg; });
+    dropzone.addEventListener("dragleave", () => { dropzone.style.borderColor = C.gBdr; dropzone.style.background = "#FAFAF8"; });
+    dropzone.addEventListener("drop", (e) => {
+      e.preventDefault();
+      dropzone.style.borderColor = C.gBdr; dropzone.style.background = "#FAFAF8";
+      setState({ uploadFiles: Array.from(e.dataTransfer.files) });
+    });
+
+    if (state.uploadFiles.length > 0) {
+      dropzone.appendChild(h("div", { style: { fontSize: "14px", fontWeight: "600", color: C.forest } }, state.uploadFiles.length + " file(s) selected"));
+      state.uploadFiles.forEach(f => {
+        dropzone.appendChild(h("div", { style: { fontSize: "11px", color: C.gray, marginTop: "4px" } }, f.name + " (" + fmtSize(f.size) + ")"));
+      });
+    } else {
+      dropzone.appendChild(h("div", { style: { fontSize: "36px", marginBottom: "8px" } }, "📎"));
+      dropzone.appendChild(h("div", { style: { fontSize: "14px", fontWeight: "600", color: C.forest } }, "Drop files here or click to browse"));
+      dropzone.appendChild(h("div", { style: { fontSize: "11px", color: C.muted, marginTop: "6px" } }, "PDF, JPG, PNG, XLSX, DOCX — up to 50MB"));
+    }
+    body.appendChild(dropzone);
+
+    const destLabel = h("div", { style: { marginTop: "16px" } });
+    destLabel.appendChild(h("label", { style: { display: "block", fontSize: "10px", fontWeight: "600", color: C.gray, textTransform: "uppercase", letterSpacing: "0.3px", marginBottom: "6px" } }, "Destination"));
+    destLabel.appendChild(h("div", { style: { padding: "10px 14px", border: "1px solid " + C.border, borderRadius: "8px", fontSize: "12px", background: "#FAFAF8" } }, "📁 " + curName));
+    body.appendChild(destLabel);
+
+    // Tag selection
+    const tagsLabel = h("div", { style: { marginTop: "14px" } });
+    tagsLabel.appendChild(h("label", { style: { display: "block", fontSize: "10px", fontWeight: "600", color: C.gray, textTransform: "uppercase", letterSpacing: "0.3px", marginBottom: "6px" } }, "Tags (optional)"));
+    const tagsRow = h("div", { style: { display: "flex", gap: "4px", flexWrap: "wrap" } });
+    state.tags.forEach(t => {
+      const isSelected = state.uploadTags.includes(t.id);
+      const tColor = tagColorMap[t.color] || "#B0BAB6";
+      tagsRow.appendChild(h("span", { className: "tag", style: { background: tColor + (isSelected ? "35" : "15"), color: tColor, border: "1px solid " + tColor + (isSelected ? "60" : "20"), cursor: "pointer" }, onClick: () => {
+        if (isSelected) state.uploadTags = state.uploadTags.filter(id => id !== t.id);
+        else state.uploadTags = [...state.uploadTags, t.id];
+        render();
+      } }, (isSelected ? "✓ " : "") + t.name));
+    });
+    tagsLabel.appendChild(tagsRow);
+    body.appendChild(tagsLabel);
+  } else {
+    // Create folder
+    body.appendChild(h("label", { style: { display: "block", fontSize: "10px", fontWeight: "600", color: C.gray, textTransform: "uppercase", letterSpacing: "0.3px", marginBottom: "6px" } }, "Folder Name *"));
+    const nameInput = h("input", { style: { width: "100%", height: "40px", padding: "0 14px", border: "1.5px solid rgba(27,58,45,.12)", borderRadius: "8px", fontFamily: FONT, fontSize: "12px", outline: "none" }, placeholder: "e.g. Tax Documents 2026", value: state.newFolderName, onInput: (e) => { state.newFolderName = e.target.value; } });
+    body.appendChild(nameInput);
+    const insideLabel = h("div", { style: { marginTop: "14px" } });
+    insideLabel.appendChild(h("label", { style: { display: "block", fontSize: "10px", fontWeight: "600", color: C.gray, textTransform: "uppercase", letterSpacing: "0.3px", marginBottom: "6px" } }, "Inside"));
+    insideLabel.appendChild(h("div", { style: { padding: "10px 14px", border: "1px solid " + C.border, borderRadius: "8px", fontSize: "12px", background: "#FAFAF8" } }, curName));
+    body.appendChild(insideLabel);
+  }
+  card.appendChild(body);
+
+  // Footer
+  const footer = h("div", { style: { padding: "14px", borderTop: "1px solid " + C.border, display: "flex", justifyContent: "flex-end", gap: "8px" } });
+  footer.appendChild(h("button", { className: "bg", onClick: () => setState({ modal: null, uploadFiles: [], uploadTags: [], newFolderName: "" }) }, "Cancel"));
+
+  if (state.modal === "upload") {
+    const uploadBtn = h("button", { className: "bp", disabled: state.uploadFiles.length === 0 || state.uploading, onClick: async () => {
+      for (const file of state.uploadFiles) {
+        await doUpload(file, state.selFolder, state.uploadTags);
+      }
+    } }, state.uploading ? "Uploading..." : "Upload");
+    footer.appendChild(uploadBtn);
+  } else {
+    footer.appendChild(h("button", { className: "bp", onClick: () => {
+      if (state.newFolderName.trim()) doCreateFolder(state.newFolderName.trim(), state.selFolder);
+      else showToast("Please enter a folder name", "error");
+    } }, "Create Folder"));
+  }
+  card.appendChild(footer);
+  bg.appendChild(card);
+  return bg;
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// RENDER — MANDATORY DOC EDIT MODAL
+// ═══════════════════════════════════════════════════════════════════════════
+function renderMandEditModal() {
+  if (!state.mandShowEditModal || !state.mandEditDoc) return null;
+  const doc = state.mandEditDoc;
+  const form = state.mandEditForm;
+  const DOC_TYPE_LABELS = {
+    company_registration: "Company Registration", vat_registration: "VAT Registration",
+    tax_registration: "Tax Registration", constitution_contract: "Constitution Contract",
+    owner_id: "Owner ID", owner_passport: "Owner Passport",
+    office_lease_contract: "Office Lease Contract", medical_insurance_policy: "Medical Insurance Policy",
+    export_certificate: "Export Certificate", tax_portal_registration: "Tax Portal Registration",
+    social_insurance: "Social Insurance", company_establishment_card: "Company Establishment Card",
+    housing_lease_contract: "Housing Lease Contract",
+    civil_defense: "Civil Defense",
+  };
+
+  const bg = h("div", { className: "modal-bg" });
+  const card = h("div", {
+    className: "modal-card",
+    style: { width: "520px", maxHeight: "85vh", overflow: "hidden", display: "flex", flexDirection: "column" },
+    onClick: (e) => e.stopPropagation(),
+  });
+
+  // Header
+  const header = h("div", { style: { padding: "16px 20px", borderBottom: "1px solid " + C.border, display: "flex", alignItems: "center", justifyContent: "space-between" } });
+  const headerInfo = h("div");
+  headerInfo.appendChild(h("h3", { style: { fontSize: "15px", fontWeight: "700", color: C.dark, margin: "0" } }, DOC_TYPE_LABELS[doc.docType] || doc.docType));
+  headerInfo.appendChild(h("p", { style: { fontSize: "11px", color: C.muted, margin: "2px 0 0" } }, doc.companyName));
+  header.appendChild(headerInfo);
+  header.appendChild(h("button", {
+    style: { width: "28px", height: "28px", borderRadius: "6px", border: "none", background: C.pageBg, cursor: "pointer", fontSize: "14px", display: "flex", alignItems: "center", justifyContent: "center" },
+    onClick: () => setState({ mandShowEditModal: false }),
+  }, "\u2715"));
+  card.appendChild(header);
+
+  // Body
+  const body = h("div", { style: { padding: "16px 20px", overflowY: "auto", flex: "1" } });
+
+  // Linked Document
+  const linkedSection = h("div", { style: { marginBottom: "16px" } });
+  linkedSection.appendChild(h("label", { style: { display: "block", fontSize: "10px", fontWeight: "700", color: C.sage, textTransform: "uppercase", letterSpacing: "0.5px", marginBottom: "6px" } }, "Linked Odoo Document"));
+  if (doc.odooDocumentId) {
+    const linkedCard = h("div", { style: { display: "flex", alignItems: "center", gap: "10px", padding: "10px 12px", background: C.gBg, border: "1px solid " + C.gBdr, borderRadius: "8px" } });
+    linkedCard.appendChild(h("div", { style: { width: "28px", height: "28px", borderRadius: "6px", background: C.gBg2, display: "flex", alignItems: "center", justifyContent: "center", fontSize: "12px", fontWeight: "700", color: C.forest } }, "\ud83d\udcc4"));
+    linkedCard.appendChild(h("div", { style: { flex: "1" } },
+      h("div", { style: { fontSize: "12px", fontWeight: "600", color: C.dark } }, doc.documentName || "Document #" + doc.odooDocumentId),
+      h("div", { style: { fontSize: "10px", color: C.muted } }, "Odoo ID: " + doc.odooDocumentId)
+    ));
+    const btnWrap = h("div", { style: { display: "flex", gap: "6px" } });
+    btnWrap.appendChild(h("button", {
+      style: { padding: "4px 10px", borderRadius: "6px", border: "1px solid " + C.forest, background: C.forest, cursor: "pointer", fontSize: "10px", fontWeight: "600", color: "white", display: "flex", alignItems: "center", gap: "4px" },
+      onClick: () => doDownload(doc.odooDocumentId, doc.documentName || ("document-" + doc.odooDocumentId)),
+    }, "↓ Download"));
+    btnWrap.appendChild(h("button", {
+      style: { padding: "4px 10px", borderRadius: "6px", border: "1px solid " + C.gBdr, background: "white", cursor: "pointer", fontSize: "10px", fontWeight: "600", color: C.forest },
+      onClick: () => mandOpenLink(),
+    }, "Change"));
+    linkedCard.appendChild(btnWrap);
+    linkedSection.appendChild(linkedCard);
+    // Renew button
+    const renewBtn = h("button", {
+      style: { width: "100%", marginTop: "8px", padding: "8px 12px", borderRadius: "8px", border: "1px solid #F59E0B", background: "#FFFBEB", cursor: "pointer", fontSize: "11px", fontWeight: "600", color: "#92400E", display: "flex", alignItems: "center", justifyContent: "center", gap: "6px", transition: "all .15s" },
+      onClick: () => mandRenewDoc(),
+      onMouseEnter: (e) => { e.currentTarget.style.background = "#FEF3C7"; },
+      onMouseLeave: (e) => { e.currentTarget.style.background = "#FFFBEB"; },
+    }, "\ud83d\udd04 Renew Document (keep old version in history)");
+    linkedSection.appendChild(renewBtn);
+  } else {
+    const linkBtn = h("button", {
+      style: { width: "100%", padding: "12px", borderRadius: "8px", border: "1.5px dashed " + C.gBdr, background: C.gBg, cursor: "pointer", fontSize: "12px", fontWeight: "600", color: C.forest, display: "flex", alignItems: "center", justifyContent: "center", gap: "8px", transition: "all .15s" },
+      onClick: () => mandOpenLink(),
+      onMouseEnter: (e) => { e.currentTarget.style.borderColor = C.forest; e.currentTarget.style.background = C.gBg2; },
+      onMouseLeave: (e) => { e.currentTarget.style.borderColor = C.gBdr; e.currentTarget.style.background = C.gBg; },
+    }, "\ud83d\udcc2 Link from Odoo Documents");
+    linkedSection.appendChild(linkBtn);
+  }
+  body.appendChild(linkedSection);
+
+  // Error
+  if (state.mandEditError) {
+    body.appendChild(h("div", { style: { padding: "8px 12px", background: "#FEF2F2", border: "1px solid #FECACA", borderRadius: "6px", fontSize: "11px", color: "#991B1B", marginBottom: "12px" } }, state.mandEditError));
+  }
+
+  // Form fields
+  const fieldStyle = { display: "block", fontSize: "10px", fontWeight: "600", color: C.gray, textTransform: "uppercase", letterSpacing: "0.3px", marginBottom: "4px" };
+  const inputStyle = { width: "100%", height: "36px", padding: "0 12px", border: "1px solid " + C.border, borderRadius: "7px", fontFamily: FONT, fontSize: "12px", outline: "none", background: "white" };
+
+  // Expiry Date
+  const expiryField = h("div", { style: { marginBottom: "12px" } });
+  expiryField.appendChild(h("label", { style: fieldStyle }, "Expiry Date *"));
+  expiryField.appendChild(h("input", { type: "date", value: form.expiryDate, style: inputStyle, onInput: (e) => { state.mandEditForm.expiryDate = e.target.value; } }));
+  body.appendChild(expiryField);
+
+  // Issue Date
+  const issueField = h("div", { style: { marginBottom: "12px" } });
+  issueField.appendChild(h("label", { style: fieldStyle }, "Issue Date"));
+  issueField.appendChild(h("input", { type: "date", value: form.issueDate, style: inputStyle, onInput: (e) => { state.mandEditForm.issueDate = e.target.value; } }));
+  body.appendChild(issueField);
+
+  // Reference Number
+  const refField = h("div", { style: { marginBottom: "12px" } });
+  refField.appendChild(h("label", { style: fieldStyle }, "Reference Number"));
+  refField.appendChild(h("input", { type: "text", value: form.referenceNumber, placeholder: "e.g. CR-2024-12345", style: inputStyle, onInput: (e) => { state.mandEditForm.referenceNumber = e.target.value; } }));
+  body.appendChild(refField);
+
+  // Notes
+  const notesField = h("div", { style: { marginBottom: "12px" } });
+  notesField.appendChild(h("label", { style: fieldStyle }, "Notes"));
+  const notesArea = h("textarea", { value: form.notes, placeholder: "Additional notes...", style: { ...inputStyle, height: "60px", padding: "8px 12px", resize: "vertical" }, onInput: (e) => { state.mandEditForm.notes = e.target.value; } });
+  notesField.appendChild(notesArea);
+  body.appendChild(notesField);
+
+  // ─── Renewal History Timeline ───────────────────────────────────────
+  const historySection = h("div", { style: { marginTop: "8px", borderTop: "1px solid " + C.border, paddingTop: "12px" } });
+  historySection.appendChild(h("label", { style: { display: "block", fontSize: "10px", fontWeight: "700", color: C.sage, textTransform: "uppercase", letterSpacing: "0.5px", marginBottom: "8px" } }, "\ud83d\udcdc Renewal History"));
+
+  if (state.mandRenewalLoading) {
+    historySection.appendChild(h("div", { style: { fontSize: "11px", color: C.muted, padding: "8px 0" } }, "Loading history..."));
+  } else if (state.mandRenewalHistory.length === 0) {
+    historySection.appendChild(h("div", { style: { fontSize: "11px", color: C.muted, padding: "8px 0", fontStyle: "italic" } }, "No renewal history yet. When you renew this document, previous versions will appear here."));
+  } else {
+    const timeline = h("div", { style: { position: "relative", paddingLeft: "20px" } });
+    // Vertical line
+    timeline.appendChild(h("div", { style: { position: "absolute", left: "7px", top: "4px", bottom: "4px", width: "2px", background: C.border, borderRadius: "1px" } }));
+    state.mandRenewalHistory.forEach((renewal, idx) => {
+      const item = h("div", { style: { position: "relative", marginBottom: "12px", paddingBottom: idx < state.mandRenewalHistory.length - 1 ? "0" : "0" } });
+      // Dot
+      item.appendChild(h("div", { style: { position: "absolute", left: "-16px", top: "4px", width: "10px", height: "10px", borderRadius: "50%", background: idx === 0 ? "#F59E0B" : C.border, border: "2px solid white", boxShadow: "0 0 0 1px " + C.border } }));
+      // Content
+      const content = h("div", { style: { background: idx === 0 ? "#FFFBEB" : C.pageBg, border: "1px solid " + (idx === 0 ? "#FDE68A" : C.border), borderRadius: "8px", padding: "8px 10px" } });
+      const topRow = h("div", { style: { display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "4px" } });
+      topRow.appendChild(h("div", { style: { fontSize: "11px", fontWeight: "600", color: C.dark } }, renewal.previousDocumentName || "Document #" + renewal.previousOdooDocId));
+      const renewDate = renewal.renewedAt ? new Date(renewal.renewedAt).toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" }) : "";
+      topRow.appendChild(h("div", { style: { fontSize: "9px", color: C.muted } }, renewDate));
+      content.appendChild(topRow);
+      const details = h("div", { style: { display: "flex", gap: "12px", flexWrap: "wrap" } });
+      if (renewal.previousExpiryDate) {
+        const expDate = new Date(renewal.previousExpiryDate).toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" });
+        details.appendChild(h("span", { style: { fontSize: "10px", color: C.muted } }, "Expired: " + expDate));
+      }
+      if (renewal.previousReferenceNumber) {
+        details.appendChild(h("span", { style: { fontSize: "10px", color: C.muted } }, "Ref: " + renewal.previousReferenceNumber));
+      }
+      details.appendChild(h("span", { style: { fontSize: "10px", color: C.muted } }, "Odoo ID: " + renewal.previousOdooDocId));
+      if (renewal.renewedByName) {
+        details.appendChild(h("span", { style: { fontSize: "10px", color: C.forest, fontWeight: "500" } }, "by " + renewal.renewedByName));
+      }
+      content.appendChild(details);
+      if (renewal.notes) {
+        content.appendChild(h("div", { style: { fontSize: "10px", color: C.gray, marginTop: "4px", fontStyle: "italic" } }, renewal.notes));
+      }
+      item.appendChild(content);
+      timeline.appendChild(item);
+    });
+    historySection.appendChild(timeline);
+  }
+  body.appendChild(historySection);
+
+  card.appendChild(body);
+
+  // Footer
+  const footer = h("div", { style: { padding: "14px 20px", borderTop: "1px solid " + C.border, display: "flex", justifyContent: "flex-end", gap: "8px" } });
+  footer.appendChild(h("button", { className: "bg", onClick: () => setState({ mandShowEditModal: false }) }, "Cancel"));
+  footer.appendChild(h("button", { className: "bp", disabled: state.mandEditSaving, onClick: () => mandSave() }, state.mandEditSaving ? "Saving..." : "Save"));
+  card.appendChild(footer);
+
+  bg.appendChild(card);
+  return bg;
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// RENDER — MANDATORY DOC LINK MODAL (Folder Tree + Search)
+// ═══════════════════════════════════════════════════════════════════════════
+function renderMandLinkModal() {
+  if (!state.mandShowLinkModal) return null;
+
+  const bg = h("div", { className: "modal-bg" });
+  const card = h("div", {
+    style: { background: "white", borderRadius: "16px", width: "640px", maxHeight: "85vh", overflow: "hidden", boxShadow: "0 20px 60px rgba(0,0,0,0.2)", display: "flex", flexDirection: "column" },
+    onClick: (e) => e.stopPropagation(),
+  });
+
+  // Header
+  const header = h("div", { style: { padding: "16px 20px", borderBottom: "1px solid " + C.border, display: "flex", alignItems: "center", justifyContent: "space-between" } });
+  const headerInfo = h("div");
+  headerInfo.appendChild(h("h3", { style: { fontSize: "16px", fontWeight: "700", color: C.dark, margin: "0" } }, "Link from Odoo Documents"));
+  headerInfo.appendChild(h("p", { style: { fontSize: "11px", color: C.muted, margin: "2px 0 0" } }, "Browse folders or search documents in Odoo to link to this record"));
+  header.appendChild(headerInfo);
+  header.appendChild(h("button", {
+    style: { width: "28px", height: "28px", borderRadius: "6px", border: "none", background: C.pageBg, cursor: "pointer", fontSize: "14px", display: "flex", alignItems: "center", justifyContent: "center" },
+    onClick: () => setState({ mandShowLinkModal: false }),
+  }, "\u2715"));
+  card.appendChild(header);
+
+  // Folder Tree Dropdown
+  const folderSection = h("div", { style: { padding: "12px 20px 0", borderBottom: "1px solid " + C.border, paddingBottom: "12px" } });
+  folderSection.appendChild(h("div", { style: { fontSize: "10px", fontWeight: "700", color: C.forest, marginBottom: "6px", textTransform: "uppercase", letterSpacing: "0.5px" } }, "Browse Folders"));
+  const folderDropWrapper = h("div", { style: { position: "relative" } });
+
+  // Folder dropdown button
+  const folderBtnLabel = state.mandLinkFolderPath.length > 0
+    ? state.mandLinkFolderPath.map(f => f.name).join(" / ")
+    : "All Workspaces (select a folder)";
+  const folderBtn = h("button", {
+    type: "button",
+    style: {
+      width: "100%", padding: "9px 12px", borderRadius: "8px",
+      border: "1px solid " + (state.mandFolderDropdownOpen ? C.forest : C.border),
+      background: state.mandFolderDropdownOpen ? C.gBg : "white",
+      fontSize: "13px", fontFamily: FONT, color: C.dark,
+      cursor: "pointer", display: "flex", alignItems: "center",
+      justifyContent: "space-between", textAlign: "left", transition: "all .15s",
+    },
+    onClick: (e) => { e.stopPropagation(); setState({ mandFolderDropdownOpen: !state.mandFolderDropdownOpen }); },
+  });
+  const folderBtnInner = h("div", { style: { display: "flex", alignItems: "center", gap: "8px", minWidth: "0", flex: "1" } });
+  folderBtnInner.appendChild(h("span", { innerHTML: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="' + C.forest + '" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 19a2 2 0 01-2 2H4a2 2 0 01-2-2V5a2 2 0 012-2h5l2 3h9a2 2 0 012 2z"/></svg>' }));
+  folderBtnInner.appendChild(h("span", { style: { overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" } }, folderBtnLabel));
+  folderBtn.appendChild(folderBtnInner);
+  folderBtn.appendChild(h("span", { innerHTML: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="' + C.muted + '" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="transition:transform .15s;transform:' + (state.mandFolderDropdownOpen ? 'rotate(180deg)' : 'rotate(0)') + '"><polyline points="6 9 12 15 18 9"/></svg>' }));
+  folderDropWrapper.appendChild(folderBtn);
+
+  // Folder dropdown panel
+  if (state.mandFolderDropdownOpen) {
+    const ddPanel = h("div", { style: {
+      position: "absolute", top: "calc(100% + 4px)", left: "0", right: "0",
+      background: "white", borderRadius: "10px", border: "1px solid " + C.border,
+      boxShadow: "0 8px 24px rgba(0,0,0,0.12)", zIndex: "10",
+      maxHeight: "280px", overflowY: "auto",
+    }});
+
+    if (state.mandFolderTreeLoading) {
+      ddPanel.appendChild(h("div", { style: { padding: "20px", textAlign: "center", color: C.muted, fontSize: "12px" } }, "Loading folder tree..."));
+    } else if (state.mandFolderTree) {
+      const treeWrap = h("div", { style: { padding: "6px 0" } });
+      // "All" option
+      const allItem = h("div", {
+        style: {
+          display: "flex", alignItems: "center", gap: "8px",
+          padding: "8px 14px", cursor: "pointer",
+          background: !state.mandLinkFolderId ? C.gBg : "transparent",
+          fontWeight: !state.mandLinkFolderId ? "600" : "400",
+          color: !state.mandLinkFolderId ? C.forest : C.dark,
+          fontSize: "12px", transition: "all .1s",
+        },
+        onMouseEnter: (e) => { if (state.mandLinkFolderId) e.currentTarget.style.background = C.pageBg; },
+        onMouseLeave: (e) => { if (state.mandLinkFolderId) e.currentTarget.style.background = "transparent"; },
+        onClick: (e) => {
+          e.stopPropagation();
+          state.mandLinkFolderId = null;
+          state.mandLinkFolderPath = [];
+          state.mandFolderDropdownOpen = false;
+          render();
+          mandSearchDocs();
+        },
+      });
+      allItem.appendChild(h("span", { innerHTML: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/></svg>' }));
+      allItem.appendChild(h("span", {}, "All Workspaces"));
+      treeWrap.appendChild(allItem);
+
+      // Recursive folder tree rendering
+      function renderFolderNode(folder, depth) {
+        const hasKids = folder.children && folder.children.length > 0;
+        const isSelected = state.mandLinkFolderId === folder.id;
+        const row = h("div", {
+          style: {
+            display: "flex", alignItems: "center", gap: "6px",
+            padding: "7px 14px", paddingLeft: (14 + depth * 20) + "px",
+            cursor: "pointer", fontSize: "12px",
+            background: isSelected ? C.gBg : "transparent",
+            color: isSelected ? C.forest : C.dark,
+            fontWeight: isSelected ? "600" : "400",
+            transition: "all .1s",
+          },
+          onMouseEnter: (e) => { if (!isSelected) e.currentTarget.style.background = C.pageBg; },
+          onMouseLeave: (e) => { if (!isSelected) e.currentTarget.style.background = "transparent"; },
+          onClick: (e) => {
+            e.stopPropagation();
+            // Build path from root to this folder
+            const path = [];
+            function findPath(nodes, targetId) {
+              for (const n of nodes) {
+                if (n.id === targetId) { path.push({ id: n.id, name: n.name }); return true; }
+                if (n.children && n.children.length > 0) {
+                  path.push({ id: n.id, name: n.name });
+                  if (findPath(n.children, targetId)) return true;
+                  path.pop();
+                }
+              }
+              return false;
+            }
+            findPath(state.mandFolderTree, folder.id);
+            state.mandLinkFolderId = folder.id;
+            state.mandLinkFolderPath = path;
+            state.mandLinkSearch = "";
+            state.mandFolderDropdownOpen = false;
+            render();
+            mandSearchDocs();
+          },
+        });
+        if (hasKids) {
+          row.appendChild(h("span", { style: { fontSize: "8px", color: C.muted } }, "\u25B6"));
+        }
+        row.appendChild(h("span", { innerHTML: '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="' + (isSelected ? C.forest : C.gray) + '" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 19a2 2 0 01-2 2H4a2 2 0 01-2-2V5a2 2 0 012-2h5l2 3h9a2 2 0 012 2z"/></svg>' }));
+        row.appendChild(h("span", { style: { overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" } }, folder.name));
+        if (folder.documentCount > 0) {
+          row.appendChild(h("span", { style: { fontSize: "9px", color: C.muted, marginLeft: "auto" } }, folder.documentCount + ""));
+        }
+        treeWrap.appendChild(row);
+        if (hasKids) {
+          folder.children.forEach(child => renderFolderNode(child, depth + 1));
+        }
+      }
+      state.mandFolderTree.forEach(root => renderFolderNode(root, 0));
+      ddPanel.appendChild(treeWrap);
+    }
+    folderDropWrapper.appendChild(ddPanel);
+  }
+  folderSection.appendChild(folderDropWrapper);
+  card.appendChild(folderSection);
+
+  // Search Bar
+  const searchSection = h("div", { style: { padding: "10px 20px", borderBottom: "1px solid " + C.border } });
+  const searchBar = h("div", { style: { display: "flex", alignItems: "center", gap: "8px", background: C.pageBg, borderRadius: "8px", padding: "8px 12px" } });
+  searchBar.appendChild(h("span", { innerHTML: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="' + C.muted + '" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>' }));
+  let searchTimeout = null;
+  const searchInput = h("input", {
+    type: "text", value: state.mandLinkSearch, placeholder: "Search documents by name...",
+    style: { flex: "1", border: "none", background: "transparent", fontSize: "13px", outline: "none", fontFamily: FONT, color: C.dark },
+    onInput: (e) => {
+      state.mandLinkSearch = e.target.value;
+      if (e.target.value) {
+        state.mandLinkFolderId = null;
+        state.mandLinkFolderPath = [];
+      }
+      clearTimeout(searchTimeout);
+      searchTimeout = setTimeout(() => mandSearchDocs(), 300);
+    },
+  });
+  searchBar.appendChild(searchInput);
+  if (state.mandLinkSearch) {
+    searchBar.appendChild(h("button", {
+      style: { border: "none", background: "transparent", cursor: "pointer", fontSize: "12px", color: C.muted, padding: "0" },
+      onClick: () => { state.mandLinkSearch = ""; render(); mandSearchDocs(); },
+    }, "Clear"));
+  }
+  searchSection.appendChild(searchBar);
+  card.appendChild(searchSection);
+
+  // Breadcrumb
+  if (state.mandLinkFolderPath.length > 0 && !state.mandLinkSearch) {
+    const breadSection = h("div", { style: { padding: "8px 20px", borderBottom: "1px solid " + C.border, display: "flex", alignItems: "center", gap: "4px", flexWrap: "wrap" } });
+    breadSection.appendChild(h("span", { innerHTML: '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="' + C.forest + '" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 19a2 2 0 01-2 2H4a2 2 0 01-2-2V5a2 2 0 012-2h5l2 3h9a2 2 0 012 2z"/></svg>' }));
+    breadSection.appendChild(h("button", {
+      style: { border: "none", background: "transparent", cursor: "pointer", fontSize: "11px", color: C.forest, fontWeight: "600", padding: "2px 4px", fontFamily: FONT },
+      onClick: () => mandNavigateBreadcrumb(-1),
+    }, "Root"));
+    state.mandLinkFolderPath.forEach((f, i) => {
+      const isLast = i === state.mandLinkFolderPath.length - 1;
+      breadSection.appendChild(h("span", { style: { color: C.muted, fontSize: "10px" } }, "/"));
+      breadSection.appendChild(h("button", {
+        style: { border: "none", background: "transparent", cursor: "pointer", fontSize: "11px", fontFamily: FONT, padding: "2px 4px", color: isLast ? C.dark : C.forest, fontWeight: isLast ? "600" : "400" },
+        onClick: () => mandNavigateBreadcrumb(i),
+      }, f.name));
+    });
+    card.appendChild(breadSection);
+  }
+
+  // Results
+  const results = h("div", { style: { flex: "1", overflowY: "auto", padding: "8px 0" } });
+  if (state.mandLinkDocsLoading) {
+    results.appendChild(h("div", { style: { textAlign: "center", padding: "40px 0", color: C.muted, fontSize: "13px" } }, "Searching Odoo documents..."));
+  } else {
+    // Subfolders
+    if (state.mandLinkSubfolders && state.mandLinkSubfolders.length > 0) {
+      const sfSection = h("div", { style: { padding: "4px 20px 8px" } });
+      sfSection.appendChild(h("div", { style: { fontSize: "10px", fontWeight: "600", color: C.muted, marginBottom: "6px", textTransform: "uppercase" } }, "Subfolders"));
+      state.mandLinkSubfolders.forEach(folder => {
+        const sfRow = h("div", {
+          style: { display: "flex", alignItems: "center", gap: "10px", padding: "8px 12px", borderRadius: "8px", cursor: "pointer", transition: "all .15s", marginBottom: "2px" },
+          onMouseEnter: (e) => { e.currentTarget.style.background = C.gBg; },
+          onMouseLeave: (e) => { e.currentTarget.style.background = "transparent"; },
+          onClick: () => mandNavigateToFolder(folder.id, folder.name),
+        });
+        sfRow.appendChild(h("div", { style: { width: "28px", height: "28px", borderRadius: "6px", background: C.gBg2, color: C.forest, display: "flex", alignItems: "center", justifyContent: "center" } },
+          h("span", { innerHTML: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 19a2 2 0 01-2 2H4a2 2 0 01-2-2V5a2 2 0 012-2h5l2 3h9a2 2 0 012 2z"/></svg>' })
+        ));
+        const sfInfo = h("div", { style: { flex: "1" } });
+        sfInfo.appendChild(h("div", { style: { fontSize: "13px", fontWeight: "600", color: C.dark } }, folder.name));
+        sfInfo.appendChild(h("div", { style: { fontSize: "10px", color: C.muted } }, (folder.documentCount || 0) + " document" + ((folder.documentCount || 0) !== 1 ? "s" : "")));
+        sfRow.appendChild(sfInfo);
+        sfRow.appendChild(h("span", { innerHTML: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="' + C.muted + '" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>' }));
+        sfSection.appendChild(sfRow);
+      });
+      results.appendChild(sfSection);
+    }
+
+    // Documents
+    if (state.mandLinkDocs && state.mandLinkDocs.length > 0) {
+      const docsSection = h("div", { style: { padding: "4px 20px" } });
+      const docsLabel = state.mandLinkSearch ? 'Documents (search: "' + state.mandLinkSearch + '")' : "Documents (" + state.mandLinkDocs.length + ")";
+      docsSection.appendChild(h("div", { style: { fontSize: "10px", fontWeight: "600", color: C.muted, marginBottom: "6px", textTransform: "uppercase" } }, docsLabel));
+      state.mandLinkDocs.forEach(doc => {
+        const ext = doc.fileExtension ? doc.fileExtension.toUpperCase().slice(0, 3) : "DOC";
+        const docRow = h("div", {
+          style: { display: "flex", alignItems: "center", gap: "10px", padding: "10px 12px", borderRadius: "8px", cursor: "pointer", transition: "all .15s", marginBottom: "2px", border: "1px solid transparent" },
+          onMouseEnter: (e) => { e.currentTarget.style.background = C.gBg; e.currentTarget.style.borderColor = C.gBdr; },
+          onMouseLeave: (e) => { e.currentTarget.style.background = "transparent"; e.currentTarget.style.borderColor = "transparent"; },
+          onClick: () => mandLinkDocument(doc),
+        });
+        docRow.appendChild(h("div", { style: { width: "32px", height: "32px", borderRadius: "6px", background: C.gBg2, color: C.forest, display: "flex", alignItems: "center", justifyContent: "center", fontSize: "10px", fontWeight: "700", flexShrink: "0" } }, ext));
+        const docInfo = h("div", { style: { flex: "1", minWidth: "0" } });
+        docInfo.appendChild(h("div", { style: { fontSize: "13px", fontWeight: "600", color: C.dark, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" } }, doc.name));
+        const meta = h("div", { style: { fontSize: "10px", color: C.muted, display: "flex", gap: "8px" } });
+        if (doc.folderName) meta.appendChild(h("span", {}, "\ud83d\udcc1 " + doc.folderName));
+        if (doc.fileSize > 0) meta.appendChild(h("span", {}, fmtSize(doc.fileSize)));
+        if (doc.createDate) meta.appendChild(h("span", {}, fmtDate(doc.createDate)));
+        docInfo.appendChild(meta);
+        docRow.appendChild(docInfo);
+        docRow.appendChild(h("div", { style: { fontSize: "10px", color: C.forest, fontWeight: "600", padding: "4px 10px", borderRadius: "6px", background: C.gBg, flexShrink: "0", border: "1px solid " + C.gBdr } }, "Link"));
+        docsSection.appendChild(docRow);
+      });
+      results.appendChild(docsSection);
+    }
+
+    // Empty state
+    if ((!state.mandLinkDocs || state.mandLinkDocs.length === 0) && (!state.mandLinkSubfolders || state.mandLinkSubfolders.length === 0)) {
+      const empty = h("div", { style: { textAlign: "center", padding: "40px 0", color: C.muted } });
+      empty.appendChild(h("div", { innerHTML: '<svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="' + C.muted + '" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="margin:0 auto 8px;opacity:0.5"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>' }));
+      if (state.mandLinkSearch) {
+        empty.appendChild(h("div", { style: { fontSize: "13px" } }, 'No documents found for "' + state.mandLinkSearch + '"'));
+      } else if (state.mandLinkFolderId) {
+        empty.appendChild(h("div", { style: { fontSize: "13px" } }, "No documents in this folder"));
+      } else {
+        empty.appendChild(h("div", { style: { fontSize: "13px" } }, "Select a folder above to browse documents"));
+        empty.appendChild(h("div", { style: { fontSize: "11px", marginTop: "4px", color: C.muted } }, "Or use the search bar to find documents by name"));
+      }
+      results.appendChild(empty);
+    }
+  }
+  card.appendChild(results);
+
+  bg.appendChild(card);
+  return bg;
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// MAIN RENDER
+// ═══════════════════════════════════════════════════════════════════════════
+function render() {
+  const app = document.getElementById("app");
+  app.innerHTML = "";
+
+  if (state.loading) {
+    app.appendChild(h("div", { style: { display: "flex", alignItems: "center", justifyContent: "center", height: "100vh", flexDirection: "column", gap: "12px" } },
+      h("div", { style: { width: "40px", height: "40px", border: "3px solid " + C.border, borderTopColor: C.forest, borderRadius: "50%", animation: "spin 1s linear infinite" } }),
+      h("div", { style: { fontSize: "14px", color: C.gray } }, "Loading documents from Odoo...")
+    ));
+    // Add spin animation
+    if (!document.getElementById("spin-style")) {
+      const style = document.createElement("style");
+      style.id = "spin-style";
+      style.textContent = "@keyframes spin{to{transform:rotate(360deg)}}";
+      document.head.appendChild(style);
+    }
+    return;
+  }
+
+  const layout = h("div", { style: { display: "flex", flexDirection: "column", height: "100vh" } });
+  layout.appendChild(renderHeader());
+  const body = h("div", { style: { display: "flex", flex: "1", minHeight: "0" } });
+  if (state.page === "dashboard") {
+    body.appendChild(renderDashboard());
+  } else {
+    body.appendChild(renderBrowse());
+  }
+  layout.appendChild(body);
+  app.appendChild(layout);
+
+  const modal = renderModal();
+  if (modal) app.appendChild(modal);
+
+  const mandEdit = renderMandEditModal();
+  if (mandEdit) app.appendChild(mandEdit);
+
+  const mandLink = renderMandLinkModal();
+  if (mandLink) app.appendChild(mandLink);
+}
+
+// Close dropdowns on outside click
+document.addEventListener("click", () => {
+  if (state.companyDropdownOpen) setState({ companyDropdownOpen: false });
+  if (state.mandFolderDropdownOpen) setState({ mandFolderDropdownOpen: false });
+});
+
+// Initial load — first fetch companies from Odoo API, then load all data
+(async () => {
+  await loadCompanyObjects();
+  render(); // re-render with the real company list
+  await loadAllData();
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,9 @@
+{
+  "query": "CREATE TABLE IF NOT EXISTS `shipment_drafts` (`id` int AUTO_INCREMENT NOT NULL, `wizardType` enum('purchase','sales','multi_linked') NOT NULL, `currentStep` int NOT NULL DEFAULT 1, `label` varchar(255), `formData` json NOT NULL, `userId` int NOT NULL, `createdAt` timestamp NOT NULL DEFAULT (now()), `updatedAt` timestamp NOT NULL DEFAULT (now()) ON UPDATE CURRENT_TIMESTAMP, CONSTRAINT `shipment_drafts_id` PRIMARY KEY(`id`));",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user WXqa14W8mSgTfpb.99f8bb228633 --database X5tJK2uaPFqt5EwqucHsfz --execute CREATE TABLE IF NOT EXISTS `shipment_drafts` (`id` int AUTO_INCREMENT NOT NULL, `wizardType` enum('purchase','sales','multi_linked') NOT NULL, `currentStep` int NOT NULL DEFAULT 1, `label` varchar(255), `formData` json NOT NULL, `userId` int NOT NULL, `createdAt` timestamp NOT NULL DEFAULT (now()), `updatedAt` timestamp NOT NULL DEFAULT (now()) ON UPDATE CURRENT_TIMESTAMP, CONSTRAINT `shipment_drafts_id` PRIMARY KEY(`id`));",
+  "rows": [],
+  "messages": [],
+  "stdout": "",
+  "stderr": "",
+  "execution_time_ms": 1522
+}

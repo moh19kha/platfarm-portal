@@ -1,0 +1,1 @@
+ALTER TABLE `company_documents` MODIFY COLUMN `docType` enum('company_registration','vat_registration','tax_registration','constitution_contract','owner_id','owner_passport','office_lease_contract','medical_insurance_policy','export_certificate','tax_portal_registration','social_insurance','company_establishment_card','housing_lease_contract') NOT NULL;

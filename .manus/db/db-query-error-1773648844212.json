@@ -1,0 +1,8 @@
+{
+  "query": "SELECT id, name, email, role FROM user WHERE email LIKE '%akhalil%' OR email LIKE '%khalil%' OR name LIKE '%test%';",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user WXqa14W8mSgTfpb.99f8bb228633 --database X5tJK2uaPFqt5EwqucHsfz --execute SELECT id, name, email, role FROM user WHERE email LIKE '%akhalil%' OR email LIKE '%khalil%' OR name LIKE '%test%';",
+  "returncode": 1,
+  "logs": [
+    "ERROR 1146 (42S02) at line 1: Table 'x5tjk2uapfqt5ewquchsfz.user' doesn't exist"
+  ]
+}

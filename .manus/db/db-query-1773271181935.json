@@ -1,0 +1,9 @@
+{
+  "query": "CREATE TABLE IF NOT EXISTS `document_hard_copy` (`id` int AUTO_INCREMENT NOT NULL, `odooOrderId` int NOT NULL, `orderType` enum('purchase','sales') NOT NULL, `documentField` varchar(128) NOT NULL, `received` int NOT NULL DEFAULT 0, `receivedBy` varchar(128), `receivedAt` timestamp NULL, `createdAt` timestamp NOT NULL DEFAULT (now()), `updatedAt` timestamp NOT NULL DEFAULT (now()) ON UPDATE CURRENT_TIMESTAMP, CONSTRAINT `document_hard_copy_id` PRIMARY KEY(`id`));",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user WXqa14W8mSgTfpb.99f8bb228633 --database X5tJK2uaPFqt5EwqucHsfz --execute CREATE TABLE IF NOT EXISTS `document_hard_copy` (`id` int AUTO_INCREMENT NOT NULL, `odooOrderId` int NOT NULL, `orderType` enum('purchase','sales') NOT NULL, `documentField` varchar(128) NOT NULL, `received` int NOT NULL DEFAULT 0, `receivedBy` varchar(128), `receivedAt` timestamp NULL, `createdAt` timestamp NOT NULL DEFAULT (now()), `updatedAt` timestamp NOT NULL DEFAULT (now()) ON UPDATE CURRENT_TIMESTAMP, CONSTRAINT `document_hard_copy_id` PRIMARY KEY(`id`));",
+  "rows": [],
+  "messages": [],
+  "stdout": "",
+  "stderr": "",
+  "execution_time_ms": 1513
+}

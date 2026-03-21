@@ -1,0 +1,18 @@
+{
+  "query": "SELECT id, name, email, role, loginMethod, status FROM users WHERE email = 'khalil@platfarm.io';",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user WXqa14W8mSgTfpb.99f8bb228633 --database X5tJK2uaPFqt5EwqucHsfz --execute SELECT id, name, email, role, loginMethod, status FROM users WHERE email = 'khalil@platfarm.io';",
+  "rows": [
+    {
+      "id": "390001",
+      "name": "Mohamed Khalil",
+      "email": "khalil@platfarm.io",
+      "role": "admin",
+      "loginMethod": "local",
+      "status": "active"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tname\temail\trole\tloginMethod\tstatus\n390001\tMohamed Khalil\tkhalil@platfarm.io\tadmin\tlocal\tactive\n",
+  "stderr": "",
+  "execution_time_ms": 1492
+}

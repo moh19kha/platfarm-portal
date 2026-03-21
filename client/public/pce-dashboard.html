@@ -1,0 +1,993 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Petty Cash & Expenses — Platfarm</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'DM Sans',sans-serif;background:#F7F6F3;color:#2C3E50;overflow-x:hidden}
+::-webkit-scrollbar{width:5px;height:5px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:#CDDDD1;border-radius:99px}
+::-webkit-scrollbar-thumb:hover{background:#4A7C59}
+/* ── Accent Bar ── */
+.ab{height:3px;background:linear-gradient(90deg,#2D5A3D,#C0714A)}
+/* ── Nav Item ── */
+.ni{display:flex;align-items:center;gap:10px;padding:9px 16px;margin:1px 6px;border-radius:7px;cursor:pointer;font-size:12px;font-weight:500;color:#64706C;white-space:nowrap;transition:all .15s}
+.ni:hover{background:#F2F7F3}
+.ni.a{background:#E4EFE6;color:#2D5A3D;font-weight:600}
+/* ── KPI Card ── */
+.sc{background:#fff;border:1px solid #CDDDD1;border-radius:9px;padding:14px;transition:border-color .15s}
+.sc:hover{border-color:#4A7C59}
+.sl{font-size:9px;font-weight:700;text-transform:uppercase;color:#4A7C59;letter-spacing:.5px;margin-bottom:5px}
+.sv{font-family:'JetBrains Mono',monospace;font-size:18px;font-weight:700;color:#2D5A3D}
+/* ── Section Card ── */
+.xc{background:#fff;border:1px solid #E4E1DC;border-radius:9px;overflow:hidden;margin-bottom:14px}
+.xh{padding:10px 16px;display:flex;align-items:center;justify-content:space-between}
+.xh h3{font-size:13px;font-weight:600;color:#fff}
+/* ── Table ── */
+.t{width:100%;border-collapse:collapse}
+.t th{font-size:9px;font-weight:700;text-transform:uppercase;color:#4A7C59;padding:7px 10px;text-align:left;border-bottom:1px solid #E4E1DC}
+.t td{font-size:11px;color:#2C3E50;padding:8px 10px;border-bottom:1px solid #F2F0EC}
+.t tr{cursor:pointer;transition:background .1s}
+.t tr:hover td{background:#FAFAF8}
+/* ── Mono ── */
+.m{font-family:'JetBrains Mono',monospace;font-weight:600}
+/* ── Page Header ── */
+.ph{display:flex;align-items:center;justify-content:space-between;padding:12px 24px;border-bottom:1px solid #E4E1DC;background:#fff;position:sticky;top:0;z-index:40}
+.pt{font-size:18px;font-weight:700;color:#2C3E50}
+/* ── Detail Panel ── */
+.dp{position:fixed;right:0;top:3px;bottom:0;width:420px;background:#fff;border-left:1px solid #E4E1DC;overflow-y:auto;z-index:45;box-shadow:-4px 0 20px rgba(0,0,0,.06);animation:dpIn .2s ease both}
+@keyframes dpIn{0%{opacity:0;transform:translateX(20px)}100%{opacity:1;transform:translateX(0)}}
+/* ── Company Switcher ── */
+.co-btn{padding:3px 8px;border-radius:4px;border:1px solid #CDDDD1;background:#F2F7F3;font-size:10px;font-weight:600;color:#2D5A3D;cursor:pointer;font-family:inherit;position:relative;white-space:nowrap}
+.co-btn:hover,.co-btn.open{background:#E4EFE6;border-color:#4A7C59}
+.co-dd{position:absolute;top:calc(100% + 4px);right:0;min-width:280px;background:#fff;border-radius:8px;box-shadow:0 8px 24px rgba(0,0,0,.12);border:1px solid #E4E1DC;overflow:hidden;z-index:200;animation:ddIn .2s cubic-bezier(.16,1,.3,1) both}
+@keyframes ddIn{0%{opacity:0;transform:translateY(-4px) scale(.98)}100%{opacity:1;transform:translateY(0) scale(1)}}
+.co-dd-header{padding:8px 12px;border-bottom:1px solid #E4E1DC;background:#F2F7F3}
+.co-dd-header span{font-size:9px;font-weight:700;color:#4A7C59;text-transform:uppercase;letter-spacing:.8px}
+.co-item{padding:8px 12px;font-size:11.5px;color:#2C3E50;cursor:pointer;transition:background .1s;display:flex;align-items:center;gap:8px;border-bottom:1px solid #E4E1DC}
+.co-item:last-child{border-bottom:none}
+.co-item:hover{background:#F2F7F3}
+.co-item.act{background:#E4EFE6}
+.co-badge{width:26px;height:26px;border-radius:5px;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;color:#fff;flex-shrink:0}
+.co-item-info{flex:1;min-width:0}
+.co-item-name{font-size:11.5px;font-weight:600;color:#2C3E50;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.co-item-sub{font-size:9px;color:#B0BAB6}
+/* ── Toast ── */
+.toast{position:fixed;bottom:20px;right:20px;padding:12px 16px 12px 20px;border-radius:8px;font-size:12px;font-weight:500;z-index:400;animation:toastIn .3s ease;box-shadow:0 4px 16px rgba(0,0,0,.08);background:#fff;color:#1C2B22;border:1px solid #E4E1DC;border-left:4px solid #2D5A3D;min-width:260px;max-width:380px;display:flex;align-items:center;gap:10px}
+.toast.success{border-left-color:#2D5A3D}
+.toast.error{border-left-color:#C94444}
+.toast.info{border-left-color:#475577}
+@keyframes toastIn{0%{opacity:0;transform:translateY(8px)}100%{opacity:1;transform:translateY(0)}}
+/* ── Form Input ── */
+.fi{margin-bottom:10px}
+.fi label{display:block;font-size:10px;font-weight:600;color:#64706C;margin-bottom:4px}
+.fi input,.fi select,.fi textarea{width:100%;padding:8px 10px;border:1.5px solid #E4E1DC;border-radius:8px;font-size:12px;font-family:inherit;outline:none;background:#fff}
+.fi input:focus,.fi select:focus,.fi textarea:focus{border-color:#4A7C59}
+.fi textarea{height:60px;resize:vertical}
+@keyframes spin{to{transform:rotate(360deg)}}
+@keyframes shimmer{0%{opacity:1}50%{opacity:.5}100%{opacity:1}}
+</style>
+</head>
+<body>
+<!-- Canonical redirect removed: dashboard is always served via /api/* inside an iframe; the React shell handles canonical domain enforcement -->
+<div id="app">
+<!-- Loading Skeleton -->
+<div style="display:flex;height:100vh;background:#F8F6F2;font-family:'DM Sans',sans-serif;overflow:hidden">
+  <div style="flex:1;display:flex;flex-direction:column;overflow:hidden">
+    <div class="ab"></div>
+    <div style="height:52px;background:#fff;border-bottom:1px solid #E4E1DC;display:flex;align-items:center;padding:0 24px;gap:16px">
+      <div style="width:140px;height:14px;background:#E8E5E0;border-radius:4px;animation:shimmer 1.5s ease-in-out infinite"></div>
+      <div style="flex:1"></div>
+      <div style="width:200px;height:28px;background:#F5F3EF;border-radius:6px;animation:shimmer 1.5s ease-in-out infinite;animation-delay:.15s"></div>
+    </div>
+    <div style="flex:1;padding:24px;overflow:hidden">
+      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:24px">
+        <div style="height:80px;background:#fff;border-radius:10px;border:1px solid #E4E1DC;padding:16px;animation:shimmer 1.5s ease-in-out infinite"><div style="width:60%;height:10px;background:#EDEBE7;border-radius:3px;margin-bottom:12px"></div><div style="width:40%;height:22px;background:#E8E5E0;border-radius:4px"></div></div>
+        <div style="height:80px;background:#fff;border-radius:10px;border:1px solid #E4E1DC;padding:16px;animation:shimmer 1.5s ease-in-out infinite;animation-delay:.1s"><div style="width:55%;height:10px;background:#EDEBE7;border-radius:3px;margin-bottom:12px"></div><div style="width:35%;height:22px;background:#E8E5E0;border-radius:4px"></div></div>
+        <div style="height:80px;background:#fff;border-radius:10px;border:1px solid #E4E1DC;padding:16px;animation:shimmer 1.5s ease-in-out infinite;animation-delay:.2s"><div style="width:65%;height:10px;background:#EDEBE7;border-radius:3px;margin-bottom:12px"></div><div style="width:30%;height:22px;background:#E8E5E0;border-radius:4px"></div></div>
+        <div style="height:80px;background:#fff;border-radius:10px;border:1px solid #E4E1DC;padding:16px;animation:shimmer 1.5s ease-in-out infinite;animation-delay:.3s"><div style="width:50%;height:10px;background:#EDEBE7;border-radius:3px;margin-bottom:12px"></div><div style="width:45%;height:22px;background:#E8E5E0;border-radius:4px"></div></div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
+        <div style="background:#fff;border-radius:10px;border:1px solid #E4E1DC;padding:20px;min-height:200px;animation:shimmer 1.5s ease-in-out infinite;animation-delay:.15s"><div style="width:120px;height:12px;background:#E8E5E0;border-radius:4px;margin-bottom:20px"></div><div style="display:flex;flex-direction:column;gap:12px"><div style="height:32px;background:#F5F3EF;border-radius:6px"></div><div style="height:32px;background:#F5F3EF;border-radius:6px"></div><div style="height:32px;background:#F5F3EF;border-radius:6px"></div></div></div>
+        <div style="background:#fff;border-radius:10px;border:1px solid #E4E1DC;padding:20px;min-height:200px;animation:shimmer 1.5s ease-in-out infinite;animation-delay:.25s"><div style="width:100px;height:12px;background:#E8E5E0;border-radius:4px;margin-bottom:20px"></div><div style="display:flex;flex-direction:column;gap:12px"><div style="height:32px;background:#F5F3EF;border-radius:6px"></div><div style="height:32px;background:#F5F3EF;border-radius:6px"></div><div style="height:32px;background:#F5F3EF;border-radius:6px"></div></div></div>
+      </div>
+      <div style="display:flex;align-items:center;justify-content:center;gap:10px;padding:20px">
+        <div style="width:16px;height:16px;border:2px solid #E4E1DC;border-top-color:#2D5A3D;border-radius:50%;animation:spin .8s linear infinite"></div>
+        <span style="font-size:11px;color:#64706C;font-weight:500">Loading Petty Cash & Expenses...</span>
+      </div>
+    </div>
+  </div>
+</div>
+</div>
+<script>
+// ══════════════════════════════════════════════════════════════════════════════
+// PETTY CASH & EXPENSES MODULE — Platfarm V3 — Standalone HTML (embedded via iframe)
+// Connected to live Odoo + local DB via tRPC API
+// ══════════════════════════════════════════════════════════════════════════════
+
+// ─── API HELPERS ─────────────────────────────────────────────────────────────
+let API_BASE = window.location.origin;
+try { if (window.parent !== window) API_BASE = window.parent.location.origin; } catch(e) {}
+async function trpcQuery(path, input) {
+  const params = input !== undefined ? `&input=${encodeURIComponent(JSON.stringify({"0":{"json":input}}))}` : `&input=${encodeURIComponent(JSON.stringify({"0":{"json":{}}}))}`;
+  const res = await fetch(`${API_BASE}/api/trpc/${path}?batch=1${params}`, {credentials:'include'});
+  const json = await res.json();
+  if (json[0]?.error) { console.error(`tRPC error [${path}]:`, json[0].error); return null; }
+  return json[0]?.result?.data?.json;
+}
+async function trpcMutate(path, input) {
+  const res = await fetch(`${API_BASE}/api/trpc/${path}?batch=1`, {
+    method:'POST', headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({"0":{"json":input}}),
+    credentials:'include'
+  });
+  const json = await res.json();
+  if (json[0]?.error) {
+    console.error(`tRPC mutation error [${path}]:`, json[0].error);
+    const errMsg = json[0].error?.json?.message || 'Unknown error';
+    // Extract the meaningful part after "Odoo RPC error (...):"
+    const odooMatch = errMsg.match(/Odoo RPC error \([^)]+\):\s*(.+)/s);
+    throw new Error(odooMatch ? odooMatch[1].trim() : errMsg);
+  }
+  return json[0]?.result?.data?.json;
+}
+
+// ─── CONSTANTS ───────────────────────────────────────────────────────────────
+const ALL_ODOO_COMPANIES = [
+  { odooId: 2, name: 'ABU DHABI-PLATFARM FOR AGRITECH AND AGRIBUSINESS LTD', abbr: 'AB', currency: 'AED', country: 'United Arab Emirates' },
+  { odooId: 1, name: 'ADGM-PLATFARM FOR AGRITECH AND AGRIBUSINESS LTD', abbr: 'AD', currency: 'AED', country: 'United Arab Emirates' },
+  { odooId: 5, name: 'Cairo-AlfaGlobal Agribusiness (The Platform for Smart Solutions)', abbr: 'CA', currency: 'EGP', country: 'Egypt' },
+  { odooId: 3, name: 'Cairo-PLATFARM FOR AGRICULTURE CONSULTANCY', abbr: 'CA', currency: 'EGP', country: 'Egypt' },
+  { odooId: 4, name: 'Sokhna-PLATFARM FOR AGRIBUSINESS', abbr: 'SO', currency: 'EGP', country: 'Egypt' },
+];
+const SY={draft:{bg:"#FDF6EC",c:"#D4960A",l:"Draft"},confirmed:{bg:"#E4EFE6",c:"#2D5A3D",l:"Confirmed"},submitted:{bg:"#E8EAF6",c:"#475577",l:"Pending Review"},approved:{bg:"#E4EFE6",c:"#2D5A3D",l:"Approved"},paid:{bg:"#D4EDDA",c:"#155724",l:"Paid"},refused:{bg:"#FDF0F0",c:"#C94444",l:"Refused"}};
+const TY={top_up:{bg:"#E4EFE6",c:"#2D5A3D",l:"Top Up",ic:"↑",sign:"+"},expense_deduction:{bg:"#FDF0F0",c:"#C94444",l:"Expense Deduction",ic:"↓",sign:"-"},adjustment:{bg:"#FDF6EC",c:"#D4960A",l:"Adjustment",ic:"↔",sign:"±"}};
+const PCRS={draft:{bg:"#F7F6F3",c:"#64706C",l:"Draft"},submitted:{bg:"#FDF6EC",c:"#D4960A",l:"Pending Review"},approved:{bg:"#E4EFE6",c:"#2D5A3D",l:"Approved"},refused:{bg:"#FDF0F0",c:"#C94444",l:"Refused"}};
+const STAGES=["submitted","approved","paid"];
+const FREQS=[{k:"daily",l:"Daily"},{k:"weekly",l:"Weekly"},{k:"monthly",l:"Monthly"}];
+const DAYS=["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
+
+// ─── HELPERS ─────────────────────────────────────────────────────────────────
+function fN(n,currency){currency=currency||'EGP';return Number(n||0).toLocaleString("en",{minimumFractionDigits:2,maximumFractionDigits:2})+" "+currency;}
+function fD(d){if(!d)return"—";const m=String(d).match(/(\d{4})-(\d{2})-(\d{2})/);if(!m)return d;const ms=["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];return+m[3]+" "+ms[+m[2]-1]+" "+m[1];}
+function getInitials(name){if(!name)return"?";const parts=name.trim().split(/\s+/);return parts.length>=2?(parts[0][0]+parts[parts.length-1][0]).toUpperCase():name.substring(0,2).toUpperCase();}
+const avatarColors=['#2D5A3D','#4A7C59','#7A9E7E','#C0714A','#D4960A','#6B8E7B','#3A7350','#8B6E5A','#5B7065','#A0522D'];
+function hashColor(name){let h=0;for(let i=0;i<name.length;i++)h=name.charCodeAt(i)+((h<<5)-h);return avatarColors[Math.abs(h)%avatarColors.length];}
+function bd(st){const s=SY[st]||SY.draft;return `<span style="display:inline-flex;padding:3px 10px;border-radius:99px;font-size:10px;font-weight:600;background:${s.bg};color:${s.c}">${s.l}</span>`;}function reqBd(st){const s=PCRS[st]||PCRS.draft;return `<span style="display:inline-flex;padding:3px 10px;border-radius:99px;font-size:10px;font-weight:600;background:${s.bg};color:${s.c}">${s.l}</span>`;}
+function currencyForCompany(companyName){const co=companyObjects.find(c=>c.name===companyName);return co?.currency||'EGP';}
+
+// ─── DATA STORES ─────────────────────────────────────────────────────────────
+let employees = [];
+let expenseSheets = [];
+let transactions = [];
+let requests = [];
+let reminders = [];
+let companyObjects = [...ALL_ODOO_COMPANIES];
+let _isCompanyAdmin = true;
+let _allowedOdooIds = [];
+let _defaultCompanyId = null;
+
+// ─── STATE ───────────────────────────────────────────────────────────────────
+let state = {
+  page: "dash",
+  company: (()=>{const v=localStorage.getItem('platfarm_company');if(!v)return"All Companies";try{const p=JSON.parse(v);if(p&&typeof p==='object'){if(p.id==="ALL")return"All Companies";if(p.name)return p.name;}return v;}catch(e){}return v;})(),
+  companyOpen: false,
+  sel: null, selType: null,
+  stF: "all", empSr: "",
+  pcTab: "bal",
+  showForm: false, formType: "top_up", formAmt: "", formRef: "",
+  showRefuse: false, refuseReason: "",
+  showRejectReq: false, rejectReqReason: "",
+  remForm: null, // null=closed, {empId,freq,hour,dow,dom,msg,active,editId}
+  topUpForm: null, // null=closed, {empId,amount,reason,notes}
+  toast: null,
+};
+
+function setState(patch) {
+  const activeEl = document.activeElement;
+  const wasFocused = activeEl && activeEl.tagName === "INPUT";
+  const selStart = wasFocused ? activeEl.selectionStart : null;
+  const selEnd = wasFocused ? activeEl.selectionEnd : null;
+  const focusPlaceholder = wasFocused ? activeEl.placeholder : null;
+  Object.assign(state, patch);
+  if (patch.company !== undefined) {
+    if (patch.company === 'All Companies') {
+      localStorage.setItem('platfarm_company', JSON.stringify({ id: 'ALL', name: 'All Companies' }));
+    } else {
+      const co = companyObjects.find(c => c.name === patch.company);
+      if (co) localStorage.setItem('platfarm_company', JSON.stringify({ id: co.odooId, name: co.name }));
+      else localStorage.setItem('platfarm_company', JSON.stringify({ id: 0, name: patch.company }));
+    }
+  }
+  render();
+  if (wasFocused && focusPlaceholder) {
+    const newInput = document.querySelector('input[placeholder="' + focusPlaceholder + '"]');
+    if (newInput) { newInput.focus(); if (selStart !== null) { try { newInput.setSelectionRange(selStart, selEnd); } catch(e) {} } }
+  }
+}
+
+let _toastTimer = null;
+function showToast(msg, ok) {
+  const type = ok === true ? "success" : ok === false ? "error" : "info";
+  state.toast = { msg, type };
+  render();
+  clearTimeout(_toastTimer);
+  _toastTimer = setTimeout(() => { state.toast = null; render(); }, 3500);
+}
+
+// ─── COMPUTED HELPERS ────────────────────────────────────────────────────────
+function getFilteredEmployees() {
+  let fe = employees;
+  if (state.company !== "All Companies") {
+    fe = fe.filter(e => e.companyName === state.company);
+  }
+  if (state.empSr) {
+    const q = state.empSr.toLowerCase();
+    fe = fe.filter(e => e.name.toLowerCase().includes(q) || (e.job||'').toLowerCase().includes(q));
+  }
+  return fe;
+}
+function getBalance(empId) {
+  let b = 0;
+  transactions.filter(t => t.employeeId === empId).forEach(t => {
+    if (t.type === "top_up") b += Number(t.amount);
+    else if (t.type === "expense_deduction") b -= Math.abs(Number(t.amount));
+    else b += Number(t.amount);
+  });
+  return b;
+}
+function getFilteredTxs() { const fe = getFilteredEmployees(); return transactions.filter(t => fe.some(e => e.id === t.employeeId)); }
+function getFilteredExps() { if (state.company === "All Companies" && !state.empSr) return expenseSheets.slice(); let fe = expenseSheets; if (state.company !== "All Companies") { const empIds = getFilteredEmployees().map(e => e.id); fe = fe.filter(e => empIds.includes(e.employeeId)); } if (state.empSr) { const q = state.empSr.toLowerCase(); fe = fe.filter(e => e.employeeName.toLowerCase().includes(q)); } return fe; }
+function getFilteredReqs() {
+  let fr = requests;
+  if (state.company !== "All Companies") {
+    fr = fr.filter(r => r.companyName === state.company);
+  }
+  if (state.empSr) {
+    const q = state.empSr.toLowerCase();
+    fr = fr.filter(r => r.employeeName.toLowerCase().includes(q));
+  }
+  return fr;
+}
+
+// ─── ACTIONS ─────────────────────────────────────────────────────────────────
+let _actionBusy = false;
+async function createTx(empId, type, amount, ref) {
+  const emp = employees.find(e => e.id === empId);
+  if (!emp) return;
+  const today = new Date().toISOString().split('T')[0];
+  const result = await trpcMutate('pce.createPettyCash', {
+    employeeId: empId,
+    amount: Number(amount),
+    date: today,
+    type,
+    name: (type === 'top_up' ? 'Top Up' : type === 'expense_deduction' ? 'Expense Deduction' : 'Adjustment') + ' - ' + emp.name,
+    notes: ref || "",
+    reference: ref || "",
+  });
+  if (result?.success) {
+    showToast("✓ " + TY[type].l + " — " + fN(Math.abs(Number(amount)), currencyForCompany(emp.companyName)), true);
+    await reloadTransactions();
+  }
+}
+async function directTopUp() {
+  const f = state.topUpForm;
+  if (!f || !f.empId || !f.amount || !f.reason) { showToast('Please fill all required fields', false); return; }
+  if (_actionBusy) return;
+  _actionBusy = true;
+  render();
+  try {
+    const result = await trpcMutate('pce.directTopUp', {
+      employeeId: Number(f.empId),
+      amount: Number(f.amount),
+      reason: f.reason,
+      notes: f.notes || '',
+    });
+    if (result?.success) {
+      const emp = employees.find(e => e.id === Number(f.empId));
+      showToast('✓ Direct top-up — ' + fN(Number(f.amount), currencyForCompany(emp?.companyName || '')) + ' to ' + (emp?.name || 'employee'), true);
+      setState({ topUpForm: null });
+      await Promise.all([reloadTransactions(), reloadRequests()]);
+    } else { showToast('Top-up failed', false); }
+  } catch(e) { showToast('Error: ' + (e.message || 'Unknown'), false); }
+  _actionBusy = false;
+  render();
+}
+async function approveReq(req) {
+  if (_actionBusy) return;
+  _actionBusy = true;
+  render(); // show loading state on button
+  try {
+    const result = await trpcMutate('pce.approveRequest', { id: req.id, approvedAmount: Number(req.amount || req.requestedAmount || 0) });
+    if (result?.success) {
+      // Batch reload: fetch both without rendering in between
+      const companyId = getActiveCompanyId();
+      const [newReqs, newTxs] = await Promise.all([
+        trpcQuery('pce.requests', companyId ? { companyId } : undefined),
+        trpcQuery('pce.pettyCash', companyId ? { companyId } : undefined),
+      ]);
+      if (newReqs) requests = newReqs;
+      if (newTxs) transactions = newTxs;
+      const updated = requests.find(r => r.id === req.id);
+      state.toast = { msg: "✓ Request approved & disbursed", ok: true };
+      clearTimeout(_toastTimer);
+      _toastTimer = setTimeout(() => { state.toast = null; render(); }, 3000);
+      if (updated) Object.assign(state, { sel: updated });
+      _actionBusy = false;
+      render(); // single render with all updated data
+    } else {
+      _actionBusy = false;
+      showToast("✗ Failed to approve request", false);
+    }
+  } catch (e) {
+    _actionBusy = false;
+    showToast("✗ " + (e.message || "Failed to approve request"), false);
+  }
+}
+async function rejectReq(req, reason) {
+  if (_actionBusy) return;
+  _actionBusy = true;
+  render(); // show loading state on button
+  try {
+    const result = await trpcMutate('pce.refuseRequest', { id: req.id, reason: reason || 'Rejected by admin' });
+    if (result?.success) {
+      // Batch reload without intermediate renders
+      const companyId = getActiveCompanyId();
+      const newReqs = await trpcQuery('pce.requests', companyId ? { companyId } : undefined);
+      if (newReqs) requests = newReqs;
+      const updated = requests.find(r => r.id === req.id);
+      state.toast = { msg: "✗ Request rejected", ok: false };
+      clearTimeout(_toastTimer);
+      _toastTimer = setTimeout(() => { state.toast = null; render(); }, 3000);
+      if (updated) Object.assign(state, { sel: updated, showRejectReq: false, rejectReqReason: "" });
+      _actionBusy = false;
+      render(); // single render with all updated data
+    } else {
+      _actionBusy = false;
+      showToast("✗ Failed to reject request", false);
+    }
+  } catch (e) {
+    _actionBusy = false;
+    showToast("✗ " + (e.message || "Failed to reject request"), false);
+  }
+}
+async function confirmExp(exp) {
+  try {
+    const result = await trpcMutate('pce.confirmExpense', { id: exp.id });
+    if (result?.success) {
+      showToast("✓ Expense " + exp.name + " confirmed", true);
+      await reloadExpenses();
+      await reloadTransactions();
+      const updated = expenseSheets.find(e => e.id === exp.id);
+      if (updated) setState({ sel: updated });
+    } else {
+      showToast("✗ Failed to confirm expense", false);
+    }
+  } catch (e) {
+    showToast("✗ Error: " + (e.message || "Failed to confirm"), false);
+  }
+}
+async function submitExp(exp) {
+  try {
+    const result = await trpcMutate('pce.submitExpense', { id: exp.id });
+    if (result?.success) {
+      showToast("✓ Expense submitted for review", true);
+      await reloadExpenses();
+      const updated = expenseSheets.find(e => e.id === exp.id);
+      if (updated) setState({ sel: updated });
+    } else {
+      showToast("✗ Failed to submit expense", false);
+    }
+  } catch (e) {
+    showToast("✗ Error: " + (e.message || "Failed to submit"), false);
+  }
+}
+async function approveExp(exp) {
+  try {
+    const result = await trpcMutate('pce.approveExpense', { id: exp.id });
+    if (result?.success) {
+      showToast("✓ Expense approved", true);
+      await reloadExpenses();
+      await reloadTransactions();
+      const updated = expenseSheets.find(e => e.id === exp.id);
+      if (updated) setState({ sel: updated });
+    } else {
+      showToast("✗ Failed to approve expense", false);
+    }
+  } catch (e) {
+    showToast("✗ Error: " + (e.message || "Failed to approve"), false);
+  }
+}
+async function payExp(exp) {
+  try {
+    const result = await trpcMutate('pce.payExpense', { id: exp.id });
+    if (result?.success) {
+      showToast("✓ Expense marked as paid", true);
+      await reloadExpenses();
+      await reloadTransactions();
+      const updated = expenseSheets.find(e => e.id === exp.id);
+      if (updated) setState({ sel: updated });
+    } else {
+      showToast("✗ Failed to mark as paid", false);
+    }
+  } catch (e) {
+    showToast("✗ Error: " + (e.message || "Failed to pay"), false);
+  }
+}
+async function refuseExp(exp) {
+  try {
+    const result = await trpcMutate('pce.refuseExpense', { id: exp.id });
+    if (result?.success) {
+      showToast("✗ Expense refused", true);
+      await reloadExpenses();
+      const updated = expenseSheets.find(e => e.id === exp.id);
+      if (updated) setState({ sel: updated, showRefuse: false });
+    } else {
+      showToast("✗ Failed to refuse expense", false);
+    }
+  } catch (e) {
+    showToast("✗ Error: " + (e.message || "Failed to refuse"), false);
+  }
+}
+async function resetExp(exp) {
+  try {
+    const result = await trpcMutate('pce.resetExpense', { id: exp.id });
+    if (result?.success) {
+      showToast("✓ Expense reset to draft", true);
+      await reloadExpenses();
+      const updated = expenseSheets.find(e => e.id === exp.id);
+      if (updated) setState({ sel: updated });
+    } else {
+      showToast("✗ Failed to reset expense", false);
+    }
+  } catch (e) {
+    showToast("✗ Error: " + (e.message || "Failed to reset"), false);
+  }
+}
+let _deleteExpPending = null;
+async function deleteExp(exp) {
+  if (_deleteExpPending !== exp.id) {
+    _deleteExpPending = exp.id;
+    showToast("⚠ Click Delete again to confirm removal", false);
+    setTimeout(() => { if (_deleteExpPending === exp.id) _deleteExpPending = null; }, 4000);
+    return;
+  }
+  _deleteExpPending = null;
+  try {
+    const result = await trpcMutate('pce.deleteExpense', { id: exp.id });
+    if (result?.success) {
+      showToast("✓ Expense deleted", true);
+      closeDet();
+      await reloadExpenses();
+      await reloadTransactions();
+    } else {
+      showToast("✗ Failed to delete expense", false);
+    }
+  } catch (e) {
+    showToast("✗ Error: " + (e.message || "Failed to delete"), false);
+  }
+}
+async function createExpDeduction() {
+  const empId = Number(state.expForm?.empId);
+  const emp = employees.find(e => e.id === empId);
+  if (!emp) { showToast("✗ Select an employee", false); return; }
+  const amount = Number(state.expForm?.amount);
+  if (!amount || amount <= 0) { showToast("✗ Enter a valid amount", false); return; }
+  const name = state.expForm?.name || "";
+  if (!name.trim()) { showToast("✗ Enter a description", false); return; }
+  try {
+    const result = await trpcMutate('pce.createExpense', {
+      employeeId: empId,
+      amount: amount,
+      date: state.expForm?.date || new Date().toISOString().split('T')[0],
+      name: name,
+      notes: state.expForm?.notes || "",
+      reference: state.expForm?.reference || "",
+    });
+    if (result?.success) {
+      showToast("✓ Expense deduction created", true);
+      setState({ expForm: null });
+      await reloadExpenses();
+      await reloadTransactions();
+    } else {
+      showToast("✗ Failed to create expense", false);
+    }
+  } catch (e) {
+    showToast("✗ Error: " + (e.message || "Failed to create"), false);
+  }
+}
+async function saveReminder(f) {
+  if (f.editId) {
+    await trpcMutate('pce.updateReminder', {
+      id: f.editId, employeeId: Number(f.empId),
+      employeeName: (employees.find(e => e.id === Number(f.empId)) || {}).name || "",
+      freq: f.freq, hour: Number(f.hour), dow: Number(f.dow), dom: Number(f.dom),
+      message: f.msg, active: f.active,
+    });
+  } else {
+    await trpcMutate('pce.createReminder', {
+      employeeId: Number(f.empId),
+      employeeName: (employees.find(e => e.id === Number(f.empId)) || {}).name || "",
+      freq: f.freq, hour: Number(f.hour), dow: Number(f.dow || 0), dom: Number(f.dom || 1),
+      message: f.msg, active: f.active !== false,
+    });
+  }
+  showToast("✓ Reminder saved", true);
+  setState({ remForm: null });
+  await reloadReminders();
+}
+async function toggleReminder(id) {
+  await trpcMutate('pce.toggleReminder', { id });
+  await reloadReminders();
+}
+let _deleteRemPending = null;
+async function deleteReminder(id) {
+  if (_deleteRemPending !== id) {
+    _deleteRemPending = id;
+    showToast("⚠ Click Delete again to confirm", false);
+    setTimeout(() => { if (_deleteRemPending === id) _deleteRemPending = null; }, 4000);
+    return;
+  }
+  _deleteRemPending = null;
+  try {
+    await trpcMutate('pce.deleteReminder', { id });
+    showToast("✓ Reminder deleted", true);
+    await reloadReminders();
+  } catch (e) {
+    showToast("✗ Error: " + (e.message || "Failed to delete"), false);
+  }
+}
+
+function openDet(item, type) { setState({ sel: item, selType: type, showForm: false, showRefuse: false, showRejectReq: false }); }
+function closeDet() { setState({ sel: null, selType: null, showForm: false, showRefuse: false, showRejectReq: false }); }
+
+// ─── DATA LOADING ────────────────────────────────────────────────────────────
+async function reloadTransactions() {
+  const companyId = getActiveCompanyId();
+  const data = await trpcQuery('pce.pettyCash', companyId ? { companyId } : undefined);
+  if (data) transactions = data;
+  render();
+}
+async function reloadRequests() {
+  const companyId = getActiveCompanyId();
+  const data = await trpcQuery('pce.requests', companyId ? { companyId } : undefined);
+  if (data) requests = data;
+  render();
+}
+async function reloadExpenses() {
+  const companyId = getActiveCompanyId();
+  const data = await trpcQuery('pce.expenses', companyId ? { companyId } : undefined);
+  if (data) expenseSheets = data;
+  render();
+}
+async function reloadReminders() {
+  const data = await trpcQuery('pce.reminders');
+  if (data) reminders = data;
+  render();
+}
+function getActiveCompanyId() {
+  if (state.company === "All Companies") return null;
+  const co = companyObjects.find(c => c.name === state.company);
+  return co?.odooId || null;
+}
+
+async function loadData() {
+  try {
+    // Fetch company access
+    try {
+      const accessData = await trpcQuery('userMgmt.myCompanyAccess');
+      if (accessData) {
+        _isCompanyAdmin = accessData.isAdmin || (accessData.allowedCompanyIds && accessData.allowedCompanyIds.length === 0);
+        _allowedOdooIds = accessData.allowedCompanyIds || [];
+        _defaultCompanyId = accessData.defaultCompanyId || null;
+      }
+    } catch(e) { console.error('Failed to fetch company access:', e); }
+
+    // Filter companies based on access
+    if (!_isCompanyAdmin && _allowedOdooIds.length > 0) {
+      companyObjects = ALL_ODOO_COMPANIES.filter(c => _allowedOdooIds.includes(c.odooId));
+    }
+    // Set default company for restricted users
+    if (!_isCompanyAdmin && companyObjects.length > 0) {
+      if (_defaultCompanyId) {
+        const defaultCo = companyObjects.find(c => c.odooId === _defaultCompanyId);
+        if (defaultCo) setState({ company: defaultCo.name });
+      }
+      if (state.company === 'All Companies' || !companyObjects.some(c => c.name === state.company)) {
+        setState({ company: companyObjects[0].name });
+      }
+    }
+
+    // Fetch all data in parallel
+    const companyId = getActiveCompanyId();
+    const [emps, sheets, txs, reqs, rems] = await Promise.all([
+      trpcQuery('pce.employees', companyId ? { companyId } : undefined),
+      trpcQuery('pce.expenses', companyId ? { companyId } : undefined),
+      trpcQuery('pce.pettyCash', companyId ? { companyId } : undefined),
+      trpcQuery('pce.requests', companyId ? { companyId } : undefined),
+      trpcQuery('pce.reminders'),
+    ]);
+    if (emps) employees = emps;
+    if (sheets) expenseSheets = sheets;
+    if (txs) transactions = txs;
+    if (reqs) requests = reqs;
+    if (rems) reminders = rems;
+    render();
+  } catch (err) {
+    console.error("loadData error:", err);
+    document.getElementById('app').innerHTML = `<div style="padding:40px;text-align:center;color:#C94444"><h3>Failed to load data</h3><p style="margin-top:8px;font-size:12px;color:#64706C">${err.message}</p><button onclick="loadData()" style="margin-top:12px;padding:8px 20px;background:#2D5A3D;color:#fff;border:none;border-radius:6px;cursor:pointer;font-family:inherit">Retry</button></div>`;
+  }
+}
+
+// ─── RENDER ──────────────────────────────────────────────────────────────────
+function render() {
+  const fe = getFilteredEmployees();
+  const fTxs = getFilteredTxs();
+  const fExps = getFilteredExps();
+  const fReqs = getFilteredReqs();
+  const selEmp = fe.length === 1 ? fe[0] : null;
+  const totalBal = fe.reduce((s, e) => s + getBalance(e.id), 0);
+  const pendingReq = fReqs.filter(r => r.state === "submitted").length;
+  const submittedExp = fExps.filter(e => e.state === "submitted").length;
+  const approvedExp = fExps.filter(e => e.state === "approved").length;
+  const paidExp = fExps.filter(e => e.state === "paid").length;
+  const refusedExp = fExps.filter(e => e.state === "refused").length;
+  const confirmedExp = fExps.filter(e => e.state === "confirmed").length;
+  let fExpList = fExps.slice();
+  if (state.stF !== "all") fExpList = fExpList.filter(e => e.state === state.stF);
+
+  // Active company object
+  const activeCoObj = state.company !== 'All Companies' ? companyObjects.find(c => c.name === state.company) : null;
+  const activeCurrency = activeCoObj?.currency || 'EGP';
+  function empCurrency(emp) { if (activeCoObj) return activeCurrency; const co = companyObjects.find(c => c.name === emp?.companyName); return co?.currency || 'EGP'; }
+  function fNc(n, emp) { return fN(n, emp ? empCurrency(emp) : activeCurrency); }
+
+  let html = '';
+
+  // ── TOAST ──
+  if (state.toast) {
+    const _tIcon = state.toast.type === "success" ? "✓" : state.toast.type === "error" ? "✗" : "ℹ";
+    const _tIconColor = state.toast.type === "success" ? "#2D5A3D" : state.toast.type === "error" ? "#C94444" : "#475577";
+    html += `<div class="toast ${state.toast.type || 'success'}"><span style="font-size:15px;font-weight:700;color:${_tIconColor};flex-shrink:0">${_tIcon}</span><span>${state.toast.msg}</span></div>`;
+  }
+
+  // ── DETAIL PANEL ──
+  if (state.sel) {
+    html += '<div class="dp">';
+
+    // PC Employee Detail
+    if (state.selType === "pc") {
+      const emp = state.sel;
+      const bal = getBalance(emp.id);
+      const empTxs = transactions.filter(t => t.employeeId === emp.id);
+      const cur = empCurrency(emp);
+      html += `<div style="padding:14px 18px;background:linear-gradient(135deg,#1B3A2D,#2D5A3D);color:#fff"><div style="display:flex;justify-content:space-between"><div><div style="font-size:16px;font-weight:700">${emp.name}</div><div style="font-size:11px;opacity:.6;margin-top:2px">${emp.job||''} · ${emp.companyName?emp.companyName.split('-')[0]:''}</div></div><button style="background:rgba(255,255,255,.15);border:none;border-radius:6px;padding:4px 8px;color:#fff;cursor:pointer;font-size:14px" onclick="closeDet()">✕</button></div><div class="m" style="font-size:32px;margin-top:10px;color:${bal>=0?'#7FBF96':'#F5C4C4'}">${fN(bal,cur)}</div><div style="font-size:10px;opacity:.5;margin-top:2px">Live Balance · ${empTxs.length} txs</div></div>`;
+      html += `<div style="display:flex;gap:8px;padding:12px 18px;border-bottom:1px solid #E4E1DC"><button onclick="setState({showForm:true,formType:'top_up'})" style="flex:1;padding:8px;border-radius:8px;border:1.5px solid #2D5A3D;background:#E4EFE6;color:#2D5A3D;font-size:11px;font-weight:700;cursor:pointer;font-family:inherit">↑ Top Up</button><button onclick="setState({showForm:true,formType:'adjustment'})" style="flex:1;padding:8px;border-radius:8px;border:1.5px solid #D4960A;background:#FDF6EC;color:#D4960A;font-size:11px;font-weight:700;cursor:pointer;font-family:inherit">± Adjust</button></div>`;
+      // Top-up / Adjustment form
+      if (state.showForm) {
+        const isTopUp = state.formType === "top_up";
+        html += `<div style="padding:14px 18px;background:#FAFAF8;border-bottom:1px solid #E4E1DC"><div style="font-size:11px;font-weight:700;color:${isTopUp?'#2D5A3D':'#D4960A'};margin-bottom:10px">${isTopUp?'New Top-Up':'Manual Adjustment'}</div><input type="number" id="txAmt" value="${state.formAmt}" oninput="state.formAmt=this.value" placeholder="Amount" style="width:100%;padding:8px 10px;border:1.5px solid #E4E1DC;border-radius:8px;font-size:14px;font-family:'JetBrains Mono';margin-bottom:8px;outline:none"/><input id="txRef" value="${state.formRef}" oninput="state.formRef=this.value" placeholder="Reference (e.g. March allocation)" style="width:100%;padding:8px 10px;border:1.5px solid #E4E1DC;border-radius:8px;font-size:12px;font-family:inherit;margin-bottom:8px;outline:none"/><div style="display:flex;gap:8px"><button onclick="(async()=>{await createTx(state.sel.id,state.formType,state.formAmt,state.formRef);setState({formAmt:'',formRef:'',showForm:false})})()" style="flex:1;padding:10px;border-radius:8px;background:${isTopUp?'#2D5A3D':'#D4960A'};color:#fff;border:none;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit">✓ Confirm</button><button onclick="setState({showForm:false})" style="padding:10px 14px;border-radius:8px;background:#fff;color:#64706C;border:1px solid #E4E1DC;font-size:12px;cursor:pointer;font-family:inherit">Cancel</button></div></div>`;
+      }
+      // Transaction history
+      html += `<div style="padding:12px 18px"><div style="font-size:9px;font-weight:700;color:#4A7C59;text-transform:uppercase;margin-bottom:8px">Transaction History</div>`;
+      empTxs.forEach(t => {
+        const ty = TY[t.type] || TY.top_up;
+        html += `<div style="display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid #F2F0EC"><div style="width:30px;height:30px;border-radius:8px;background:${ty.bg};display:flex;align-items:center;justify-content:center;font-size:13px;color:${ty.c};font-weight:700">${ty.ic}</div><div style="flex:1"><div style="display:flex;justify-content:space-between"><span style="font-size:11px;font-weight:600;color:#2C3E50">${ty.l}</span><span class="m" style="font-size:12px;color:${ty.c}">${ty.sign}${fN(Math.abs(Number(t.amount)),cur)}</span></div><div style="font-size:9px;color:#95A09C;margin-top:1px">${t.reference||t.notes||''} · ${fD(t.date||t.createDate)}</div></div></div>`;
+      });
+      if (empTxs.length === 0) html += `<div style="text-align:center;padding:20px;color:#95A09C;font-size:11px">No transactions yet</div>`;
+      html += '</div>';
+    }
+
+    // Expense Deduction Detail (pf.petty.cash)
+    if (state.selType === "exp") {
+      const exp = expenseSheets.find(e => e.id === state.sel.id) || state.sel;
+      const cur = exp.currencyName || 'EGP';
+      html += `<div style="padding:14px 18px;background:linear-gradient(135deg,#475577,#2C3E50);color:#fff"><div style="display:flex;justify-content:space-between"><div><div class="m" style="font-size:16px">${exp.name}</div><div style="font-size:11px;opacity:.6;margin-top:2px">${exp.employeeName}</div></div><button style="background:rgba(255,255,255,.15);border:none;border-radius:6px;padding:4px 8px;color:#fff;cursor:pointer;font-size:14px" onclick="closeDet()">✕</button></div><div class="m" style="font-size:28px;margin-top:8px">${fN(exp.amount,cur)}</div><div style="display:flex;gap:6px;margin-top:6px">${bd(exp.state)}<span style="padding:3px 8px;border-radius:99px;font-size:9px;font-weight:600;background:rgba(196,68,68,.2);color:#F5C4C4">Expense Deduction</span></div></div>`;
+      // Pipeline stepper
+      html += `<div style="display:flex;align-items:center;padding:12px 18px;border-bottom:1px solid #E4E1DC;background:#FAFAF8">`;
+      STAGES.forEach((st, i) => {
+        const cur2 = STAGES.indexOf(exp.state);
+        const done = cur2 >= i;
+        const active = exp.state === st;
+        html += `<div style="display:flex;align-items:center;flex:1"><div style="display:flex;flex-direction:column;align-items:center;gap:2px"><div style="width:${active?26:20}px;height:${active?26:20}px;border-radius:13px;background:${done?'#2D5A3D':'#E4E1DC'};color:${done?'#fff':'#95A09C'};display:flex;align-items:center;justify-content:center;font-size:${active?10:8}px;font-weight:700;border:${active?'2px solid #C0714A':'none'}">${done?'\u2713':i+1}</div><span style="font-size:7px;font-weight:${done?700:500};color:${done?'#2D5A3D':'#95A09C'}">${(SY[st]||{}).l||st}</span></div>${i<STAGES.length-1?`<div style="flex:1;height:2px;background:${cur2>i?'#2D5A3D':'#E4E1DC'};margin:0 3px;margin-bottom:14px"></div>`:''}</div>`;
+      });
+      html += '</div>';
+      // Actions
+      if (exp.state === "submitted") {
+        html += `<div style="padding:12px 18px;border-bottom:1px solid #E4E1DC;background:#E8EAF610"><div style="font-size:9px;font-weight:700;color:#475577;text-transform:uppercase;margin-bottom:8px">Pending Review</div><div style="display:flex;gap:8px"><button onclick="approveExp(expenseSheets.find(e=>e.id===${exp.id})||state.sel)" style="flex:1;padding:10px;border-radius:8px;background:#2D5A3D;color:#fff;border:none;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit">\u2713 Approve</button><button onclick="setState({showRefuse:true})" style="flex:1;padding:10px;border-radius:8px;background:#fff;color:#C94444;border:1.5px solid #C94444;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit">\u2717 Refuse</button></div></div>`;
+      }
+      if (state.showRefuse && exp.state === "submitted") {
+        html += `<div style="padding:14px 18px;background:#FDF0F0;border-bottom:1px solid #E4E1DC"><div style="font-size:11px;font-weight:700;color:#C94444;margin-bottom:8px">Confirm Refusal</div><div style="display:flex;gap:8px"><button onclick="refuseExp(expenseSheets.find(e=>e.id===${exp.id})||state.sel)" style="flex:1;padding:8px;border-radius:8px;background:#C94444;color:#fff;border:none;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit">\u2717 Confirm Refuse</button><button onclick="setState({showRefuse:false})" style="padding:8px 14px;border-radius:8px;background:#fff;border:1px solid #E4E1DC;font-size:12px;cursor:pointer;font-family:inherit;color:#64706C">Cancel</button></div></div>`;
+      }
+      if (exp.state === "approved") {
+        html += `<div style="padding:12px 18px;border-bottom:1px solid #E4E1DC;background:#E4EFE610"><div style="font-size:9px;font-weight:700;color:#2D5A3D;text-transform:uppercase;margin-bottom:8px">Approved — Ready to Pay</div><div style="display:flex;gap:8px"><button onclick="payExp(expenseSheets.find(e=>e.id===${exp.id})||state.sel)" style="flex:1;padding:10px;border-radius:8px;background:#155724;color:#fff;border:none;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit">💰 Mark as Paid</button><button onclick="refuseExp(expenseSheets.find(e=>e.id===${exp.id})||state.sel)" style="flex:1;padding:10px;border-radius:8px;background:#fff;color:#C94444;border:1.5px solid #C94444;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit">\u2717 Refuse</button></div></div>`;
+      }
+      if (exp.state === "paid") {
+        html += `<div style="padding:12px 18px;background:#D4EDDA;border-bottom:1px solid #A3D9A5"><div style="font-size:12px;font-weight:700;color:#155724">💰 Paid</div><div style="font-size:10px;color:#64706C;margin-top:2px">Balance after: ${fN(exp.balanceAfter,cur)}</div></div>`;
+      }
+      if (exp.state === "confirmed") {
+        html += `<div style="padding:12px 18px;background:#F2F7F3;border-bottom:1px solid #CDDDD1"><div style="font-size:12px;font-weight:700;color:#2D5A3D">\u2713 Confirmed</div><div style="font-size:10px;color:#64706C;margin-top:2px">Balance after: ${fN(exp.balanceAfter,cur)}</div></div>`;
+      }
+      if (exp.state === "refused") {
+        html += `<div style="padding:12px 18px;background:#FDF0F0;border-bottom:1px solid #E4E1DC"><div style="font-size:12px;font-weight:700;color:#C94444">\u2717 Refused</div><div style="display:flex;gap:8px;margin-top:8px"><button onclick="resetExp(expenseSheets.find(e=>e.id===${exp.id})||state.sel)" style="padding:8px 16px;border-radius:8px;background:#fff;color:#475577;border:1.5px solid #475577;font-size:11px;font-weight:600;cursor:pointer;font-family:inherit">↩ Reset to Pending Review</button></div></div>`;
+      }
+      // Details
+      html += `<div style="padding:12px 18px">`;
+      [["Employee", exp.employeeName], ["Date", fD(exp.date)], ["Amount", fN(exp.amount, cur)], ["Balance After", exp.balanceAfter !== undefined ? fN(exp.balanceAfter, cur) : '—'], exp.reference ? ["Reference", exp.reference] : null, exp.notes ? ["Notes", exp.notes] : null, exp.createdBy ? ["Created By", exp.createdBy] : null].filter(Boolean).forEach(([l, v]) => {
+        html += `<div style="display:flex;justify-content:space-between;padding:6px 0;font-size:11px;border-bottom:1px solid #F2F0EC"><span style="color:#64706C">${l}</span><span style="color:#2C3E50;font-weight:600">${v}</span></div>`;
+      });
+      html += '</div>';
+    }
+
+    // Request Detail
+    if (state.selType === "pcr") {
+      const req = requests.find(r => r.id === state.sel.id) || state.sel;
+      const st = PCRS[req.state] || PCRS.draft;
+      const cur = currencyForCompany(req.companyName);
+      html += `<div style="padding:14px 18px;background:linear-gradient(135deg,#C0714A,#D4845F);color:#fff"><div style="display:flex;justify-content:space-between"><div><div style="font-size:14px;font-weight:700">Top-Up Request #${req.id}</div><div style="font-size:11px;opacity:.6;margin-top:2px">${req.employeeName} · ${req.companyName?req.companyName.split('-')[0]:''}</div></div><button style="background:rgba(255,255,255,.15);border:none;border-radius:6px;padding:4px 8px;color:#fff;cursor:pointer;font-size:14px" onclick="closeDet()">✕</button></div><div class="m" style="font-size:28px;margin-top:8px">${fN(Number(req.amount),cur)}</div><div style="margin-top:6px"><span style="padding:3px 10px;border-radius:99px;font-size:10px;font-weight:600;background:rgba(255,255,255,.2);color:#fff">${st.l}</span></div></div>`;
+      // Action buttons
+      if (req.state === "submitted" && !state.showRejectReq) {
+        if (_actionBusy) {
+          html += `<div style="padding:12px 18px;border-bottom:1px solid #E4E1DC;background:#FDF7F3"><div style="font-size:9px;font-weight:700;color:#C0714A;text-transform:uppercase;margin-bottom:6px">Processing...</div><div style="display:flex;gap:8px"><button disabled style="flex:1;padding:10px;border-radius:8px;background:#95A09C;color:#fff;border:none;font-size:12px;font-weight:700;cursor:wait;font-family:inherit;opacity:0.7">⏳ Processing...</button></div></div>`;
+        } else {
+          html += `<div style="padding:12px 18px;border-bottom:1px solid #E4E1DC;background:#FDF7F3"><div style="font-size:9px;font-weight:700;color:#C0714A;text-transform:uppercase;margin-bottom:6px">Action Required</div><div style="font-size:11px;color:#64706C;margin-bottom:10px">Approve → creates <strong>${fN(Number(req.amount),cur)}</strong> top-up (current balance: <strong>${fN(getBalance(req.employeeId),cur)}</strong>)</div><div style="display:flex;gap:8px"><button onclick="approveReq(requests.find(r=>r.id===${req.id})||state.sel)" style="flex:1;padding:10px;border-radius:8px;background:#2D5A3D;color:#fff;border:none;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit">✓ Approve & Disburse</button><button onclick="setState({showRejectReq:true})" style="flex:1;padding:10px;border-radius:8px;background:#fff;color:#C94444;border:1.5px solid #C94444;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit">✗ Reject</button></div></div>`;
+        }
+      }
+      if (state.showRejectReq && req.state === "submitted") {
+        if (_actionBusy) {
+          html += `<div style="padding:14px 18px;background:#FDF0F0;border-bottom:1px solid #E4E1DC"><div style="font-size:11px;font-weight:700;color:#C94444;margin-bottom:8px">Processing rejection...</div><div style="display:flex;gap:8px"><button disabled style="flex:1;padding:8px;border-radius:8px;background:#95A09C;color:#fff;border:none;font-size:12px;font-weight:600;cursor:wait;font-family:inherit;opacity:0.7">⏳ Processing...</button></div></div>`;
+        } else {
+          html += `<div style="padding:14px 18px;background:#FDF0F0;border-bottom:1px solid #E4E1DC"><div style="font-size:11px;font-weight:700;color:#C94444;margin-bottom:8px">Rejection Reason</div><input id="rejectInput" value="${state.rejectReqReason}" oninput="state.rejectReqReason=this.value" placeholder="Enter reason..." style="width:100%;padding:8px;border:1.5px solid #C94444;border-radius:8px;font-size:12px;font-family:inherit;margin-bottom:8px;outline:none"/><div style="display:flex;gap:8px"><button onclick="rejectReq(requests.find(r=>r.id===${req.id})||state.sel,state.rejectReqReason)" style="flex:1;padding:8px;border-radius:8px;background:#C94444;color:#fff;border:none;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit">✗ Confirm Rejection</button><button onclick="setState({showRejectReq:false})" style="padding:8px 14px;border-radius:8px;background:#fff;border:1px solid #E4E1DC;font-size:12px;cursor:pointer;font-family:inherit;color:#64706C">Cancel</button></div></div>`;
+        }
+      }
+      if (req.state === "approved") {
+        html += `<div style="padding:12px 18px;background:#F2F7F3;border-bottom:1px solid #CDDDD1"><div style="font-size:12px;font-weight:700;color:#2D5A3D">✓ Approved & Disbursed</div><div style="font-size:10px;color:#64706C;margin-top:2px">${fN(Number(req.amount),cur)} top-up created. New balance: ${fN(getBalance(req.employeeId),cur)}</div></div>`;
+      }
+      if (req.state === "refused") {
+        html += `<div style="padding:12px 18px;background:#FDF0F0;border-bottom:1px solid #E4E1DC"><div style="font-size:12px;font-weight:700;color:#C94444">✗ Rejected</div></div>`;
+      }
+      // Details
+      html += `<div style="padding:12px 18px">`;
+      [["Purpose", req.purpose || "—"], ["Notes", req.notes || "—"], ["Amount", fN(Number(req.amount), cur)], ["Employee", req.employeeName], ["Company", req.companyName ? req.companyName.split('-')[0] : ''], ["Date", fD(req.requestDate || req.createdAt)], ["Current Balance", fN(getBalance(req.employeeId), cur)]].forEach(([l, v]) => {
+        html += `<div style="display:flex;justify-content:space-between;padding:6px 0;font-size:11px;border-bottom:1px solid #F2F0EC"><span style="color:#64706C">${l}</span><span style="color:#2C3E50;font-weight:600;max-width:200px;text-align:right">${v}</span></div>`;
+      });
+      html += '</div>';
+    }
+
+    html += '</div>'; // close .dp
+  }
+
+  // ── PAGE HEADER ──
+  html += `<div class="ph"><div class="pt">${state.page==="dash"?"Dashboard":state.page==="pc"?"Petty Cash":state.page==="exp"?"Expenses":"Reminders"}</div><div style="display:flex;align-items:center;gap:8px">`;
+  // Employee search (not on reminders page)
+  if (state.page !== "rem") {
+    html += `<div style="position:relative"><input value="${state.empSr}" oninput="setState({empSr:this.value})" placeholder="🔍 Employee..." style="width:180px;padding:6px 28px 6px 10px;border:1.5px solid ${state.empSr?'#2D5A3D':'#E4E1DC'};border-radius:8px;font-size:11px;font-family:inherit;outline:none;background:${state.empSr?'#F2F7F3':'#fff'}"/>${state.empSr?`<button onclick="setState({empSr:''})" style="position:absolute;right:6px;top:50%;transform:translateY(-50%);background:none;border:none;font-size:11px;color:#95A09C;cursor:pointer">✕</button>`:''}</div>`;
+  }
+  // Company selector
+  html += `<div style="position:relative"><button class="co-btn${state.companyOpen?' open':''}" onclick="setState({companyOpen:!state.companyOpen})">${state.company==='All Companies'?'All Companies':activeCoObj?.name||state.company} ▾</button>`;
+  if (state.companyOpen) {
+    html += `<div class="co-dd"><div class="co-dd-header"><span>Switch Company</span></div>`;
+    if (_isCompanyAdmin) {
+      html += `<div class="co-item ${state.company==='All Companies'?'act':''}" onclick="setState({company:'All Companies',companyOpen:false});loadData()"><div class="co-badge" style="background:#2D5A3D">⊕</div><div class="co-item-info"><div class="co-item-name">All Companies</div><div class="co-item-sub">HQ consolidated view</div></div>${state.company==='All Companies'?'<span style="font-size:11px;color:#2D5A3D;font-weight:700">✓</span>':''}</div>`;
+    }
+    companyObjects.forEach(co => {
+      const isAct = state.company === co.name;
+      html += `<div class="co-item ${isAct?'act':''}" onclick="setState({company:'${co.name.replace(/'/g,"\\'")}',companyOpen:false});loadData()"><div class="co-badge" style="background:#4A7C59">${co.abbr}</div><div class="co-item-info"><div class="co-item-name">${co.name}</div><div class="co-item-sub">${co.currency}${co.country?' · '+co.country:''}</div></div>${isAct?'<span style="font-size:11px;color:#2D5A3D;font-weight:700">✓</span>':''}</div>`;
+    });
+    html += '</div>';
+  }
+  html += '</div>';
+  html += '</div></div>';
+
+  // ── SELECTED EMPLOYEE BANNER ──
+  if (selEmp && state.page !== "rem") {
+    const bal = getBalance(selEmp.id);
+    const cur = empCurrency(selEmp);
+    html += `<div style="display:flex;align-items:center;justify-content:space-between;padding:10px 24px;border-bottom:1px solid #CDDDD1;background:linear-gradient(135deg,#F2F7F3,#E4EFE6)"><div style="display:flex;align-items:center;gap:10px"><div style="width:34px;height:34px;border-radius:8px;background:#2D5A3D;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:#fff">${getInitials(selEmp.name)}</div><div><div style="font-size:14px;font-weight:700;color:#2D5A3D">${selEmp.name}</div><div style="font-size:10px;color:#64706C">${selEmp.job||''} · ${selEmp.companyName?selEmp.companyName.split('-')[0]:''}</div></div></div><div style="display:flex;align-items:center;gap:14px"><div style="text-align:center"><div style="font-size:8px;font-weight:700;color:#4A7C59;text-transform:uppercase">Balance</div><div class="m" style="font-size:16px;color:${bal>=0?'#2D5A3D':'#C94444'}">${fN(bal,cur)}</div></div><button onclick="setState({empSr:''})" style="padding:5px 12px;border-radius:6px;border:1px solid #CDDDD1;background:#fff;font-size:10px;font-weight:600;cursor:pointer;font-family:inherit;color:#64706C">Clear</button></div></div>`;
+  }
+
+  // ── CONTENT AREA ──
+  html += `<div style="margin-right:${state.sel?'420px':'0'};transition:margin .2s">`;
+
+  // ═══ DASHBOARD PAGE ═══
+  if (state.page === "dash") {
+    html += `<div style="padding:18px">`;
+    // Hero banner
+    html += `<div style="background:linear-gradient(135deg,#1B3A2D,#2D5A3D 60%,#4A7C59);border-radius:12px;padding:24px 28px;margin-bottom:16px;color:#fff"><div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:1px;opacity:.6;margin-bottom:6px">Petty Cash & Expenses</div><div style="display:flex;gap:30px;margin-top:10px"><div><div style="font-size:9px;opacity:.5">TOTAL BALANCE</div><div class="m" style="font-size:24px;margin-top:2px">${fN(totalBal,activeCurrency)}</div></div><div><div style="font-size:9px;opacity:.5">TOP-UP REQUESTS</div><div class="m" style="font-size:24px;color:${pendingReq>0?'#F5C4C4':'rgba(255,255,255,.4)'};margin-top:2px">${pendingReq}</div></div><div><div style="font-size:9px;opacity:.5">PENDING REVIEW</div><div class="m" style="font-size:24px;color:#F5DDB8;margin-top:2px">${submittedExp}</div></div><div><div style="font-size:9px;opacity:.5">APPROVED</div><div class="m" style="font-size:24px;color:#7FBF96;margin-top:2px">${approvedExp}</div></div><div><div style="font-size:9px;opacity:.5">PAID</div><div class="m" style="font-size:24px;color:#A3D9A5;margin-top:2px">${paidExp}</div></div></div></div>`;
+    // Two-column grid: Requests + Pending Expenses
+    html += `<div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">`;
+    // Top-Up Requests
+    html += `<div class="xc"><div class="xh" style="background:#C0714A"><h3>📩 Top-Up Requests</h3></div><table class="t"><thead><tr><th>Employee</th><th>Amount</th><th>Purpose</th><th></th></tr></thead><tbody>`;
+    fReqs.filter(r => r.state === "submitted").forEach(r => {
+      const cur = currencyForCompany(r.companyName);
+      html += `<tr><td style="font-size:10px">${r.employeeName}</td><td class="m" style="font-size:11px;color:#C0714A">${fN(Number(r.amount),cur)}</td><td style="font-size:9px;color:#64706C;max-width:80px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${r.purpose||'—'}</td><td><button onclick="setState({page:'pc',pcTab:'req'});openDet(requests.find(x=>x.id===${r.id}),'pcr')" style="padding:4px 8px;border-radius:6px;background:#2D5A3D;color:#fff;border:none;font-size:9px;font-weight:600;cursor:pointer;font-family:inherit">Review</button></td></tr>`;
+    });
+    if (pendingReq === 0) html += `<tr><td colspan="4" style="text-align:center;padding:16px;color:#95A09C;font-size:12px">No pending</td></tr>`;
+    html += `</tbody></table></div>`;
+    // Pending Expenses
+    html += `<div class="xc"><div class="xh" style="background:#475577"><h3>📋 Pending Expenses</h3></div><table class="t"><thead><tr><th>Ref</th><th>Employee</th><th>Amount</th><th></th></tr></thead><tbody>`;
+    fExps.filter(e => e.state === "submitted").forEach(e => {
+      const cur = e.currencyName || 'EGP';
+      html += `<tr><td class="m" style="color:#475577;font-size:10px">${e.name}</td><td style="font-size:10px">${e.employeeName}</td><td class="m" style="font-size:11px">${fN(e.amount,cur)}</td><td><button onclick="setState({page:'exp'});openDet(expenseSheets.find(x=>x.id===${e.id}),'exp')" style="padding:4px 8px;border-radius:6px;background:#475577;color:#fff;border:none;font-size:9px;font-weight:600;cursor:pointer;font-family:inherit">Review</button></td></tr>`;
+    });
+    if (fExps.filter(e => e.state === "submitted").length === 0) html += `<tr><td colspan="4" style="text-align:center;padding:16px;color:#95A09C;font-size:12px">All clear</td></tr>`;
+    html += `</tbody></table></div>`;
+    html += `</div></div>`;
+  }
+
+  // ═══ PETTY CASH PAGE ═══
+  if (state.page === "pc") {
+    html += `<div style="padding:18px">`;
+    // KPI cards
+    const totalDisbursed = fTxs.filter(t => t.type === "top_up").reduce((s, t) => s + Number(t.amount), 0);
+    html += `<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:14px"><div class="sc"><div class="sl">Total Outstanding</div><div class="sv" style="font-size:16px">${fN(totalBal,activeCurrency)}</div></div><div class="sc"><div class="sl">Employees</div><div class="sv" style="font-size:16px">${fe.length}</div></div><div class="sc"><div class="sl">Total Disbursed</div><div class="sv" style="font-size:16px">${fN(totalDisbursed,activeCurrency)}</div></div><div class="sc" style="border-color:${pendingReq>0?'#C94444':'#CDDDD1'}"><div class="sl" style="color:#C0714A">Pending Requests</div><div class="sv" style="font-size:16px;color:${pendingReq>0?'#C94444':'#2D5A3D'}">${pendingReq}</div></div></div>`;
+    // Tabs: Balances / Requests + Direct Top-Up button
+    html += `<div style="display:flex;gap:8px;margin-bottom:14px;align-items:center"><button onclick="setState({pcTab:'bal'})" style="padding:8px 20px;border-radius:8px;font-size:12px;font-weight:${state.pcTab==='bal'?700:500};cursor:pointer;border:${state.pcTab==='bal'?'1.5px solid #2D5A3D':'1.5px solid #E4E1DC'};background:${state.pcTab==='bal'?'#2D5A3D':'#fff'};color:${state.pcTab==='bal'?'#fff':'#64706C'};font-family:inherit">💰 Balances</button><button onclick="setState({pcTab:'req'})" style="padding:8px 20px;border-radius:8px;font-size:12px;font-weight:${state.pcTab==='req'?700:500};cursor:pointer;border:${state.pcTab==='req'?'1.5px solid #C0714A':'1.5px solid #E4E1DC'};background:${state.pcTab==='req'?'#C0714A':'#fff'};color:${state.pcTab==='req'?'#fff':'#64706C'};font-family:inherit;position:relative">📩 Requests${pendingReq>0?`<span style="position:absolute;top:-6px;right:-6px;width:18px;height:18px;border-radius:9px;background:#C94444;color:#fff;font-size:9px;font-weight:700;display:flex;align-items:center;justify-content:center">${pendingReq}</span>`:''}</button><div style="flex:1"></div><button onclick="setState({topUpForm:state.topUpForm?null:{empId:'',amount:'',reason:'',notes:''}})" style="padding:8px 20px;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;border:1.5px solid #2D5A3D;background:${state.topUpForm?'#fff':'#2D5A3D'};color:${state.topUpForm?'#2D5A3D':'#fff'};font-family:inherit">${state.topUpForm?'✕ Cancel':'+ Direct Top-Up'}</button></div>`;
+    // Direct Top-Up form
+    if (state.topUpForm) {
+      const tf = state.topUpForm;
+      html += `<div style="background:#fff;border:1.5px solid #2D5A3D;border-radius:10px;padding:18px;margin-bottom:14px">`;
+      html += `<div style="font-size:13px;font-weight:700;color:#2D5A3D;margin-bottom:12px">💰 Direct Top-Up (No Employee Request)</div>`;
+      html += `<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">`;
+      html += `<div style="margin-bottom:8px"><label style="font-size:10px;font-weight:600;color:#64706C">Employee *</label><select onchange="state.topUpForm.empId=this.value" style="width:100%;padding:8px;border:1px solid #E4E1DC;border-radius:6px;font-size:12px;font-family:inherit;margin-top:2px"><option value="">Select employee...</option>${fe.map(e=>'<option value="'+e.id+'"'+(tf.empId==e.id?' selected':'')+'>'+e.name+(e.companyName?' ('+e.companyName.split('-')[0]+')':'')+'</option>').join('')}</select></div>`;
+      html += `<div style="margin-bottom:8px"><label style="font-size:10px;font-weight:600;color:#64706C">Amount *</label><input type="number" value="${tf.amount}" oninput="state.topUpForm.amount=this.value" placeholder="e.g. 500" style="width:100%;padding:8px;border:1px solid #E4E1DC;border-radius:6px;font-size:12px;font-family:inherit;margin-top:2px"/></div>`;
+      html += `</div>`;
+      html += `<div style="margin-bottom:8px"><label style="font-size:10px;font-weight:600;color:#64706C">Reason / Purpose *</label><input value="${tf.reason||''}" oninput="state.topUpForm.reason=this.value" placeholder="e.g. Monthly petty cash allocation" style="width:100%;padding:8px;border:1px solid #E4E1DC;border-radius:6px;font-size:12px;font-family:inherit;margin-top:2px"/></div>`;
+      html += `<div style="margin-bottom:12px"><label style="font-size:10px;font-weight:600;color:#64706C">Notes (optional)</label><input value="${tf.notes||''}" oninput="state.topUpForm.notes=this.value" placeholder="Additional notes..." style="width:100%;padding:8px;border:1px solid #E4E1DC;border-radius:6px;font-size:12px;font-family:inherit;margin-top:2px"/></div>`;
+      html += `<div style="display:flex;gap:8px;justify-content:flex-end">`;
+      html += `<button onclick="setState({topUpForm:null})" style="padding:8px 20px;border-radius:8px;border:1px solid #E4E1DC;background:#fff;color:#64706C;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit">Cancel</button>`;
+      html += `<button onclick="directTopUp()" style="padding:8px 20px;border-radius:8px;border:none;background:#2D5A3D;color:#fff;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit" ${_actionBusy?'disabled':''}>${_actionBusy?'Processing...':'✓ Top Up & Confirm'}</button>`;
+      html += `</div></div>`;
+    }
+    // Balances tab
+    if (state.pcTab === "bal") {
+      html += `<div class="xc"><div class="xh" style="background:#2D5A3D"><h3>Employee Balances</h3></div><table class="t"><thead><tr><th>Employee</th><th>Company</th><th>Balance</th><th>Txs</th></tr></thead><tbody>`;
+      fe.forEach(e => {
+        const b = getBalance(e.id);
+        const cur = empCurrency(e);
+        const coShort = e.companyName ? e.companyName.split('-')[0] : '';
+        const isUAE = e.companyName && (e.companyName.includes('ADGM') || e.companyName.includes('ABU DHABI'));
+        html += `<tr onclick="openDet(employees.find(x=>x.id===${e.id}),'pc')" style="background:${state.sel&&state.sel.id===e.id&&state.selType==='pc'?'#E4EFE6':''}"><td style="font-weight:600">${e.name}<div style="font-size:9px;color:#95A09C">${e.job||''}</div></td><td><span style="padding:2px 8px;border-radius:99px;font-size:9px;font-weight:600;background:${isUAE?'#E4EFE6':'#FDF7F3'};color:${isUAE?'#2D5A3D':'#C0714A'}">${coShort}</span></td><td class="m" style="color:${b>0?'#2D5A3D':b===0?'#95A09C':'#C94444'};font-size:14px">${fN(b,cur)}</td><td class="m" style="font-size:10px">${transactions.filter(t=>t.employeeId===e.id).length}</td></tr>`;
+      });
+      if (fe.length === 0) html += `<tr><td colspan="4" style="text-align:center;padding:20px;color:#95A09C;font-size:12px">No employees found</td></tr>`;
+      html += `</tbody></table></div>`;
+    }
+    // Requests tab
+    if (state.pcTab === "req") {
+      html += `<div class="xc"><div class="xh" style="background:#C0714A"><h3>Top-Up Requests</h3></div><table class="t"><thead><tr><th>Employee</th><th>Amount</th><th>Purpose</th><th>Date</th><th>Status</th></tr></thead><tbody>`;
+      fReqs.forEach(r => {
+        const st = PCRS[r.state] || PCRS.draft;
+        const cur = currencyForCompany(r.companyName);
+        html += `<tr onclick="openDet(requests.find(x=>x.id===${r.id}),'pcr')"><td style="font-weight:500">${r.employeeName}</td><td class="m" style="color:#C0714A">${fN(Number(r.amount),cur)}</td><td style="font-size:10px;max-width:140px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${r.purpose||'—'}</td><td class="m" style="font-size:10px;color:#95A09C">${fD(r.requestDate||r.createdAt)}</td><td><span style="padding:3px 10px;border-radius:99px;font-size:10px;font-weight:600;background:${st.bg};color:${st.c}">${st.l}</span></td></tr>`;
+      });
+      if (fReqs.length === 0) html += `<tr><td colspan="5" style="text-align:center;padding:20px;color:#95A09C;font-size:12px">No requests</td></tr>`;
+      html += `</tbody></table></div>`;
+    }
+    html += `</div>`;
+  }
+
+  // ═══ EXPENSES PAGE ═══
+  if (state.page === "exp") {
+    html += `<div style="padding:18px">`;
+    // KPI cards
+    html += `<div style="display:grid;grid-template-columns:repeat(5,1fr);gap:10px;margin-bottom:14px"><div class="sc"><div class="sl">Total</div><div class="sv" style="font-size:16px">${fExps.length}</div></div><div class="sc" style="border-color:#E8EAF640"><div class="sl" style="color:#475577">Pending Review</div><div class="sv" style="font-size:16px;color:#475577">${submittedExp}</div></div><div class="sc"><div class="sl" style="color:#2D5A3D">Approved</div><div class="sv" style="font-size:16px;color:#2D5A3D">${approvedExp}</div></div><div class="sc"><div class="sl" style="color:#155724">Paid</div><div class="sv" style="font-size:16px;color:#155724">${paidExp}</div></div><div class="sc" style="border-color:#FDF0F040"><div class="sl" style="color:#C94444">Refused</div><div class="sv" style="font-size:16px;color:#C94444">${refusedExp}</div></div></div>`;
+    // State filter pills
+    html += `<div style="display:flex;gap:4px;margin-bottom:14px">`;
+    [["all","All"],["submitted","Pending Review"],["approved","Approved"],["paid","Paid"],["refused","Refused"]].forEach(([k,l]) => {
+      html += `<button onclick="setState({stF:'${k}'})" style="padding:5px 14px;border-radius:99px;font-size:11px;font-weight:${state.stF===k?600:500};cursor:pointer;border:${state.stF===k?'1px solid #2D5A3D':'1px solid #E4E1DC'};background:${state.stF===k?'#2D5A3D':'#fff'};color:${state.stF===k?'#fff':'#64706C'};font-family:inherit">${l}</button>`;
+    });
+    html += `</div>`;
+    // Expense table
+    // Create expense button
+    html += `<button onclick="setState({expForm:{empId:'',amount:'',name:'',date:new Date().toISOString().split('T')[0],notes:'',reference:''}})" style="padding:10px 20px;border-radius:8px;background:#475577;color:#fff;border:none;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;margin-bottom:14px">+ New Expense Deduction</button>`;
+    // Create expense form
+    if (state.expForm) {
+      const ef = state.expForm;
+      html += `<div style="background:#fff;border:1.5px solid #475577;border-radius:10px;padding:18px;margin-bottom:14px">`;
+      html += `<div style="font-size:13px;font-weight:700;color:#475577;margin-bottom:12px">New Expense Deduction</div>`;
+      html += `<div style="margin-bottom:8px"><label style="font-size:10px;font-weight:600;color:#64706C">Employee</label><select onchange="state.expForm.empId=this.value" style="width:100%;padding:8px;border:1px solid #E4E1DC;border-radius:6px;font-size:12px;font-family:inherit;margin-top:2px"><option value="">Select employee...</option>${fe.map(e=>'<option value="'+e.id+'"'+(ef.empId==e.id?' selected':'')+'>'+e.name+'</option>').join('')}</select></div>`;
+      html += `<div style="margin-bottom:8px"><label style="font-size:10px;font-weight:600;color:#64706C">Description</label><input value="${ef.name}" oninput="state.expForm.name=this.value" placeholder="e.g. Office supplies, Travel expense..." style="width:100%;padding:8px;border:1px solid #E4E1DC;border-radius:6px;font-size:12px;font-family:inherit;margin-top:2px"/></div>`;
+      html += `<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px"><div><label style="font-size:10px;font-weight:600;color:#64706C">Amount</label><input type="number" value="${ef.amount}" oninput="state.expForm.amount=this.value" placeholder="0.00" style="width:100%;padding:8px;border:1px solid #E4E1DC;border-radius:6px;font-size:12px;font-family:inherit;margin-top:2px"/></div><div><label style="font-size:10px;font-weight:600;color:#64706C">Date</label><input type="date" value="${ef.date}" oninput="state.expForm.date=this.value" style="width:100%;padding:8px;border:1px solid #E4E1DC;border-radius:6px;font-size:12px;font-family:inherit;margin-top:2px"/></div></div>`;
+      html += `<div style="margin-bottom:8px"><label style="font-size:10px;font-weight:600;color:#64706C">Reference (optional)</label><input value="${ef.reference}" oninput="state.expForm.reference=this.value" placeholder="Invoice #, receipt ref..." style="width:100%;padding:8px;border:1px solid #E4E1DC;border-radius:6px;font-size:12px;font-family:inherit;margin-top:2px"/></div>`;
+      html += `<div style="margin-bottom:12px"><label style="font-size:10px;font-weight:600;color:#64706C">Notes (optional)</label><textarea oninput="state.expForm.notes=this.value" placeholder="Additional details..." style="width:100%;padding:8px;border:1px solid #E4E1DC;border-radius:6px;font-size:12px;font-family:inherit;margin-top:2px;min-height:50px">${ef.notes}</textarea></div>`;
+      html += `<div style="display:flex;gap:8px"><button onclick="createExpDeduction()" style="flex:1;padding:10px;border-radius:8px;background:#475577;color:#fff;border:none;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit">Create Expense Deduction</button><button onclick="setState({expForm:null})" style="padding:10px 16px;border-radius:8px;background:#fff;border:1px solid #E4E1DC;font-size:12px;cursor:pointer;font-family:inherit;color:#64706C">Cancel</button></div>`;
+      html += `</div>`;
+    }
+    // Expense table
+    html += `<div class="xc"><div class="xh" style="background:#475577"><h3>Expense Deductions</h3><span style="font-size:10px;color:rgba(255,255,255,.6)">${fExpList.length}</span></div><table class="t"><thead><tr><th>Ref</th><th>Employee</th><th>Amount</th><th>Status</th><th>Balance After</th><th>Date</th></tr></thead><tbody>`;
+    fExpList.forEach(e => {
+      const cur = e.currencyName || 'EGP';
+      html += `<tr onclick="openDet(expenseSheets.find(x=>x.id===${e.id}),'exp')" style="background:${state.sel&&state.sel.id===e.id?'#E4EFE6':''}">`;
+      html += `<td style="font-weight:500;max-width:140px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${e.name}</td>`;
+      html += `<td style="font-size:10px">${e.employeeName}</td>`;
+      html += `<td class="m" style="color:#C94444">${fN(e.amount,cur)}</td>`;
+      html += `<td>${bd(e.state)}</td>`;
+      html += `<td class="m" style="font-size:10px">${e.balanceAfter !== undefined && e.balanceAfter !== null ? fN(e.balanceAfter,cur) : '—'}</td>`;
+      html += `<td class="m" style="font-size:10px;color:#95A09C">${fD(e.date)}</td></tr>`;
+    });
+    if (fExpList.length === 0) html += `<tr><td colspan="6" style="text-align:center;padding:20px;color:#95A09C;font-size:12px">No expense deductions yet</td></tr>`;
+    html += `</tbody></table></div></div>`;
+  }
+
+  // ═══ REMINDERS PAGE ═══
+  if (state.page === "rem") {
+    html += `<div style="padding:18px">`;
+    // KPI cards
+    html += `<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:14px"><div class="sc"><div class="sl">Total Configured</div><div class="sv" style="font-size:16px">${reminders.length}</div></div><div class="sc"><div class="sl">Active</div><div class="sv" style="font-size:16px;color:#2D5A3D">${reminders.filter(r=>r.active).length}</div></div><div class="sc"><div class="sl">Inactive</div><div class="sv" style="font-size:16px;color:#95A09C">${reminders.filter(r=>!r.active).length}</div></div></div>`;
+    // Add button
+    html += `<button onclick="setState({remForm:{empId:'',freq:'weekly',hour:9,dow:'0',dom:1,msg:'',active:true,editId:null}})" style="padding:10px 20px;border-radius:8px;background:#C0714A;color:#fff;border:none;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;margin-bottom:14px">+ Add Reminder</button>`;
+    // Reminder form
+    if (state.remForm) {
+      const f = state.remForm;
+      html += `<div style="background:#fff;border:1.5px solid #C0714A;border-radius:10px;padding:18px;margin-bottom:14px">`;
+      html += `<div style="font-size:13px;font-weight:700;color:#C0714A;margin-bottom:12px">${f.editId?'Edit Reminder':'New Reminder'}</div>`;
+      html += `<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px">`;
+      html += `<div class="fi"><label>Employee</label><select onchange="setState({remForm:{...state.remForm,empId:this.value}})"><option value="">Select...</option>${employees.filter(e=>!reminders.some(r=>r.employeeId===e.id&&r.id!==f.editId)).map(e=>`<option value="${e.id}"${String(e.id)===String(f.empId)?' selected':''}>${e.name}</option>`).join('')}</select></div>`;
+      html += `<div class="fi"><label>Frequency</label><select onchange="setState({remForm:{...state.remForm,freq:this.value}})">${FREQS.map(fr=>`<option value="${fr.k}"${fr.k===f.freq?' selected':''}>${fr.l}</option>`).join('')}</select></div>`;
+      html += `</div>`;
+      html += `<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:10px">`;
+      html += `<div class="fi"><label>Hour (0-23)</label><input type="number" min="0" max="23" value="${f.hour}" onchange="setState({remForm:{...state.remForm,hour:this.value}})" style="font-family:'JetBrains Mono'"/></div>`;
+      if (f.freq === "weekly") {
+        html += `<div class="fi"><label>Day of Week</label><select onchange="setState({remForm:{...state.remForm,dow:this.value}})">${DAYS.map((d,i)=>`<option value="${i}"${String(i)===String(f.dow)?' selected':''}>${d}</option>`).join('')}</select></div>`;
+      }
+      if (f.freq === "monthly") {
+        html += `<div class="fi"><label>Day of Month</label><input type="number" min="1" max="31" value="${f.dom}" onchange="setState({remForm:{...state.remForm,dom:this.value}})" style="font-family:'JetBrains Mono'"/></div>`;
+      }
+      html += `<div class="fi"><label>Status</label><div style="margin-top:4px"><button onclick="setState({remForm:{...state.remForm,active:!state.remForm.active}})" style="padding:8px 16px;border-radius:8px;border:1.5px solid ${f.active?'#2D5A3D':'#E4E1DC'};background:${f.active?'#E4EFE6':'#fff'};color:${f.active?'#2D5A3D':'#95A09C'};font-size:12px;font-weight:600;cursor:pointer;font-family:inherit">${f.active?'✓ Active':'Disabled'}</button></div></div>`;
+      html += `</div>`;
+      html += `<div class="fi"><label>Message</label><input value="${(f.msg||'').replace(/"/g,'&quot;')}" oninput="state.remForm.msg=this.value" placeholder="Please submit your expense report..." style="width:100%;padding:8px;border:1.5px solid #E4E1DC;border-radius:8px;font-size:12px;font-family:inherit;outline:none"/></div>`;
+      html += `<div style="display:flex;gap:8px"><button onclick="if(state.remForm.empId&&state.remForm.msg)saveReminder(state.remForm)" ${!(f.empId&&f.msg)?'disabled':''} style="flex:1;padding:10px;border-radius:8px;background:${f.empId&&f.msg?'#C0714A':'#E4E1DC'};color:#fff;border:none;font-size:12px;font-weight:700;cursor:${f.empId&&f.msg?'pointer':'default'};font-family:inherit;opacity:${f.empId&&f.msg?'1':'.55'}">${f.editId?'✓ Update':'✓ Create'}</button><button onclick="setState({remForm:null})" style="padding:10px 14px;border-radius:8px;background:#fff;border:1px solid #E4E1DC;font-size:12px;cursor:pointer;font-family:inherit;color:#64706C">Cancel</button></div>`;
+      html += `</div>`;
+    }
+    // Reminders table
+    html += `<div class="xc"><div class="xh" style="background:#C0714A"><h3>🔔 Configured Reminders</h3></div><table class="t"><thead><tr><th>Employee</th><th>Frequency</th><th>Schedule</th><th>Message</th><th>Active</th><th>Actions</th></tr></thead><tbody>`;
+    reminders.forEach(r => {
+      const freq = FREQS.find(f => f.k === r.freq) || FREQS[0];
+      html += `<tr><td style="font-weight:500">${r.employeeName}</td><td><span style="padding:2px 8px;border-radius:99px;font-size:10px;font-weight:600;background:${r.freq==='daily'?'#FDF6EC':r.freq==='weekly'?'#E4EFE6':'#F2F0EC'};color:${r.freq==='daily'?'#D4960A':r.freq==='weekly'?'#2D5A3D':'#64706C'}">${freq.l}</span></td><td class="m" style="font-size:10px">${r.hour}:00${r.freq==='weekly'?' · '+DAYS[r.dow||0]:r.freq==='monthly'?' · Day '+r.dom:''}</td><td style="font-size:10px;max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${r.message||''}</td><td><button onclick="toggleReminder(${r.id})" style="padding:4px 10px;border-radius:6px;border:1px solid ${r.active?'#2D5A3D':'#E4E1DC'};background:${r.active?'#E4EFE6':'#fff'};color:${r.active?'#2D5A3D':'#95A09C'};font-size:10px;font-weight:600;cursor:pointer;font-family:inherit">${r.active?'✓ On':'Off'}</button></td><td><div style="display:flex;gap:4px"><button onclick="setState({remForm:{empId:String(${r.employeeId}),freq:'${r.freq}',hour:${r.hour},dow:${r.dow||0},dom:${r.dom||1},msg:'${(r.message||'').replace(/'/g,"\\'")}',active:${r.active},editId:${r.id}}})" style="padding:4px 8px;border-radius:6px;background:#FAFAF8;border:1px solid #E4E1DC;font-size:10px;cursor:pointer;font-family:inherit;color:#64706C">Edit</button><button onclick="deleteReminder(${r.id})" style="padding:4px 8px;border-radius:6px;background:#FDF0F0;border:1px solid #E4E1DC;font-size:10px;cursor:pointer;font-family:inherit;color:#C94444">Delete</button></div></td></tr>`;
+    });
+    if (reminders.length === 0) html += `<tr><td colspan="6" style="text-align:center;padding:20px;color:#95A09C;font-size:12px">No reminders configured</td></tr>`;
+    html += `</tbody></table></div></div>`;
+  }
+
+  html += '</div>'; // close content area
+
+  document.getElementById('app').innerHTML = html;
+}
+
+// ─── NAVIGATION FROM PARENT FRAME ────────────────────────────────────────────
+window.addEventListener('message', function(event) {
+  if (event.data && event.data.type === 'pce-navigate' && event.data.page) {
+    setState({ page: event.data.page, sel: null, selType: null });
+  }
+});
+
+// ─── SYNC WITH GLOBAL COMPANY SELECTOR ───────────────────────────────────────
+window.addEventListener('storage', function(e) {
+  if (e.key === 'platfarm_company' && e.newValue) {
+    try {
+      const p = JSON.parse(e.newValue);
+      let newCompany = 'All Companies';
+      if (p && typeof p === 'object') {
+        if (p.id === 'ALL') newCompany = 'All Companies';
+        else if (p.name) newCompany = p.name;
+      }
+      if (newCompany !== state.company) {
+        state.company = newCompany;
+        state.companyOpen = false;
+        loadData();
+      }
+    } catch(err) { /* ignore parse errors */ }
+  }
+});
+
+// ─── LOAD DATA ───────────────────────────────────────────────────────────────
+loadData();
+</script>
+</body>
+</html>

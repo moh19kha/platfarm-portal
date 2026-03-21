@@ -1,0 +1,34 @@
+<!doctype html>
+<html lang="en">
+
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, maximum-scale=1" />
+    <title>Platfarm Trade Operations Portal</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  </head>
+
+  <body>
+    <script>
+      // Canonical domain redirect: ensure users always see erp.platfarm.io
+      (function() {
+        var canonical = "erp.platfarm.io";
+        var h = window.location.hostname;
+        if (h !== canonical && h !== "localhost" && h !== "127.0.0.1" && !h.startsWith("192.168.") && !h.startsWith("10.")) {
+          window.location.replace(window.location.protocol + "//" + canonical + window.location.pathname + window.location.search + window.location.hash);
+        }
+      })();
+    </script>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+    <script
+      defer
+      src="%VITE_ANALYTICS_ENDPOINT%/umami"
+      data-website-id="%VITE_ANALYTICS_WEBSITE_ID%"></script>
+  </body>
+
+</html>

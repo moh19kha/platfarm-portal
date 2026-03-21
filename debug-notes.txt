@@ -1,0 +1,23 @@
+KEY FINDING: The state transitions DO work in Odoo!
+
+Current Odoo state (after my curl test changed ID 4 to paid):
+ID 7 (PTC-00005) = approved (was submitted, user changed via portal to approved)
+ID 6 (PTC-00004) = approved 
+ID 5 (PTC-00003) = paid
+ID 4 (New) = paid (I just changed this via curl test)
+
+But the portal was showing:
+PTC-00005 = Pending Review (should be approved!)
+PTC-00004 = Approved
+PTC-00003 = Paid
+
+ISSUE: The portal shows STALE data. When user clicks Approve on PTC-00005, the Odoo write succeeds (ID 7 is now "approved"), but the portal doesn't refresh/reload the data properly.
+
+Wait - actually looking at the IDs:
+- Portal shows PTC-00005 but Odoo ID 7 = PTC-00005 (approved)
+- Portal shows PTC-00004 but Odoo ID 6 = PTC-00004 (approved)
+
+The portal was showing PTC-00005 as "Pending Review" but Odoo shows it as "approved".
+This means the user DID click Approve on PTC-00005 and it worked in Odoo, but the portal didn't refresh.
+
+The issue is likely in the reloadExpenses function or the data mapping.
