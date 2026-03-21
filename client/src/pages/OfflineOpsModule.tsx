@@ -615,7 +615,7 @@ export default function OfflineOpsModule(){
 
               {/* Tabs */}
               <div style={{display:"flex",gap:0,borderBottom:"1.5px solid #E8E5E0",padding:"0 18px"}}>
-                {(selType==="rcv"?["Timeline","Overview","Crew"]:selType==="qc"?["Grades","Details"]:selType==="dpr"?["Timeline","Overview","Crew"]:selType==="trf"?["Timeline","Overview","Receiving","Crew","Actions"]:["Overview","Crew","Attachments"]).map((t,i)=><button key={t} onClick={()=>setDetTab(i)} style={{padding:"8px 14px",fontSize:11,fontWeight:detTab===i?700:500,color:detTab===i?"#2D5A3D":"#95A09C",background:"none",border:"none",borderBottom:detTab===i?"2px solid #2D5A3D":"2px solid transparent",cursor:"pointer",fontFamily:"inherit"}}>{t}</button>)}
+                {(selType==="rcv"?["Timeline","Overview","Crew"]:selType==="qc"?["Grades","Details"]:selType==="dpr"?["Timeline","Overview","Crew"]:selType==="trf"?["Timeline","Overview","Receiving","Quality","Crew","Actions"]:["Overview","Crew","Attachments"]).map((t,i)=><button key={t} onClick={()=>setDetTab(i)} style={{padding:"8px 14px",fontSize:11,fontWeight:detTab===i?700:500,color:detTab===i?"#2D5A3D":"#95A09C",background:"none",border:"none",borderBottom:detTab===i?"2px solid #2D5A3D":"2px solid transparent",cursor:"pointer",fontFamily:"inherit"}}>{t}</button>)}
               </div>
             </div>
 
@@ -770,15 +770,43 @@ export default function OfflineOpsModule(){
                 {(()=>{const arrAtt=(sel.att||[]).filter(a=>["Arrival Truck","Bale Condition","Arrival Weighbridge","Tarp Damage"].includes(a.n));return arrAtt.length>0?(<div style={{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:6}}>{arrAtt.map((a,i)=><div key={i} style={{borderRadius:6,overflow:"hidden",border:"1px solid #E4E1DC",aspectRatio:"1",display:"flex",alignItems:"center",justifyContent:"center",background:"#F7F6F3"}}><div style={{textAlign:"center"}}><div style={{fontSize:16}}>{a.t==="photo"?"📷":"📄"}</div><div style={{fontSize:8,color:"#95A09C",marginTop:2,padding:"0 4px",lineHeight:1.3}}>{a.n}</div></div></div>)}</div>):(<div style={{padding:16,textAlign:"center",borderRadius:8,background:"#F7F6F3",border:"1px solid #E4E1DC",color:"#95A09C",fontSize:11}}>No arrival photos yet{!sel.arrDate?" — shipment still in transit":""}</div>)})()}
               </div>}
 
-              {/* TRF Crew */}
+              {/* TRF Quality */}
               {selType==="trf"&&detTab===3&&<div>
+                <div style={{fontSize:11,fontWeight:700,color:"#4A7C59",marginBottom:14}}>QUALITY INSPECTION</div>
+                {sel.condition?(<div>
+                  <div style={{display:"flex",alignItems:"center",gap:10,padding:"10px 14px",borderRadius:10,background:sel.condition==="Intact"?"#E4EFE6":"#FEF2F2",border:"1px solid "+(sel.condition==="Intact"?"#D5E5D5":"#FECACA"),marginBottom:18}}>
+                    <span style={{width:32,height:32,borderRadius:16,background:sel.condition==="Intact"?"#2D5A3D":"#DC2626",color:"#fff",display:"flex",alignItems:"center",justifyContent:"center",fontSize:16,fontWeight:700}}>{sel.condition==="Intact"?"✓":"⚠"}</span>
+                    <div>
+                      <div style={{fontSize:13,fontWeight:700,color:sel.condition==="Intact"?"#2D5A3D":"#DC2626"}}>{sel.condition}</div>
+                      <div style={{fontSize:10,color:"#95A09C"}}>Arrival Condition Assessment</div>
+                    </div>
+                  </div>
+                  <div style={{fontSize:11,fontWeight:700,color:"#4A7C59",marginBottom:10}}>WEIGHT VERIFICATION</div>
+                  {[["Loaded Weight",sel.weight>0?fK(sel.weight):"—"],["Received Weight",sel.rcvWeight>0?fK(sel.rcvWeight):"—"],["Difference",sel.diff?((sel.diff>0?"+":"")+fK(sel.diff)):"—"],["Tare Weight",sel.tare>0?fK(sel.tare):"—"]].map(([l,v])=><div key={l} style={{display:"flex",justifyContent:"space-between",padding:"6px 0",borderBottom:"1px solid #F2F0EC"}}><span style={{fontSize:11,color:"#95A09C"}}>{l}</span><span className="m" style={{fontSize:11,color:l==="Difference"&&sel.diff&&sel.diff<0?"#C0392B":"#2C3E50"}}>{v}</span></div>)}
+                  {sel.rcvWeight>0&&sel.weight>0&&<div style={{marginTop:12,padding:"8px 12px",borderRadius:8,background:Math.abs(sel.diff||0)/sel.weight>0.02?"#FEF2F2":"#E4EFE6",border:"1px solid "+(Math.abs(sel.diff||0)/sel.weight>0.02?"#FECACA":"#D5E5D5")}}>
+                    <div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+                      <span style={{fontSize:10,color:"#95A09C"}}>Weight Variance</span>
+                      <span className="m" style={{fontSize:12,fontWeight:700,color:Math.abs(sel.diff||0)/sel.weight>0.02?"#C0392B":"#2D5A3D"}}>{((sel.diff||0)/sel.weight*100).toFixed(1)}%</span>
+                    </div>
+                  </div>}
+                  <div style={{fontSize:11,fontWeight:700,color:"#4A7C59",marginBottom:10,marginTop:16}}>CARGO DETAILS</div>
+                  {[["Commodity",sel.commodity],["Bales",""+sel.bales],["Seal",sel.seal||"—"]].map(([l,v])=><div key={l} style={{display:"flex",justifyContent:"space-between",padding:"6px 0",borderBottom:"1px solid #F2F0EC"}}><span style={{fontSize:11,color:"#95A09C"}}>{l}</span><span className="m" style={{fontSize:11,color:"#2C3E50"}}>{v}</span></div>)}
+                </div>):(<div style={{padding:24,textAlign:"center",borderRadius:10,background:"#F7F6F3",border:"1px solid #E4E1DC"}}>
+                  <div style={{fontSize:24,marginBottom:8}}>🔍</div>
+                  <div style={{fontSize:12,fontWeight:600,color:"#95A09C"}}>Quality inspection pending</div>
+                  <div style={{fontSize:10,color:"#B8B5AF",marginTop:4}}>QC will be available after arrival and inspection</div>
+                </div>)}
+              </div>}
+
+              {/* TRF Crew */}
+              {selType==="trf"&&detTab===4&&<div>
                 <div style={{fontSize:11,fontWeight:700,color:"#475577",marginBottom:10}}>CREW & PERSONNEL</div>
                 {(sel.crew||[]).map((g,i)=><div key={i} style={{marginBottom:14}}><div style={{fontSize:10,fontWeight:700,color:"#95A09C",marginBottom:6}}>{g.role}</div>{g.ppl.map((p,j)=><div key={j} style={{fontSize:12,padding:"4px 0",color:"#2C3E50"}}>{p}</div>)}</div>)}
                 {(!sel.crew||sel.crew.length===0)&&<div style={{color:"#95A09C",fontSize:11}}>No crew data available</div>}
               </div>}
 
               {/* TRF Actions */}
-              {selType==="trf"&&detTab===4&&<div>
+              {selType==="trf"&&detTab===5&&<div>
                 <div style={{fontSize:11,fontWeight:700,color:"#475577",marginBottom:14}}>AVAILABLE ACTIONS</div>
 
                 {/* Create Internal Transfer */}
