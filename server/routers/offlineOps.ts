@@ -481,20 +481,29 @@ export const offlineOpsRouter = router({
             "pf.procurement", "read", [[procurementOdooId]],
             { fields: [
               "supplier", "commodity", "grade", "driver_name", "plate_number",
-              "gross_weight", "tare_weight", "bale_count", "avg_bale_weight",
+              "gross_weight", "tare_weight", "net_weight", "bale_count", "avg_bale_weight",
               "price_per_ton", "currency", "incoterm", "bale_size", "notes",
+              "recorded_at", "site_id", "user_id",
             ]}
           );
           if (procData?.[0]) {
             const p = procData[0];
             const receiptVals: Record<string, unknown> = {};
             if (p.driver_name) receiptVals.x_studio_driver_name = p.driver_name;
+            if (p.plate_number) receiptVals.x_studio_truck_load_serial_tl = p.plate_number;
             if (p.gross_weight) receiptVals.x_studio_gross_weight_in_tons = p.gross_weight / 1000;
             if (p.tare_weight) receiptVals.x_studio_tare_weight_in_tons = p.tare_weight / 1000;
-            const net = (p.gross_weight || 0) - (p.tare_weight || 0);
+            const net = p.net_weight || ((p.gross_weight || 0) - (p.tare_weight || 0));
             if (net > 0) receiptVals.x_studio_net_weight_in_tons = net / 1000;
             if (p.bale_count) receiptVals.x_studio_total_number_of_received_bales = String(p.bale_count);
             if (p.bale_count) receiptVals.x_studio_bales = String(p.bale_count);
+            if (p.bale_count) receiptVals.x_studio_number_of_balesbags = String(p.bale_count);
+            if (p.price_per_ton) receiptVals.x_studio_agreed_product_price_per_unit = p.price_per_ton;
+            const gradeMap: Record<string, string> = { premium: 'Premium', supreme: 'Supreme', grade_1: 'Grade 1', grade_2: 'Grade 2', grade_3: 'Grade 3', standard: 'Standard', brown: 'Brown' };
+            if (p.grade) receiptVals.x_studio_loaded_grade = gradeMap[p.grade] || p.grade;
+            const siteName = Array.isArray(p.site_id) ? p.site_id[1] : (p.site_id ? String(p.site_id) : '');
+            if (siteName) { receiptVals.x_studio_source = siteName; receiptVals.x_studio_farmfield_name = siteName; }
+            if (p.recorded_at) receiptVals.x_studio_loading_datetime_1 = p.recorded_at;
             if (Object.keys(receiptVals).length > 0) {
               await executeKw("stock.picking", "write", [[firstReceiptId], receiptVals]);
             }
@@ -511,31 +520,42 @@ export const offlineOpsRouter = router({
             [[["procurement_id", "=", procurementOdooId]]],
             { fields: ["id", "ir_attachment_id", "file_name", "photo_label"] }
           );
-            // Also check ir.attachment directly (mobile app links via res_model/res_id)
-            if (procAtts.length === 0) {
-              const irAtts = await executeKw<{ id: number; name: string; mimetype: string }[]>(
-                "ir.attachment", "search_read",
-                [[["res_model", "=", "pf.procurement"], ["res_id", "=", procurementOdooId]]],
-                { fields: ["id", "name", "mimetype"] }
-              );
-              procAtts = irAtts.map(a => ({
-                id: a.id,
-                ir_attachment_id: [a.id, a.name] as [number, string],
-                file_name: a.name,
-                photo_label: a.name,
-              }));
-            }
+          // Also check ir.attachment directly (mobile app links via res_model/res_id)
+          if (procAtts.length === 0) {
+            const irAtts = await executeKw<{ id: number; name: string; mimetype: string }[]>(
+              "ir.attachment", "search_read",
+              [[["res_model", "=", "pf.procurement"], ["res_id", "=", procurementOdooId]]],
+              { fields: ["id", "name", "mimetype"] }
+            );
+            procAtts = irAtts.map(a => ({
+              id: a.id,
+              ir_attachment_id: [a.id, a.name] as [number, string],
+              file_name: a.name,
+              photo_label: a.name,
+            }));
+          }
+
+          // Check existing attachments on receipt to avoid duplicates
+          const existingAtts = await executeKw<{ id: number; name: string }[]>(
+            "ir.attachment", "search_read",
+            [[["res_model", "=", "stock.picking"], ["res_id", "=", firstReceiptId]]],
+            { fields: ["id", "name"], limit: 200 }
+          );
+          const existingNames = new Set(existingAtts.map(a => a.name));
+
           for (const pfa of procAtts) {
             if (!pfa.ir_attachment_id) continue;
+            const label = pfa.photo_label || pfa.file_name || pfa.ir_attachment_id[1] || "Procurement_photo";
+            const attName = `[Procurement] ${label}`;
+            if (existingNames.has(attName)) continue;
             try {
               const irAtt = await executeKw<any[]>(
                 "ir.attachment", "read", [[pfa.ir_attachment_id[0]]],
                 { fields: ["datas", "name", "mimetype"] }
               );
               if (irAtt?.[0]?.datas) {
-                const label = pfa.photo_label || pfa.file_name || pfa.ir_attachment_id[1] || "Procurement_photo";
                 await executeKw("ir.attachment", "create", [{
-                  name: `[Procurement] ${label}`,
+                  name: attName,
                   datas: irAtt[0].datas,
                   mimetype: irAtt[0].mimetype || "image/jpeg",
                   res_model: "stock.picking",
@@ -544,6 +564,94 @@ export const offlineOpsRouter = router({
               }
             } catch (e: any) {
               console.error(`[linkProcurementToPO] Failed to copy proc attachment ${pfa.id} to receipt: ${e.message}`);
+            }
+          }
+
+          // ── Push QC data + attachments to the receipt ──
+          const qcRecords = await executeKw<any[]>(
+            "pf.quality", "search_read",
+            [[["procurement_id", "=", procurementOdooId], ["qc_type", "=", "received"]]],
+            { fields: [
+              "id", "name", "verdict", "final_grade", "moisture", "color",
+              "foreign_matter", "leaf_ratio", "bale_shape", "bale_ties",
+              "no_insects", "no_weeds", "no_black_wood", "odor", "density",
+              "avg_bale_weight", "g1_bale_count", "g2_bale_count", "mix_bale_count",
+              "qc_notes", "recorded_at", "user_id",
+              "protein_nir", "moisture_weight_pct",
+              "stack_good", "strap_good", "has_cover", "truck_clean",
+            ], limit: 1, order: "create_date desc" }
+          );
+
+          if (qcRecords.length > 0) {
+            const qc = qcRecords[0];
+            const qcVals: Record<string, unknown> = {};
+            if (qc.final_grade) qcVals.x_studio_overall_received_grade_as_per_quality_assessment = qc.final_grade;
+            if (qc.moisture) qcVals.x_studio_moisture_ = qc.moisture;
+            if (qc.verdict === "accepted") qcVals.x_studio_accepted_rejected = true;
+            if (qc.protein_nir) qcVals.x_studio_crude_protein_dry_matter_ = qc.protein_nir;
+            if (qc.no_insects === "yes") qcVals.x_studio_good_quality_absence_of_insects = true;
+            if (qc.foreign_matter === "none" || qc.foreign_matter === "clean") qcVals.x_studio_good_quality_absence_of_foreign_material = true;
+            if (qc.no_black_wood === "yes") qcVals.x_studio_good_quality_absence_of_black_spots = true;
+            if (qc.bale_ties === "good" || qc.bale_ties === "yes") qcVals.x_studio_good_quality_bale_ties = true;
+            if (qc.leaf_ratio === "good" || qc.leaf_ratio === "high") qcVals.x_studio_good_quality_good_leave_attachement = true;
+            if (qc.color === "green") qcVals.x_studio_good_quality_green_color = true;
+            if (qc.bale_shape === "good" || qc.bale_shape === "yes") qcVals.x_studio_good_quality_uniformity_of_bale_shape = true;
+            if (qc.has_cover === "yes") qcVals.x_studio_presence_of_truck_cover = true;
+            if (qc.truck_clean === "yes") qcVals.x_studio_loadcontainer_cleanliness = true;
+            if (qc.stack_good === "yes") qcVals.x_studio_proper_loadcontainer_stacking = true;
+            if (qc.strap_good === "yes") qcVals.x_studio_proper_loadcontainer_lashing = true;
+            if (qc.g1_bale_count) qcVals.x_studio_grade_1_ = qc.g1_bale_count;
+            if (qc.g2_bale_count) qcVals.x_studio_grade_3_ = qc.g2_bale_count;
+            if (Object.keys(qcVals).length > 0) {
+              await executeKw("stock.picking", "write", [[firstReceiptId], qcVals]);
+            }
+
+            // Copy QC attachments to receipt
+            let qcAtts = await executeKw<{
+              id: number;
+              ir_attachment_id: [number, string] | false;
+              file_name: string | false;
+              photo_label: string | false;
+            }[]>(
+              "pf.attachment", "search_read",
+              [[["quality_id", "=", qc.id]]],
+              { fields: ["id", "ir_attachment_id", "file_name", "photo_label"] }
+            );
+            if (qcAtts.length === 0) {
+              const irQcAtts = await executeKw<{ id: number; name: string; mimetype: string }[]>(
+                "ir.attachment", "search_read",
+                [[["res_model", "=", "pf.quality"], ["res_id", "=", qc.id]]],
+                { fields: ["id", "name", "mimetype"] }
+              );
+              qcAtts = irQcAtts.map(a => ({
+                id: a.id,
+                ir_attachment_id: [a.id, a.name] as [number, string],
+                file_name: a.name,
+                photo_label: a.name,
+              }));
+            }
+            for (const qca of qcAtts) {
+              if (!qca.ir_attachment_id) continue;
+              const label = qca.photo_label || qca.file_name || qca.ir_attachment_id[1] || "QC_photo";
+              const attName = `[Quality] ${label}`;
+              if (existingNames.has(attName)) continue;
+              try {
+                const irAtt = await executeKw<any[]>(
+                  "ir.attachment", "read", [[qca.ir_attachment_id[0]]],
+                  { fields: ["datas", "name", "mimetype"] }
+                );
+                if (irAtt?.[0]?.datas) {
+                  await executeKw("ir.attachment", "create", [{
+                    name: attName,
+                    datas: irAtt[0].datas,
+                    mimetype: irAtt[0].mimetype || "image/jpeg",
+                    res_model: "stock.picking",
+                    res_id: firstReceiptId,
+                  }]);
+                }
+              } catch (e: any) {
+                console.error(`[linkProcurementToPO] Failed to copy QC attachment ${qca.id} to receipt: ${e.message}`);
+              }
             }
           }
         } catch (e: any) {
@@ -558,6 +666,7 @@ export const offlineOpsRouter = router({
         receiptNames,
         receiptIds,
       };
+
     }),
 
   /**
