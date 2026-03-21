@@ -589,22 +589,21 @@ export default function OfflineOpsModule(){
           </div>
           <div style={{flex:1,overflow:"auto",minHeight:0,padding:"0 18px 18px"}}>
           <div className="xc"><div className="xh" style={{background:"#475577"}}><h3><ImgIcon src={ICON_TRANSFER} size={18} /> Dakhla → Sokhna Transfers</h3><span className="ct">{fTrf.length}</span></div>
-            <table className="t"><thead><tr><th>ID</th><th>Commodity</th><th>Grade</th><th>Bales</th><th>Weight</th><th>Truck / Plate</th><th>Driver</th><th>Seal</th><th>Load Date</th><th>Arrival</th><th>Rcv Weight</th><th>Status</th></tr></thead><tbody>
+            <table className="t"><thead><tr><th>ID</th><th>Commodity</th><th>Grade</th><th>Stage</th><th>Bales</th><th>Weight</th><th>Truck / Plate</th><th>Driver</th><th>Seal</th><th>Load Date</th><th>Status</th></tr></thead><tbody>
               {fTrf.map(r=>{const st=TRS[r.status]||TRS.in_transit;return(<tr key={r.id} onClick={()=>openDet(r,"trf")} style={{background:sel&&sel.id===r.id?"#E4EFE6":""}}>
                 <td className="m" style={{color:"#475577",fontSize:10}}>{r.id}</td>
                 <td style={{fontSize:10}}>{r.commodity}</td>
                 <td>{r.qcData?<span style={{display:"inline-flex",padding:"2px 8px",borderRadius:99,fontSize:9,fontWeight:600,background:"#E4EFE6",color:"#2D5A3D"}}>{(r.qcData.grade||"").replace("_"," ").replace(/\b\w/g,c=>c.toUpperCase())}</span>:<span style={{fontSize:10,color:"#B0BAB6"}}>—</span>}</td>
+                <td>{bd(r.sync)}</td>
                 <td className="m" style={{fontSize:10}}>{r.bales}</td>
                 <td className="m" style={{color:"#2D5A3D"}}>{fK(r.weight)}</td>
                 <td style={{fontSize:9,color:"#64706C"}}>{r.truck}<br/><span className="m">{r.plate}</span></td>
                 <td style={{fontSize:10}}>{r.crew?.[0]?.ppl?.[0] || "—"}</td>
                 <td className="m" style={{fontSize:9,color:"#64706C"}}>{r.seal}</td>
                 <td className="m" style={{fontSize:10,color:"#95A09C"}}>{r.loadDate}</td>
-                <td className="m" style={{fontSize:10,color:r.arrDate?"#2D5A3D":"#D4960A"}}>{r.arrDate||"—"}</td>
-                <td className="m" style={{fontSize:10,color:r.diff?"#C94444":"#B0BAB6"}}>{r.rcvWeight?fK(r.rcvWeight)+(r.diff?" ("+r.diff+")":""):"—"}</td>
                 <td><span style={{display:"inline-flex",padding:"2px 10px",borderRadius:99,fontSize:10,fontWeight:600,background:st.bg,color:st.c,whiteSpace:"nowrap"}}>{st.l}</span></td>
               </tr>);})}
-              {fTrf.length===0&&<tr><td colSpan={12} style={{textAlign:"center",padding:24,color:"#95A09C",fontSize:12}}>No transfers match the current filters</td></tr>}
+              {fTrf.length===0&&<tr><td colSpan={11} style={{textAlign:"center",padding:24,color:"#95A09C",fontSize:12}}>No transfers match the current filters</td></tr>}
             </tbody></table>
           </div>
          </div>
