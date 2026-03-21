@@ -907,28 +907,7 @@ export function OdooShipDetail({ shipmentId, onBack, onNavigateToShipment, sourc
               )}
             </Card>
 
-            {/* ── LOAD PICTURE @SOURCE ─────────────────────────────────────── */}
-            <Card>
-              <div style={{ fontSize: 11, fontWeight: 700, color: C.forest, marginBottom: 10, textTransform: "uppercase", letterSpacing: 0.5 }}>Load Picture @Source</div>
-              <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
-                {[
-                  { field: "x_studio_binary_field_7hm_1j45evrk9", label: "Left Side Picture" },
-                  { field: "x_studio_binary_field_5v_1j45ev8ib", label: "Right Side Picture" },
-                  { field: "x_studio_container_back_side", label: "Back Side Picture" },
-                ].map(ph => {
-                  const isUp = uploadedFiles[`picking-${ph.field}`];
-                  return (
-                    <div key={ph.field} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "6px 8px", borderRadius: 5, background: isUp ? C.gBg : "transparent", border: `1px solid ${C.border}` }}>
-                      <span style={{ fontSize: 10, fontWeight: 500 }}>{ph.label}</span>
-                      <div style={{ display: "flex", gap: 4 }}>
-                        {isUp && <button onClick={() => handleFilePreview("picking", selectedLoad.id, ph.field, ph.label)} style={{ fontSize: 9, padding: "2px 8px", borderRadius: 4, border: `1px solid ${C.gBdr2}`, background: C.gBg2, cursor: "pointer", color: C.forest, fontWeight: 600 }}>Preview</button>}
-                        <button onClick={() => handleFileUpload("picking", selectedLoad.id, ph.field)} style={{ fontSize: 9, padding: "2px 8px", borderRadius: 4, border: `1px solid ${C.border}`, background: C.card, cursor: "pointer", color: C.forest, fontWeight: 600 }}>{isUp ? "Replace" : "Upload"}</button>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            </Card>
+
           </div>
         )}
 
@@ -1028,41 +1007,7 @@ export function OdooShipDetail({ shipmentId, onBack, onNavigateToShipment, sourc
               )}
             </Card>
 
-            {/* ── LOAD PICTURES ───────────────────────────────────────────── */}
-            <Card>
-              <div style={{ fontSize: 11, fontWeight: 700, color: C.forest, marginBottom: 10, textTransform: "uppercase", letterSpacing: 0.5 }}>Load Pictures</div>
-              <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
-                {[
-                  { field: "x_studio_binary_field_5v_1j45ev8ib", label: "Load Picture \u2013 Right Side Picture" },
-                  { field: "x_studio_binary_field_7hm_1j45evrk9", label: "Load Picture \u2013 Left Side Picture" },
-                  { field: "x_studio_container_back_side", label: "Load Picture \u2013 Back Side Picture" },
-                ].map(att => {
-                  const isUp = uploadedFiles[`picking-${att.field}`];
-                  return (
-                    <div key={att.field} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "6px 8px", borderRadius: 5, background: isUp ? C.gBg : "transparent", border: `1px solid ${C.border}` }}>
-                      <span style={{ fontSize: 10, fontWeight: 500 }}>{att.label}</span>
-                      <div style={{ display: "flex", gap: 4 }}>
-                        {isUp && <button onClick={() => handleFilePreview("picking", selectedLoad.id, att.field, att.label)} style={{ fontSize: 9, padding: "2px 8px", borderRadius: 4, border: `1px solid ${C.gBdr2}`, background: C.gBg2, cursor: "pointer", color: C.forest, fontWeight: 600 }}>Preview</button>}
-                        <button onClick={() => handleFileUpload("picking", selectedLoad.id, att.field)} style={{ fontSize: 9, padding: "2px 8px", borderRadius: 4, border: `1px solid ${C.border}`, background: C.card, cursor: "pointer", color: C.forest, fontWeight: 600 }}>{isUp ? "Replace" : "Upload"}</button>
-                      </div>
-                    </div>
-                  );
-                })}
-                {/* Container/Truck Load Body Report */}
-                {(() => {
-                  const isUp = uploadedFiles["picking-x_studio_quality_report_attachement"];
-                  return (
-                    <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "6px 8px", borderRadius: 5, background: isUp ? C.gBg : "transparent", border: `1px solid ${C.border}` }}>
-                      <span style={{ fontSize: 10, fontWeight: 500 }}>Container/Truck Load Body Report (if exists)</span>
-                      <div style={{ display: "flex", gap: 4 }}>
-                        {isUp && <button onClick={() => handleFilePreview("picking", selectedLoad.id, "x_studio_quality_report_attachement", "Container/Truck Load Body Report")} style={{ fontSize: 9, padding: "2px 8px", borderRadius: 4, border: `1px solid ${C.gBdr2}`, background: C.gBg2, cursor: "pointer", color: C.forest, fontWeight: 600 }}>Preview</button>}
-                        <button onClick={() => handleFileUpload("picking", selectedLoad.id, "x_studio_quality_report_attachement")} style={{ fontSize: 9, padding: "2px 8px", borderRadius: 4, border: `1px solid ${C.border}`, background: C.card, cursor: "pointer", color: C.forest, fontWeight: 600 }}>{isUp ? "Replace" : "Upload"}</button>
-                      </div>
-                    </div>
-                  );
-                })()}
-              </div>
-            </Card>
+
 
             {/* ── QUALITY CHECKS ──────────────────────────────────────────── */}
             <Card>
@@ -1112,21 +1057,7 @@ export function OdooShipDetail({ shipmentId, onBack, onNavigateToShipment, sourc
                   </>
                 )}
               </div>
-              {/* Quality Report/Form Attachment */}
-              <div style={{ marginTop: 10 }}>
-                {(() => {
-                  const isUp = uploadedFiles["picking-x_studio_quality_assessment_form"];
-                  return (
-                    <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "6px 8px", borderRadius: 5, background: isUp ? C.gBg : "transparent", border: `1px solid ${C.border}` }}>
-                      <span style={{ fontSize: 10, fontWeight: 500 }}>Quality Report/Form Attachment</span>
-                      <div style={{ display: "flex", gap: 4 }}>
-                        {isUp && <button onClick={() => handleFilePreview("picking", selectedLoad.id, "x_studio_quality_assessment_form", "Quality Report/Form Attachment")} style={{ fontSize: 9, padding: "2px 8px", borderRadius: 4, border: `1px solid ${C.gBdr2}`, background: C.gBg2, cursor: "pointer", color: C.forest, fontWeight: 600 }}>Preview</button>}
-                        <button onClick={() => handleFileUpload("picking", selectedLoad.id, "x_studio_quality_assessment_form")} style={{ fontSize: 9, padding: "2px 8px", borderRadius: 4, border: `1px solid ${C.border}`, background: C.card, cursor: "pointer", color: C.forest, fontWeight: 600 }}>{isUp ? "Replace" : "Upload"}</button>
-                      </div>
-                    </div>
-                  );
-                })()}
-              </div>
+
             </Card>
 
             {/* ── LADDER IMAGES ───────────────────────────────────────────── */}
