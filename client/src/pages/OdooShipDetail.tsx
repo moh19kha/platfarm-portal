@@ -584,7 +584,7 @@ export function OdooShipDetail({ shipmentId, onBack, onNavigateToShipment, sourc
                   <div key={`${code}-${idx}`} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "6px 8px", borderRadius: 5, border: `1px solid ${C.border}`, background: hasImg ? C.gBg : "transparent" }}>
                     <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
                       {hasImg && <img src={imgCache[imgKey]} alt={label} style={{ width: 28, height: 28, borderRadius: 4, objectFit: "cover", border: `1px solid ${C.border}` }} />}
-                      <span style={{ fontSize: 10, fontWeight: 500 }}>{label}{photos.length > 1 ? ` (${idx + 1})` : ""}</span>
+                      <span style={{ fontSize: 10, fontWeight: 500 }}>{label}{photos.length > 1 ? ` (${idx + 1})` : ""}{photos.length > 1 && ph.date ? <span style={{ fontWeight: 400, color: C.gray, marginLeft: 6 }}>{new Date(ph.date).toLocaleDateString("en-GB", { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" })}</span> : null}</span>
                     </div>
                     <div style={{ display: "flex", gap: 4 }}>
                       <button onClick={() => handlePhotoPreview(ph)} style={{ fontSize: 9, padding: "2px 8px", borderRadius: 4, border: `1px solid ${C.gBdr2}`, background: C.gBg2, cursor: "pointer", color: C.forest, fontWeight: 600 }}>Preview</button>
