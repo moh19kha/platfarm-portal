@@ -568,7 +568,7 @@ export function OdooShipDetail({ shipmentId, onBack, onNavigateToShipment, sourc
         const showStageHeaders = populatedStages.length > 1;
         return (
           <div style={{ marginBottom: 12 }}>
-            <div style={{ fontSize: 11, fontWeight: 700, color: C.forest, marginBottom: 8, textTransform: "uppercase", letterSpacing: 0.5 }}>{sectionTitle}</div>
+            {sectionTitle && <div style={{ fontSize: 11, fontWeight: 700, color: C.forest, marginBottom: 8, textTransform: "uppercase", letterSpacing: 0.5 }}>{sectionTitle}</div>}
             {stageGroups.map(sg => {
               const stagePhotos: Record<string, any[]> = {};
               let stageCount = 0;
@@ -1308,7 +1308,7 @@ export function OdooShipDetail({ shipmentId, onBack, onNavigateToShipment, sourc
 
               {renderPhotoSection("Documents", ["weight_ticket", "driver_contract", "driver_license", "driver_id", "truck_plate", "bale_condition"], receiptPhotos?.byType || {})}
               {renderPhotoSection("Truck Arrival", ["arrival"], receiptPhotos?.byType || {})}
-              {renderPhotoSection("Load / Cargo Pictures", ["truck_right", "truck_left", "truck_back"], receiptPhotos?.byType || {}, true)}
+              {renderPhotoSection("", ["truck_right", "truck_left", "truck_back"], receiptPhotos?.byType || {}, true)}
               {renderPhotoSection("Quality Assessment", ["moisture_reading", "nir_reading", "bale_cross_section"], receiptPhotos?.byType || {})}
               {renderUnmatchedPhotos(receiptPhotos?.unmatched || [])}
             </Card>
