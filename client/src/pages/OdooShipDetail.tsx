@@ -76,6 +76,7 @@ export function OdooShipDetail({ shipmentId, onBack, onNavigateToShipment, sourc
   const [loadEditing, setLoadEditing] = useState(false);
   const [loadEditFields, setLoadEditFields] = useState<Record<string, any>>({});
   const [uploadedFiles, setUploadedFiles] = useState<Record<string, boolean>>({});
+  const [imgCache, setImgCache] = useState<Record<string, string>>({});
   const [updatingStage, setUpdatingStage] = useState(false);
   const [employeeSearch, setEmployeeSearch] = useState("");
   const [partnerSearch, setPartnerSearch] = useState("");
@@ -503,6 +504,37 @@ export function OdooShipDetail({ shipmentId, onBack, onNavigateToShipment, sourc
   if (selectedLoad) {
 
 
+    const receiptPhotosQuery = trpc.shipments.receiptPhotos.useQuery(
+      { receiptId: selectedLoad?.id || 0 },
+      { enabled: !!selectedLoad?.id }
+    );
+    const receiptPhotos = receiptPhotosQuery.data;
+
+    const renderReceiptPhotos = (photos: any[], emptyMsg: string) => {
+      if (!photos?.length) return <div style={{ padding: 20, textAlign: "center", color: C.light, fontSize: 12 }}>{emptyMsg}</div>;
+      return (
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(140px, 1fr))", gap: 10, padding: "10px 0" }}>
+          {photos.map((ph: any, i: number) => {
+            const imgKey = `receipt-${ph.irAttId}`;
+            const imgSrc = imgCache[imgKey];
+            if (!imgSrc && ph.irAttId) {
+              utils.offlineOps.attachmentImage.fetch({ irAttachmentId: ph.irAttId }).then((res: any) => {
+                if (res?.base64) setImgCache(prev => ({ ...prev, [imgKey]: `data:${ph.mime || "image/jpeg"};base64,${res.base64}` }));
+              }).catch(() => {});
+            }
+            return (
+              <div key={i} style={{ borderRadius: 8, overflow: "hidden", border: `1px solid ${C.border}`, background: C.pageBg }}>
+                <div style={{ aspectRatio: "1", display: "flex", alignItems: "center", justifyContent: "center", background: "#f9fafb" }}>
+                  {imgSrc ? <img src={imgSrc} alt={ph.label} style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : <span style={{ fontSize: 24, opacity: 0.3 }}>{"📷"}</span>}
+                </div>
+                <div style={{ padding: "6px 8px", fontSize: 10, color: C.sage, fontWeight: 600, textAlign: "center", borderTop: `1px solid ${C.border}` }}>{ph.label}</div>
+              </div>
+            );
+          })}
+        </div>
+      );
+    };
+
     // Company-based visibility for Procurement/Received QA tabs
     // Show for: Cairo (3), Sokhna (4), Alfaglobal (5)
     // Hide for: Abu Dhabi (2), ADGM (1)
@@ -514,6 +546,7 @@ export function OdooShipDetail({ shipmentId, onBack, onNavigateToShipment, sourc
       ...(showQATabs ? [
         { id: "procurement", label: "Procurement (Source)" },
       ] : []),
+      { id: "receiving", label: "Receiving" },
       { id: "trucking", label: "Trucking" },
       ...(showQATabs ? [
         { id: "received", label: "Quality (Received)" },
@@ -659,6 +692,24 @@ export function OdooShipDetail({ shipmentId, onBack, onNavigateToShipment, sourc
 
 
 
+        {/* ── Receiving Tab ────────────────────────────────────────────── */}
+        {loadTab === "receiving" && (
+          <Card>
+            <div style={{ fontSize: 11, fontWeight: 700, color: C.forest, marginBottom: 10, textTransform: "uppercase", letterSpacing: 0.5 }}>Receiving Photos</div>
+            <div style={{ fontSize: 11, color: C.gray, marginBottom: 12, lineHeight: 1.4 }}>Photos taken during truck arrival and receiving confirmation, before quality assessment.</div>
+            {receiptPhotos?.receiving && receiptPhotos.receiving.length > 0
+              ? renderReceiptPhotos(receiptPhotos.receiving, "")
+              : <div style={{ padding: 20, textAlign: "center", color: C.light, fontSize: 12 }}>No receiving photos uploaded yet</div>
+            }
+            {receiptPhotos?.other && receiptPhotos.other.length > 0 && (
+              <div style={{ marginTop: 16 }}>
+                <div style={{ fontSize: 11, fontWeight: 700, color: C.forest, marginBottom: 10, textTransform: "uppercase", letterSpacing: 0.5 }}>Other Attachments</div>
+                {renderReceiptPhotos(receiptPhotos.other, "")}
+              </div>
+            )}
+          </Card>
+        )}
+
         {/* ── Trucking Tab ─────────────────────────────────────────────── */}
         {loadTab === "trucking" && (
           <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
@@ -768,6 +819,12 @@ export function OdooShipDetail({ shipmentId, onBack, onNavigateToShipment, sourc
 
             {/* ── QUALITY CHECKER ─────────────────────────────────────────── */}
             <Card>
+              {receiptPhotos?.procurement && receiptPhotos.procurement.length > 0 && (
+                <div style={{ marginBottom: 16 }}>
+                  <div style={{ fontSize: 11, fontWeight: 700, color: C.forest, marginBottom: 10, textTransform: "uppercase", letterSpacing: 0.5 }}>Mobile App Photos (Procurement)</div>
+                  {renderReceiptPhotos(receiptPhotos.procurement, "")}
+                </div>
+              )}
               <div style={{ fontSize: 11, fontWeight: 700, color: C.forest, marginBottom: 10, textTransform: "uppercase", letterSpacing: 0.5 }}>Load Picture @Source</div>
               <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
                 {[
@@ -889,6 +946,12 @@ export function OdooShipDetail({ shipmentId, onBack, onNavigateToShipment, sourc
 
             {/* ── LOAD PICTURES ───────────────────────────────────────────── */}
             <Card>
+              {receiptPhotos?.quality && receiptPhotos.quality.length > 0 && (
+                <div style={{ marginBottom: 16 }}>
+                  <div style={{ fontSize: 11, fontWeight: 700, color: C.forest, marginBottom: 10, textTransform: "uppercase", letterSpacing: 0.5 }}>Mobile App Photos (Quality)</div>
+                  {renderReceiptPhotos(receiptPhotos.quality, "")}
+                </div>
+              )}
               <div style={{ fontSize: 11, fontWeight: 700, color: C.forest, marginBottom: 10, textTransform: "uppercase", letterSpacing: 0.5 }}>Load Pictures</div>
               <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
                 {[

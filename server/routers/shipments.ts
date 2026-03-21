@@ -814,6 +814,75 @@ export const shipmentsRouter = router({
 
   // ─── Grade Options ──────────────────────────────────────────────────────
   // Fetches the selection options for grade fields from Odoo's stock.picking model.
+  receiptPhotos: publicProcedure
+    .input(z.object({ receiptId: z.number() }))
+    .query(async ({ input }) => {
+      const { receiptId } = input;
+      const atts = await executeKw<{ id: number; name: string; mimetype: string; res_model: string; res_id: number }[]>(
+        "ir.attachment", "search_read",
+        [[["res_model", "=", "stock.picking"], ["res_id", "=", receiptId], ["mimetype", "like", "image/"]]],
+        { fields: ["id", "name", "mimetype"], limit: 100 }
+      );
+
+      const PROCUREMENT_TYPES = ["weight_ticket", "truck_plate", "driver_contract", "driver_license", "driver_id", "truck_right", "truck_left", "truck_back", "truck_loaded"];
+      const RECEIVING_TYPES = ["arrival", "bale_condition", "bale_right", "bale_left"];
+      const QUALITY_TYPES = ["bale_cross_section", "moisture_reading", "nir_reading"];
+
+      const PROCUREMENT_LABELS: Record<string, string> = {
+        weight_ticket: "Weight Ticket", truck_plate: "Truck Plate", driver_contract: "Driver Contract",
+        driver_license: "Driver License", driver_id: "Driver ID", truck_right: "Truck Right Side",
+        truck_left: "Truck Left Side", truck_back: "Truck Back Side", truck_loaded: "Truck Loaded",
+      };
+      const RECEIVING_LABELS: Record<string, string> = {
+        arrival: "Truck Arrival", bale_condition: "Bale Condition", bale_right: "Load Right Side",
+        bale_left: "Load Left Side",
+      };
+      const QUALITY_LABELS: Record<string, string> = {
+        bale_cross_section: "Bale Cross Section", moisture_reading: "Moisture Reading", nir_reading: "NIR Reading",
+      };
+
+      const categorize = (name: string) => {
+        const lower = name.toLowerCase();
+        if (lower.startsWith("[procurement]")) return "procurement";
+        if (lower.startsWith("[receiving]")) return "receiving";
+        if (lower.startsWith("[quality]")) return "quality";
+        for (const t of PROCUREMENT_TYPES) if (lower.includes(t)) return "procurement";
+        for (const t of RECEIVING_TYPES) if (lower.includes(t)) return "receiving";
+        for (const t of QUALITY_TYPES) if (lower.includes(t)) return "quality";
+        if (lower.includes("truck_") || lower.includes("driver_") || lower.includes("weight_ticket")) return "procurement";
+        return "other";
+      };
+
+      const getPhotoType = (name: string): string => {
+        const lower = name.toLowerCase();
+        const prefix = lower.replace(/^\[(procurement|receiving|quality)\]\s*/, "");
+        const allTypes = [...PROCUREMENT_TYPES, ...RECEIVING_TYPES, ...QUALITY_TYPES];
+        for (const t of allTypes) if (prefix.startsWith(t) || lower.includes(t)) return t;
+        return "";
+      };
+
+      const getLabel = (name: string, photoType: string, category: string): string => {
+        if (photoType) {
+          const labelMap = category === "procurement" ? PROCUREMENT_LABELS : category === "receiving" ? RECEIVING_LABELS : QUALITY_LABELS;
+          if (labelMap[photoType]) return labelMap[photoType];
+        }
+        return name.replace(/^\[(Procurement|Receiving|Quality)\]\s*/i, "").replace(/_PHT-.*$/, "").replace(/_/g, " ");
+      };
+
+      const result = { procurement: [] as any[], receiving: [] as any[], quality: [] as any[], other: [] as any[] };
+      for (const att of atts) {
+        const category = categorize(att.name);
+        const photoType = getPhotoType(att.name);
+        const label = getLabel(att.name, photoType, category);
+        const item = { irAttId: att.id, name: att.name, label, photoType, mime: att.mimetype };
+        if (category === "procurement") result.procurement.push(item);
+        else if (category === "receiving") result.receiving.push(item);
+        else if (category === "quality") result.quality.push(item);
+        else result.other.push(item);
+      }
+      return result;
+    }),
+
   gradeOptions: publicProcedure
     .query(async () => {
       const { fetchGradeOptions } = await import("../odoo-shipments");

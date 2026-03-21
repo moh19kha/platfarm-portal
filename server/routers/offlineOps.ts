@@ -515,10 +515,11 @@ export const offlineOpsRouter = router({
             ir_attachment_id: [number, string] | false;
             file_name: string | false;
             photo_label: string | false;
+            photo_type: string | false;
           }[]>(
             "pf.attachment", "search_read",
             [[["procurement_id", "=", procurementOdooId]]],
-            { fields: ["id", "ir_attachment_id", "file_name", "photo_label"] }
+            { fields: ["id", "ir_attachment_id", "file_name", "photo_label", "photo_type"] }
           );
           // Also check ir.attachment directly (mobile app links via res_model/res_id)
           if (procAtts.length === 0) {
@@ -554,8 +555,10 @@ export const offlineOpsRouter = router({
                 { fields: ["datas", "name", "mimetype"] }
               );
               if (irAtt?.[0]?.datas) {
+                const photoType = pfa.photo_type || "";
+                const finalName = photoType ? `[Procurement] ${photoType}_${label}` : attName;
                 await executeKw("ir.attachment", "create", [{
-                  name: attName,
+                  name: finalName,
                   datas: irAtt[0].datas,
                   mimetype: irAtt[0].mimetype || "image/jpeg",
                   res_model: "stock.picking",
@@ -612,10 +615,11 @@ export const offlineOpsRouter = router({
               ir_attachment_id: [number, string] | false;
               file_name: string | false;
               photo_label: string | false;
+              photo_type: string | false;
             }[]>(
               "pf.attachment", "search_read",
               [[["quality_id", "=", qc.id]]],
-              { fields: ["id", "ir_attachment_id", "file_name", "photo_label"] }
+              { fields: ["id", "ir_attachment_id", "file_name", "photo_label", "photo_type"] }
             );
             if (qcAtts.length === 0) {
               const irQcAtts = await executeKw<{ id: number; name: string; mimetype: string }[]>(
@@ -633,7 +637,8 @@ export const offlineOpsRouter = router({
             for (const qca of qcAtts) {
               if (!qca.ir_attachment_id) continue;
               const label = qca.photo_label || qca.file_name || qca.ir_attachment_id[1] || "QC_photo";
-              const attName = `[Quality] ${label}`;
+              const qcPhotoType = (qca as any).photo_type || "";
+              const attName = qcPhotoType ? `[Quality] ${qcPhotoType}_${label}` : `[Quality] ${label}`;
               if (existingNames.has(attName)) continue;
               try {
                 const irAtt = await executeKw<any[]>(
