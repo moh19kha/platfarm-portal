@@ -85,7 +85,7 @@ function transformProcurement(r: any, attachments: any[]): any {
   const syncStatus = r.synced_at ? "synced" : (r.state === "draft" ? "pending" : "synced");
 
   return {
-    id: r.name || `RCV-${String(r.id).padStart(4, "0")}`,
+    id: (r.name && r.name !== "New") ? r.name : `RCV-${String(r.id).padStart(4, "0")}`,
     odooId: r.id,
     supplier: r.supplier || "",
     commodity: r.commodity || "",
