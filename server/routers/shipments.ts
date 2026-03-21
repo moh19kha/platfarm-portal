@@ -841,6 +841,8 @@ export const shipmentsRouter = router({
         "\u0627\u0644\u062c\u0627\u0646\u0628 \u0627\u0644\u0623\u064a\u0633\u0631 \u0644\u0644\u0634\u0627\u062d\u0646\u0629": "truck_left",
         "\u0645\u0624\u062e\u0631\u0629 \u0627\u0644\u0634\u0627\u062d\u0646\u0629": "truck_back",
         "\u062d\u0627\u0644\u0629 \u0627\u0644\u0633\u064a\u0627\u0631\u0629 \u0639\u0646\u062f \u0627\u0644\u0648\u0635\u0648\u0644": "arrival",
+        "\u0627\u0644\u0648\u0635\u0648\u0644": "arrival",
+        "\u062d\u0627\u0644\u0629 \u0627\u0644\u0628\u0627\u0644\u0629": "bale_condition",
         "\u0642\u0631\u0627\u0621\u0629 \u062c\u0647\u0627\u0632 \u0627\u0644\u0631\u0637\u0648\u0628\u0629": "moisture_reading",
         "\u0642\u0631\u0627\u0621\u0629 \u062c\u0647\u0627\u0632 NIR": "nir_reading",
         "\u0645\u0642\u0637\u0639 \u0639\u0631\u0636\u064a \u0644\u0644\u0628\u0627\u0644\u0629": "bale_cross_section",
@@ -859,7 +861,7 @@ export const shipmentsRouter = router({
       };
 
       const extractPhotoType = (name: string): string => {
-        const cleaned = name.replace(/^\[(Procurement|Receiving|Quality)\]\s*/i, "").trim();
+        const cleaned = name.replace(/^\[(Procurement|Receiving|Quality|QC)\]\s*/i, "").trim();
         const lower = cleaned.toLowerCase();
         for (const code of ALL_CODES) {
           if (lower.startsWith(code + "_") || lower.startsWith(code + " ") || lower === code) {
@@ -880,8 +882,9 @@ export const shipmentsRouter = router({
         const label = photoType && PHOTO_LABELS[photoType]
           ? PHOTO_LABELS[photoType]
           : att.name.replace(/^\[(Procurement|Receiving|Quality)\]\s*/i, "").trim();
-        const stageMatch = att.name.match(/^\[(Procurement|Receiving|Quality)\]/i);
-        const stage = stageMatch ? stageMatch[1].toLowerCase() : "";
+        const stageMatch = att.name.match(/^\[(Procurement|Receiving|Quality|QC)\]/i);
+        const rawStage = stageMatch ? stageMatch[1].toLowerCase() : "";
+        const stage = rawStage === "qc" ? "quality" : rawStage;
         const item = { irAttId: att.id, name: att.name, label, photoType, mime: att.mimetype, date: att.create_date, stage };
         if (photoType) {
           if (!byType[photoType]) byType[photoType] = [];
