@@ -818,32 +818,45 @@ export const shipmentsRouter = router({
     .input(z.object({ receiptId: z.number() }))
     .query(async ({ input }) => {
       const { receiptId } = input;
-      const atts = await executeKw<{ id: number; name: string; mimetype: string; res_model: string; res_id: number; create_date: string }[]>(
+      const atts = await executeKw<{ id: number; name: string; mimetype: string; create_date: string }[]>(
         "ir.attachment", "search_read",
         [[["res_model", "=", "stock.picking"], ["res_id", "=", receiptId], ["mimetype", "like", "image/"]]],
         { fields: ["id", "name", "mimetype", "create_date"], limit: 200, order: "create_date asc" }
       );
 
-      const PHOTO_LABELS: Record<string, string> = {
-        weight_ticket: "Weight Ticket", wt: "Weight Ticket",
-        truck_plate: "Truck Plate", pl: "Truck Plate",
-        driver_contract: "Supply Contract", ct: "Supply Contract",
-        driver_license: "Driver License", dl: "Driver License",
-        driver_id: "Driver ID", id: "Driver ID",
-        truck_right: "Load Right Side", tr: "Load Right Side",
-        truck_left: "Load Left Side", tl: "Load Left Side",
-        truck_back: "Load Back Side", tb: "Load Back Side",
-        truck_loaded: "Truck Loaded",
-        arrival: "Truck Arrival", ar: "Truck Arrival",
-        bale_condition: "Bale Condition", bc: "Bale Condition",
-        bale_cross_section: "Bale Cross Section", cs: "Bale Cross Section",
-        moisture_reading: "Moisture Reading", mr: "Moisture Reading",
-        nir_reading: "NIR Reading", nir: "NIR Reading",
-        bale_right: "Bale Right Side", bale_left: "Bale Left Side",
+      const SHORT_TO_LONG: Record<string, string> = {
+        wt: "weight_ticket", ct: "driver_contract", dl: "driver_license",
+        id: "driver_id", pl: "truck_plate", bc: "bale_condition",
+        ar: "arrival", tr: "truck_right", tl: "truck_left", tb: "truck_back",
+        mr: "moisture_reading", nir: "nir_reading", cs: "bale_cross_section",
+      };
+      const ARABIC_TO_CODE: Record<string, string> = {
+        "\u062a\u0630\u0643\u0631\u0629 \u0627\u0644\u0648\u0632\u0646": "weight_ticket",
+        "\u0639\u0642\u062f \u0627\u0644\u0633\u0627\u0626\u0642": "driver_contract",
+        "\u0631\u062e\u0635\u0629 \u0627\u0644\u0642\u064a\u0627\u062f\u0629": "driver_license",
+        "\u0647\u0648\u064a\u0629 \u0627\u0644\u0633\u0627\u0626\u0642": "driver_id",
+        "\u0644\u0648\u062d\u0629 \u0627\u0644\u0634\u0627\u062d\u0646\u0629": "truck_plate",
+        "\u062d\u0627\u0644\u0629 \u0627\u0644\u0628\u0627\u0644\u0627\u062a": "bale_condition",
+        "\u0627\u0644\u062c\u0627\u0646\u0628 \u0627\u0644\u0623\u064a\u0645\u0646 \u0644\u0644\u0634\u0627\u062d\u0646\u0629": "truck_right",
+        "\u0627\u0644\u062c\u0627\u0646\u0628 \u0627\u0644\u0623\u064a\u0633\u0631 \u0644\u0644\u0634\u0627\u062d\u0646\u0629": "truck_left",
+        "\u0645\u0624\u062e\u0631\u0629 \u0627\u0644\u0634\u0627\u062d\u0646\u0629": "truck_back",
+        "\u062d\u0627\u0644\u0629 \u0627\u0644\u0633\u064a\u0627\u0631\u0629 \u0639\u0646\u062f \u0627\u0644\u0648\u0635\u0648\u0644": "arrival",
+        "\u0642\u0631\u0627\u0621\u0629 \u062c\u0647\u0627\u0632 \u0627\u0644\u0631\u0637\u0648\u0628\u0629": "moisture_reading",
+        "\u0642\u0631\u0627\u0621\u0629 \u062c\u0647\u0627\u0632 NIR": "nir_reading",
+        "\u0645\u0642\u0637\u0639 \u0639\u0631\u0636\u064a \u0644\u0644\u0628\u0627\u0644\u0629": "bale_cross_section",
       };
 
-      const QUALITY_ONLY = new Set(["bale_cross_section", "moisture_reading", "nir_reading", "cs", "mr", "nir"]);
-      const RECEIVING_ONLY = new Set(["arrival", "ar"]);
+      const ALL_CODES = Object.keys(SHORT_TO_LONG).concat(Object.values(SHORT_TO_LONG));
+
+      const PHOTO_LABELS: Record<string, string> = {
+        weight_ticket: "Weight Ticket", driver_contract: "Supply Contract (Signed)",
+        driver_license: "Driver License", driver_id: "Driver ID Card",
+        truck_plate: "Truck / License Plate", bale_condition: "Bale Condition",
+        arrival: "Truck Arrival Condition", truck_right: "Load Right Side",
+        truck_left: "Load Left Side", truck_back: "Load Back Side",
+        moisture_reading: "Moisture Reading", nir_reading: "NIR Reading (Protein)",
+        bale_cross_section: "Bale Cross Section",
+      };
 
       const categorize = (name: string): string => {
         const lower = name.toLowerCase();
@@ -854,29 +867,24 @@ export const shipmentsRouter = router({
       };
 
       const extractPhotoType = (name: string): string => {
-        const lower = name.toLowerCase();
-        const cleaned = lower.replace(/^\[(procurement|receiving|quality)\]\s*/, "");
-        const allKeys = Object.keys(PHOTO_LABELS);
-        for (const k of allKeys) {
-          if (cleaned.startsWith(k + "_") || cleaned.startsWith(k + " ") || cleaned === k) return k;
+        const cleaned = name.replace(/^\[(Procurement|Receiving|Quality)\]\s*/i, "").trim();
+        const lower = cleaned.toLowerCase();
+        for (const code of ALL_CODES) {
+          if (lower.startsWith(code + "_") || lower.startsWith(code + " ") || lower === code) {
+            return SHORT_TO_LONG[code] || code;
+          }
+        }
+        for (const [arabic, code] of Object.entries(ARABIC_TO_CODE)) {
+          if (cleaned.includes(arabic)) return code;
         }
         return "";
-      };
-
-      const getLabel = (name: string, photoType: string): string => {
-        if (photoType && PHOTO_LABELS[photoType]) return PHOTO_LABELS[photoType];
-        return name
-          .replace(/^\[(Procurement|Receiving|Quality)\]\s*/i, "")
-          .replace(/_PHT-.*$/i, "")
-          .replace(/_/g, " ")
-          .trim() || name;
       };
 
       const result = { procurement: [] as any[], receiving: [] as any[], quality: [] as any[], other: [] as any[] };
       for (const att of atts) {
         const category = categorize(att.name);
         const photoType = extractPhotoType(att.name);
-        const label = getLabel(att.name, photoType);
+        const label = photoType && PHOTO_LABELS[photoType] ? PHOTO_LABELS[photoType] : att.name.replace(/^\[(Procurement|Receiving|Quality)\]\s*/i, "").trim();
         const item = { irAttId: att.id, name: att.name, label, photoType, mime: att.mimetype, date: att.create_date };
         if (category === "procurement") result.procurement.push(item);
         else if (category === "receiving") result.receiving.push(item);

@@ -506,27 +506,146 @@ export function OdooShipDetail({ shipmentId, onBack, onNavigateToShipment, sourc
 
   const selectedLoad = selectedLoadId ? shipment.pickings.find((p: any) => p.id === selectedLoadId) : null;
 
-  const renderReceiptPhotos = (photos: any[], emptyMsg: string) => {
-      if (!photos?.length) return <div style={{ padding: 20, textAlign: "center", color: C.light, fontSize: 12 }}>{emptyMsg}</div>;
+  const PHOTO_SLOT_DOCS = [
+      { code: "weight_ticket", label: "Weight Ticket" },
+      { code: "driver_contract", label: "Supply Contract (Signed)" },
+      { code: "driver_license", label: "Driver License" },
+      { code: "driver_id", label: "Driver ID Card" },
+      { code: "truck_plate", label: "Truck / License Plate" },
+      { code: "bale_condition", label: "Bale Condition" },
+    ];
+    const PHOTO_SLOT_CARGO = [
+      { code: "truck_right", label: "Right Side Picture" },
+      { code: "truck_left", label: "Left Side Picture" },
+      { code: "truck_back", label: "Back Side Picture" },
+    ];
+    const PHOTO_SLOT_RECEIVING = [
+      { code: "arrival", label: "Truck Arrival Condition" },
+    ];
+    const PHOTO_SLOT_QUALITY = [
+      { code: "moisture_reading", label: "Moisture Reading" },
+      { code: "nir_reading", label: "NIR Reading (Protein)" },
+      { code: "bale_cross_section", label: "Bale Cross Section" },
+    ];
+
+    const handlePhotoPreview = (ph: any) => {
+      const imgKey = `receipt-${ph.irAttId}`;
+      const cached = imgCache[imgKey];
+      if (cached) {
+        setPreviewFile({ label: ph.label, base64: cached });
+        return;
+      }
+      setPreviewLoading(true);
+      utils.offlineOps.attachmentImage.fetch({ irAttachmentId: ph.irAttId }).then((res: any) => {
+        if (res?.base64) {
+          const src = `data:${ph.mime || "image/jpeg"};base64,${res.base64}`;
+          setImgCache(prev => ({ ...prev, [imgKey]: src }));
+          setPreviewFile({ label: ph.label, base64: src });
+        }
+      }).catch(() => {}).finally(() => setPreviewLoading(false));
+    };
+
+    const handlePhotoDownload = (ph: any) => {
+      const imgKey = `receipt-${ph.irAttId}`;
+      const cached = imgCache[imgKey];
+      const doDownload = (src: string) => {
+        const a = document.createElement("a");
+        a.href = src;
+        a.download = `${ph.photoType || "photo"}_${ph.irAttId}.jpg`;
+        a.click();
+      };
+      if (cached) { doDownload(cached); return; }
+      utils.offlineOps.attachmentImage.fetch({ irAttachmentId: ph.irAttId }).then((res: any) => {
+        if (res?.base64) {
+          const src = `data:${ph.mime || "image/jpeg"};base64,${res.base64}`;
+          setImgCache(prev => ({ ...prev, [imgKey]: src }));
+          doDownload(src);
+        }
+      }).catch(() => {});
+    };
+
+    const renderPhotoSlotList = (
+      slots: { code: string; label: string }[],
+      photos: any[],
+      sectionTitle: string,
+    ) => {
+      const byType: Record<string, any[]> = {};
+      for (const ph of photos || []) {
+        const k = ph.photoType || "_unknown";
+        if (!byType[k]) byType[k] = [];
+        byType[k].push(ph);
+      }
+
       return (
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(140px, 1fr))", gap: 10, padding: "10px 0" }}>
-          {photos.map((ph: any, i: number) => {
-            const imgKey = `receipt-${ph.irAttId}`;
-            const imgSrc = imgCache[imgKey];
-            if (!imgSrc && ph.irAttId) {
-              utils.offlineOps.attachmentImage.fetch({ irAttachmentId: ph.irAttId }).then((res: any) => {
-                if (res?.base64) setImgCache(prev => ({ ...prev, [imgKey]: `data:${ph.mime || "image/jpeg"};base64,${res.base64}` }));
-              }).catch(() => {});
-            }
-            return (
-              <div key={i} style={{ borderRadius: 8, overflow: "hidden", border: `1px solid ${C.border}`, background: C.pageBg }}>
-                <div style={{ aspectRatio: "1", display: "flex", alignItems: "center", justifyContent: "center", background: "#f9fafb" }}>
-                  {imgSrc ? <img src={imgSrc} alt={ph.label} style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : <span style={{ fontSize: 24, opacity: 0.3 }}>{"📷"}</span>}
+        <div style={{ marginBottom: 12 }}>
+          <div style={{ fontSize: 11, fontWeight: 700, color: C.forest, marginBottom: 8, textTransform: "uppercase", letterSpacing: 0.5 }}>{sectionTitle}</div>
+          <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+            {slots.map(slot => {
+              const matched = byType[slot.code] || [];
+              if (matched.length === 0) {
+                return (
+                  <div key={slot.code} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "6px 8px", borderRadius: 5, border: `1px solid ${C.border}`, background: "transparent" }}>
+                    <span style={{ fontSize: 10, fontWeight: 500, color: C.light }}>{slot.label}</span>
+                    <span style={{ fontSize: 9, color: C.light, fontStyle: "italic" }}>Not uploaded</span>
+                  </div>
+                );
+              }
+              return matched.map((ph: any, idx: number) => {
+                const imgKey = `receipt-${ph.irAttId}`;
+                if (!imgCache[imgKey] && ph.irAttId) {
+                  utils.offlineOps.attachmentImage.fetch({ irAttachmentId: ph.irAttId }).then((res: any) => {
+                    if (res?.base64) setImgCache(prev => ({ ...prev, [imgKey]: `data:${ph.mime || "image/jpeg"};base64,${res.base64}` }));
+                  }).catch(() => {});
+                }
+                const hasImg = !!imgCache[imgKey];
+                return (
+                  <div key={`${slot.code}-${idx}`} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "6px 8px", borderRadius: 5, border: `1px solid ${C.border}`, background: hasImg ? C.gBg : "transparent" }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                      {hasImg && <img src={imgCache[imgKey]} alt={slot.label} style={{ width: 28, height: 28, borderRadius: 4, objectFit: "cover", border: `1px solid ${C.border}` }} />}
+                      <span style={{ fontSize: 10, fontWeight: 500 }}>{slot.label}{matched.length > 1 ? ` (${idx + 1})` : ""}</span>
+                    </div>
+                    <div style={{ display: "flex", gap: 4 }}>
+                      <button onClick={() => handlePhotoPreview(ph)} style={{ fontSize: 9, padding: "2px 8px", borderRadius: 4, border: `1px solid ${C.gBdr2}`, background: C.gBg2, cursor: "pointer", color: C.forest, fontWeight: 600 }}>Preview</button>
+                      <button onClick={() => handlePhotoDownload(ph)} style={{ fontSize: 9, padding: "2px 8px", borderRadius: 4, border: `1px solid ${C.border}`, background: C.card, cursor: "pointer", color: C.forest, fontWeight: 600 }}>Download</button>
+                    </div>
+                  </div>
+                );
+              });
+            })}
+          </div>
+        </div>
+      );
+    };
+
+    const renderUnmatchedPhotos = (photos: any[], matchedCodes: string[]) => {
+      const unmatched = (photos || []).filter((p: any) => !matchedCodes.includes(p.photoType));
+      if (unmatched.length === 0) return null;
+      return (
+        <div style={{ marginTop: 8 }}>
+          <div style={{ fontSize: 11, fontWeight: 700, color: C.forest, marginBottom: 8, textTransform: "uppercase", letterSpacing: 0.5 }}>Other Photos</div>
+          <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+            {unmatched.map((ph: any, i: number) => {
+              const imgKey = `receipt-${ph.irAttId}`;
+              if (!imgCache[imgKey] && ph.irAttId) {
+                utils.offlineOps.attachmentImage.fetch({ irAttachmentId: ph.irAttId }).then((res: any) => {
+                  if (res?.base64) setImgCache(prev => ({ ...prev, [imgKey]: `data:${ph.mime || "image/jpeg"};base64,${res.base64}` }));
+                }).catch(() => {});
+              }
+              const hasImg = !!imgCache[imgKey];
+              return (
+                <div key={i} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "6px 8px", borderRadius: 5, border: `1px solid ${C.border}`, background: hasImg ? C.gBg : "transparent" }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                    {hasImg && <img src={imgCache[imgKey]} alt={ph.label} style={{ width: 28, height: 28, borderRadius: 4, objectFit: "cover", border: `1px solid ${C.border}` }} />}
+                    <span style={{ fontSize: 10, fontWeight: 500 }}>{ph.label}</span>
+                  </div>
+                  <div style={{ display: "flex", gap: 4 }}>
+                    <button onClick={() => handlePhotoPreview(ph)} style={{ fontSize: 9, padding: "2px 8px", borderRadius: 4, border: `1px solid ${C.gBdr2}`, background: C.gBg2, cursor: "pointer", color: C.forest, fontWeight: 600 }}>Preview</button>
+                    <button onClick={() => handlePhotoDownload(ph)} style={{ fontSize: 9, padding: "2px 8px", borderRadius: 4, border: `1px solid ${C.border}`, background: C.card, cursor: "pointer", color: C.forest, fontWeight: 600 }}>Download</button>
+                  </div>
                 </div>
-                <div style={{ padding: "6px 8px", fontSize: 10, color: C.sage, fontWeight: 600, textAlign: "center", borderTop: `1px solid ${C.border}` }}>{ph.label}</div>
-              </div>
-            );
-          })}
+              );
+            })}
+          </div>
         </div>
       );
     };
@@ -696,14 +815,14 @@ export function OdooShipDetail({ shipmentId, onBack, onNavigateToShipment, sourc
           <Card>
             <div style={{ fontSize: 11, fontWeight: 700, color: C.forest, marginBottom: 10, textTransform: "uppercase", letterSpacing: 0.5 }}>Receiving Photos</div>
             <div style={{ fontSize: 11, color: C.gray, marginBottom: 12, lineHeight: 1.4 }}>Photos taken during truck arrival and receiving confirmation, before quality assessment.</div>
-            {receiptPhotos?.receiving && receiptPhotos.receiving.length > 0
-              ? renderReceiptPhotos(receiptPhotos.receiving, "")
-              : <div style={{ padding: 20, textAlign: "center", color: C.light, fontSize: 12 }}>No receiving photos uploaded yet</div>
-            }
+            {renderPhotoSlotList(PHOTO_SLOT_DOCS, receiptPhotos?.receiving || [], "Documents @Receiving")}
+            {renderPhotoSlotList(PHOTO_SLOT_RECEIVING, receiptPhotos?.receiving || [], "Truck Arrival")}
+            {renderPhotoSlotList(PHOTO_SLOT_CARGO, receiptPhotos?.receiving || [], "Load Pictures @Receiving")}
+            {renderUnmatchedPhotos(receiptPhotos?.receiving || [], [...PHOTO_SLOT_DOCS, ...PHOTO_SLOT_RECEIVING, ...PHOTO_SLOT_CARGO].map(s => s.code))}
             {receiptPhotos?.other && receiptPhotos.other.length > 0 && (
-              <div style={{ marginTop: 16 }}>
-                <div style={{ fontSize: 11, fontWeight: 700, color: C.forest, marginBottom: 10, textTransform: "uppercase", letterSpacing: 0.5 }}>Other Attachments</div>
-                {renderReceiptPhotos(receiptPhotos.other, "")}
+              <div style={{ marginTop: 8 }}>
+                {renderPhotoSlotList([], receiptPhotos.other, "Other Attachments")}
+                {renderUnmatchedPhotos(receiptPhotos.other, [])}
               </div>
             )}
           </Card>
@@ -818,12 +937,11 @@ export function OdooShipDetail({ shipmentId, onBack, onNavigateToShipment, sourc
 
             {/* ── QUALITY CHECKER ─────────────────────────────────────────── */}
             <Card>
-              {receiptPhotos?.procurement && receiptPhotos.procurement.length > 0 && (
-                <div style={{ marginBottom: 16 }}>
-                  <div style={{ fontSize: 11, fontWeight: 700, color: C.forest, marginBottom: 10, textTransform: "uppercase", letterSpacing: 0.5 }}>Mobile App Photos (Procurement)</div>
-                  {renderReceiptPhotos(receiptPhotos.procurement, "")}
-                </div>
-              )}
+              <div style={{ marginBottom: 16 }}>
+                {renderPhotoSlotList(PHOTO_SLOT_DOCS, receiptPhotos?.procurement || [], "Documents @Source")}
+                {renderPhotoSlotList(PHOTO_SLOT_CARGO, receiptPhotos?.procurement || [], "Load Pictures @Source")}
+                {renderUnmatchedPhotos(receiptPhotos?.procurement || [], [...PHOTO_SLOT_DOCS, ...PHOTO_SLOT_CARGO].map(s => s.code))}
+              </div>
               <div style={{ fontSize: 11, fontWeight: 700, color: C.forest, marginBottom: 10, textTransform: "uppercase", letterSpacing: 0.5 }}>Load Picture @Source</div>
               <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
                 {[
@@ -945,12 +1063,13 @@ export function OdooShipDetail({ shipmentId, onBack, onNavigateToShipment, sourc
 
             {/* ── LOAD PICTURES ───────────────────────────────────────────── */}
             <Card>
-              {receiptPhotos?.quality && receiptPhotos.quality.length > 0 && (
-                <div style={{ marginBottom: 16 }}>
-                  <div style={{ fontSize: 11, fontWeight: 700, color: C.forest, marginBottom: 10, textTransform: "uppercase", letterSpacing: 0.5 }}>Mobile App Photos (Quality)</div>
-                  {renderReceiptPhotos(receiptPhotos.quality, "")}
-                </div>
-              )}
+              <div style={{ marginBottom: 16 }}>
+                {renderPhotoSlotList(PHOTO_SLOT_DOCS, receiptPhotos?.quality || [], "Documents @Quality")}
+                {renderPhotoSlotList(PHOTO_SLOT_RECEIVING, receiptPhotos?.quality || [], "Truck Arrival")}
+                {renderPhotoSlotList(PHOTO_SLOT_CARGO, receiptPhotos?.quality || [], "Load Pictures @Quality")}
+                {renderPhotoSlotList(PHOTO_SLOT_QUALITY, receiptPhotos?.quality || [], "Quality Assessment Photos")}
+                {renderUnmatchedPhotos(receiptPhotos?.quality || [], [...PHOTO_SLOT_DOCS, ...PHOTO_SLOT_RECEIVING, ...PHOTO_SLOT_CARGO, ...PHOTO_SLOT_QUALITY].map(s => s.code))}
+              </div>
               <div style={{ fontSize: 11, fontWeight: 700, color: C.forest, marginBottom: 10, textTransform: "uppercase", letterSpacing: 0.5 }}>Load Pictures</div>
               <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
                 {[
