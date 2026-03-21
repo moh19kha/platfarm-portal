@@ -164,12 +164,16 @@
       if (!s.qcData) return <div style={{ padding: 20, textAlign: "center", color: C.light, fontSize: 12 }}>No quality report linked yet</div>;
       const qc = s.qcData;
       const inspectionItems = [
-        { label: "Color", val: qc.color, ok: qc.color === "pass" || qc.color === true },
-        { label: "Odor", val: qc.odor, ok: qc.odor === "pass" || qc.odor === true },
-        { label: "Texture", val: qc.texture, ok: qc.texture === "pass" || qc.texture === true },
-        { label: "Pests", val: qc.pests, ok: qc.pests === "pass" || qc.pests === false || qc.pests === "no" },
-        { label: "Mold", val: qc.mold, ok: qc.mold === "pass" || qc.mold === false || qc.mold === "no" },
-        { label: "Foreign Matter", val: qc.foreignMatter, ok: qc.foreignMatter === "pass" || qc.foreignMatter === false || qc.foreignMatter === "no" },
+        { label: "Color", val: qc.color, ok: qc.color === "green" || qc.color === "pass" || qc.color === "good" },
+        { label: "Odor", val: qc.odor, ok: qc.odor === "good" || qc.odor === "pass" || qc.odor === "normal" || qc.odor === "yes" },
+        { label: "Foreign Matter", val: qc.foreignMatter, ok: qc.foreignMatter === "none" || qc.foreignMatter === "clean" || qc.foreignMatter === "no" || qc.foreignMatter === "pass" },
+        { label: "Leaf Ratio", val: qc.leafRatio, ok: qc.leafRatio === "good" || qc.leafRatio === "high" },
+        { label: "Bale Shape", val: qc.baleShape, ok: qc.baleShape === "good" || qc.baleShape === "yes" },
+        { label: "Bale Ties", val: qc.baleTies, ok: qc.baleTies === "good" || qc.baleTies === "yes" },
+        { label: "No Weeds", val: qc.noWeeds, ok: qc.noWeeds === "yes" || qc.noWeeds === "pass" || qc.noWeeds === "good" },
+        { label: "No Insects", val: qc.noInsects, ok: qc.noInsects === "yes" || qc.noInsects === "pass" || qc.noInsects === "good" },
+        { label: "No Black Wood", val: qc.noBlackWood, ok: qc.noBlackWood === "yes" || qc.noBlackWood === "pass" || qc.noBlackWood === "good" },
+        { label: "Density", val: qc.density, ok: qc.density === "good" || qc.density === "high" || qc.density === "medium" },
       ];
       return (
         <div style={{ padding: "16px 20px" }}>
@@ -211,6 +215,28 @@
               </div>
             ))}
           </div>
+          {(() => {
+            const arrivalItems = [
+              { label: "Truck Clean", val: qc.truckClean, ok: qc.truckClean === "yes" || qc.truckClean === "pass" || qc.truckClean === "good" },
+              { label: "Has Cover", val: qc.hasCover, ok: qc.hasCover === "yes" || qc.hasCover === "pass" || qc.hasCover === "good" },
+              { label: "Proper Stacking", val: qc.stackGood, ok: qc.stackGood === "yes" || qc.stackGood === "pass" || qc.stackGood === "good" },
+              { label: "Proper Lashing", val: qc.strapGood, ok: qc.strapGood === "yes" || qc.strapGood === "pass" || qc.strapGood === "good" },
+            ].filter(x => x.val);
+            if (arrivalItems.length === 0) return null;
+            return (
+              <>
+                <div style={{ marginTop: 14 }}><Lbl>Arrival Condition</Lbl></div>
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 6, marginTop: 8 }}>
+                  {arrivalItems.map(x => (
+                    <div key={x.label} style={{ display: "flex", alignItems: "center", gap: 6, padding: "5px 8px", borderRadius: 6, background: x.ok ? "#F0FDF4" : C.rBg, border: `1px solid ${x.ok ? "#BBF7D0" : C.rBdr}` }}>
+                      <span style={{ fontSize: 11 }}>{x.ok ? "✅" : "❌"}</span>
+                      <span style={{ fontSize: 10, color: x.ok ? "#166534" : C.red }}>{x.label}</span>
+                    </div>
+                  ))}
+                </div>
+              </>
+            );
+          })()}
           {qc.notes && <div style={{ marginTop: 14, padding: "10px 12px", borderRadius: 8, background: C.aBg, border: `1px solid ${C.aBdr}`, fontSize: 11, color: "#92400E" }}>📝 {qc.notes}</div>}
         </div>
       );
