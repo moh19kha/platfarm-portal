@@ -173,26 +173,18 @@
         { label: "No Weeds", val: qc.noWeeds, ok: qc.noWeeds === "yes" || qc.noWeeds === "pass" || qc.noWeeds === "good" },
         { label: "No Insects", val: qc.noInsects, ok: qc.noInsects === "yes" || qc.noInsects === "pass" || qc.noInsects === "good" },
         { label: "No Black Wood", val: qc.noBlackWood, ok: qc.noBlackWood === "yes" || qc.noBlackWood === "pass" || qc.noBlackWood === "good" },
-        { label: "Density", val: qc.density, ok: qc.density === "good" || qc.density === "high" || qc.density === "medium" },
       ];
       return (
         <div style={{ padding: "16px 20px" }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 16 }}>
-            <span style={{ fontSize: 18 }}>{qc.verdict === "accepted" ? "✅" : "❌"}</span>
+          <div style={{ display: "flex", alignItems: "center", gap: 8, padding: "8px 10px", borderRadius: 8, background: C.gBg, border: `1px solid ${C.gBdr}`, marginBottom: 16 }}>
+            <span style={{ width: 28, height: 28, borderRadius: 14, background: C.sage, color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 13, fontWeight: 700, flexShrink: 0 }}>{(qc.inspector || "?")[0].toUpperCase()}</span>
             <div>
-              <div style={{ fontFamily: MONO, fontSize: 13, fontWeight: 700, color: C.dark }}>{qc.id}</div>
-              <div style={{ fontSize: 10, color: C.light }}>Verdict: <span style={{ fontWeight: 700, color: qc.verdict === "accepted" ? "#166534" : C.red }}>{qc.verdict}</span></div>
+              <div style={{ fontSize: 9, fontWeight: 600, color: C.sage, textTransform: "uppercase", letterSpacing: 0.5 }}>QC Inspector</div>
+              <div style={{ fontSize: 12, fontWeight: 700, color: C.forest }}>{qc.inspector || "—"}</div>
             </div>
           </div>
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 8, marginBottom: 14 }}>
-            {[["Grade", qc.finalGrade], ["Moisture", qc.moisture], ["Type", qc.type === "received" ? "Raw / Received" : "Pressed"]].map(([l, v]) => (
-              <div key={l} style={{ textAlign: "center", padding: 10, borderRadius: 8, background: C.gBg, border: `1px solid ${C.gBdr}` }}>
-                <div style={{ fontFamily: MONO, fontSize: 14, fontWeight: 700, color: C.dark }}>{v}</div>
-                <div style={{ fontSize: 9, color: C.light, marginTop: 2 }}>{l}</div>
-              </div>
-            ))}
-          </div>
-          <div style={{ display: "flex", gap: 8, marginBottom: 14 }}>
+          <Lbl>Grade Assessment</Lbl>
+          <div style={{ display: "flex", gap: 10, marginTop: 8, marginBottom: 14 }}>
             {[["G1", qc.g1], ["G2", qc.g2], ["Mix", qc.mix]].map(([l, v]) => (
               <div key={l} style={{ flex: 1, textAlign: "center", padding: 10, borderRadius: 8, background: C.pageBg, border: `1px solid ${C.border}` }}>
                 <div style={{ fontFamily: MONO, fontSize: 18, fontWeight: 700, color: C.dark }}>{v}</div>
@@ -215,29 +207,28 @@
               </div>
             ))}
           </div>
-          {(() => {
-            const arrivalItems = [
-              { label: "Truck Clean", val: qc.truckClean, ok: qc.truckClean === "yes" || qc.truckClean === "pass" || qc.truckClean === "good" },
-              { label: "Has Cover", val: qc.hasCover, ok: qc.hasCover === "yes" || qc.hasCover === "pass" || qc.hasCover === "good" },
-              { label: "Proper Stacking", val: qc.stackGood, ok: qc.stackGood === "yes" || qc.stackGood === "pass" || qc.stackGood === "good" },
-              { label: "Proper Lashing", val: qc.strapGood, ok: qc.strapGood === "yes" || qc.strapGood === "pass" || qc.strapGood === "good" },
-            ].filter(x => x.val);
-            if (arrivalItems.length === 0) return null;
-            return (
-              <>
-                <div style={{ marginTop: 14 }}><Lbl>Arrival Condition</Lbl></div>
-                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 6, marginTop: 8 }}>
-                  {arrivalItems.map(x => (
-                    <div key={x.label} style={{ display: "flex", alignItems: "center", gap: 6, padding: "5px 8px", borderRadius: 6, background: x.ok ? "#F0FDF4" : C.rBg, border: `1px solid ${x.ok ? "#BBF7D0" : C.rBdr}` }}>
-                      <span style={{ fontSize: 11 }}>{x.ok ? "✅" : "❌"}</span>
-                      <span style={{ fontSize: 10, color: x.ok ? "#166534" : C.red }}>{x.label}</span>
-                    </div>
-                  ))}
-                </div>
-              </>
-            );
-          })()}
-          {qc.notes && <div style={{ marginTop: 14, padding: "10px 12px", borderRadius: 8, background: C.aBg, border: `1px solid ${C.aBdr}`, fontSize: 11, color: "#92400E" }}>📝 {qc.notes}</div>}
+          {qc.notes && <div style={{ marginTop: 14, padding: "10px 12px", borderRadius: 8, background: C.aBg, border: `1px solid ${C.aBdr}`, fontSize: 11, color: "#92400E" }}>{qc.notes}</div>}
+          <div style={{ marginTop: 24 }}><Lbl>QC Photos & Documents</Lbl></div>
+          {qc.att?.length > 0 ? (
+            <div style={{ marginTop: 8, display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(90px, 1fr))", gap: 8 }}>
+              {qc.att.map((att: any, i: number) => {
+                const irId = att.irAttId || att.ir_attachment_id;
+                const imgSrc = irId && imgCache[irId] && imgCache[irId] !== "loading" && imgCache[irId] !== "none" ? imgCache[irId] : null;
+                if (irId && !imgCache[irId]) loadImg(irId);
+                return (
+                  <div key={i} onClick={() => setPrvAtt({ ...att, irAttId: irId })} style={{ cursor: "pointer", borderRadius: 8, overflow: "hidden", border: `1px solid ${C.border}`, background: C.pageBg, aspectRatio: "1", display: "flex", alignItems: "center", justifyContent: "center" }}
+                    onMouseEnter={e => (e.currentTarget.style.borderColor = C.gBdr2)}
+                    onMouseLeave={e => (e.currentTarget.style.borderColor = C.border)}>
+                    {imgSrc ? <img src={imgSrc} alt={att.n || ""} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                      : imgCache[irId] === "loading" ? <span style={{ fontSize: 9, color: C.muted }}>Loading...</span>
+                      : <span style={{ fontSize: 22 }}>📷</span>}
+                  </div>
+                );
+              })}
+            </div>
+          ) : (
+            <div style={{ marginTop: 8, padding: 16, textAlign: "center", borderRadius: 8, background: C.pageBg, border: `1px solid ${C.border}`, color: C.muted, fontSize: 11 }}>No QC photos uploaded</div>
+          )}
         </div>
       );
     };
@@ -288,8 +279,6 @@
       { label: "Overview", icon: "📊" },
       { label: "Receiving", icon: "📦" },
       { label: "Quality", icon: "🔍" },
-      { label: "Shipment Photos", icon: "📸" },
-      { label: "QC Photos", icon: "🖼" },
       { label: "Actions", icon: "⚡" },
     ] : [];
 
@@ -470,6 +459,27 @@
                       </div>
                     </div>
                   )}
+                  <div style={{ marginTop: 24 }}><Lbl>Shipment Photos & Documents</Lbl></div>
+                  {sel.att?.length > 0 ? (
+                    <div style={{ marginTop: 8, display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(90px, 1fr))", gap: 8 }}>
+                      {sel.att.map((att: any, i: number) => {
+                        const irId = att.irAttId || att.ir_attachment_id;
+                        const imgSrc = irId && imgCache[irId] && imgCache[irId] !== "loading" && imgCache[irId] !== "none" ? imgCache[irId] : null;
+                        if (irId && !imgCache[irId]) loadImg(irId);
+                        return (
+                          <div key={i} onClick={() => setPrvAtt({ ...att, irAttId: irId })} style={{ cursor: "pointer", borderRadius: 8, overflow: "hidden", border: `1px solid ${C.border}`, background: C.pageBg, aspectRatio: "1", display: "flex", alignItems: "center", justifyContent: "center" }}
+                            onMouseEnter={e => (e.currentTarget.style.borderColor = C.gBdr2)}
+                            onMouseLeave={e => (e.currentTarget.style.borderColor = C.border)}>
+                            {imgSrc ? <img src={imgSrc} alt={att.n || ""} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                              : imgCache[irId] === "loading" ? <span style={{ fontSize: 9, color: C.muted }}>Loading...</span>
+                              : <span style={{ fontSize: 22 }}>📷</span>}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  ) : (
+                    <div style={{ marginTop: 8, padding: 16, textAlign: "center", borderRadius: 8, background: C.pageBg, border: `1px solid ${C.border}`, color: C.muted, fontSize: 11 }}>No shipment photos uploaded</div>
+                  )}
                 </div>
               )}
 
@@ -561,10 +571,8 @@
 
               {activeTab === 0 && renderTimeline(sel)}
               {activeTab === 3 && renderQuality(sel)}
-              {activeTab === 4 && renderPhotos(sel.att, "No shipment photos uploaded")}
-              {activeTab === 5 && renderPhotos(sel.qcData?.att, "No QC photos available")}
 
-              {activeTab === 6 && (
+              {activeTab === 4 && (
                 <div style={{ padding: "16px 20px" }}>
                   <Lbl>Available Actions</Lbl>
                   <div style={{ marginTop: 12 }}>
