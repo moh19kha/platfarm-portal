@@ -286,6 +286,7 @@
     const tabs = sel ? [
       { label: "Timeline", icon: "⏱" },
       { label: "Overview", icon: "📊" },
+      { label: "Receiving", icon: "📦" },
       { label: "Quality", icon: "🔍" },
       { label: "Shipment Photos", icon: "📸" },
       { label: "QC Photos", icon: "🖼" },
@@ -423,12 +424,70 @@
                 </div>
               )}
 
-              {activeTab === 0 && renderTimeline(sel)}
-              {activeTab === 2 && renderQuality(sel)}
-              {activeTab === 3 && renderPhotos(sel.att, "No shipment photos uploaded")}
-              {activeTab === 4 && renderPhotos(sel.qcData?.att, "No QC photos available")}
+              {activeTab === 2 && (
+                <div style={{ padding: "16px 20px" }}>
+                  <Lbl>Trucking & Transport</Lbl>
+                  <div style={{ marginTop: 8 }}>
+                    {[
+                      ["Driver Name", sel.driver || "—"],
+                      ["Truck Plate", sel.plate || "—"],
+                      ["Truck Included", sel.truckInc || "—"],
+                      ["Truck Cost Payer", sel.truckPayer || "—"],
+                      ["Trucking Cost", sel.truckCost ? `${sel.currency || ""} ${Number(sel.truckCost).toLocaleString()}`.trim() : "—"],
+                    ].map(([l, v]) => (
+                      <FieldRow key={l} label={l} value={v} />
+                    ))}
+                  </div>
+                  <div style={{ marginTop: 20 }}><Lbl>Commercial Terms</Lbl></div>
+                  <div style={{ marginTop: 8 }}>
+                    {[
+                      ["Incoterm", sel.incoterm || "—"],
+                      ["Price Per Ton", sel.price ? `${sel.currency || ""} ${Number(sel.price).toLocaleString()}`.trim() : "—"],
+                      ["Currency", sel.currency || "—"],
+                      ["Bale Size", sel.baleSize || "—"],
+                    ].map(([l, v]) => (
+                      <FieldRow key={l} label={l} value={v} mono />
+                    ))}
+                  </div>
+                  <div style={{ marginTop: 20 }}><Lbl>Weighbridge</Lbl></div>
+                  <div style={{ marginTop: 8 }}>
+                    {[
+                      ["Gross Weight", sel.gross ? `${Number(sel.gross).toLocaleString()} kg` : "—"],
+                      ["Tare Weight", sel.tare ? `${Number(sel.tare).toLocaleString()} kg` : "—"],
+                      ["Net Weight", sel.net ? `${Number(sel.net).toLocaleString()} kg` : "—"],
+                      ["Total Bales", sel.bales || "—"],
+                      ["Avg Bale Weight", sel.avgBale ? `${sel.avgBale} kg` : "—"],
+                    ].map(([l, v]) => (
+                      <FieldRow key={l} label={l} value={v} mono />
+                    ))}
+                  </div>
+                  {sel.notes && (
+                    <div style={{ marginTop: 20 }}>
+                      <Lbl>Field Notes</Lbl>
+                      <div style={{ marginTop: 8, padding: "10px 12px", borderRadius: 8, background: C.aBg, border: `1px solid ${C.aBdr}`, fontSize: 11, color: "#92400E", lineHeight: 1.6 }}>
+                        {sel.notes}
+                      </div>
+                    </div>
+                  )}
+                  <div style={{ marginTop: 20 }}><Lbl>Record Info</Lbl></div>
+                  <div style={{ marginTop: 8 }}>
+                    {[
+                      ["Created By", sel.createdBy || "—"],
+                      ["Recorded At", (sel.date || "") + " " + (sel.time || "")],
+                      ["Site", sel.site || "—"],
+                    ].map(([l, v]) => (
+                      <FieldRow key={l} label={l} value={(v || "").trim() || "—"} />
+                    ))}
+                  </div>
+                </div>
+              )}
 
-              {activeTab === 5 && (
+              {activeTab === 0 && renderTimeline(sel)}
+              {activeTab === 3 && renderQuality(sel)}
+              {activeTab === 4 && renderPhotos(sel.att, "No shipment photos uploaded")}
+              {activeTab === 5 && renderPhotos(sel.qcData?.att, "No QC photos available")}
+
+              {activeTab === 6 && (
                 <div style={{ padding: "16px 20px" }}>
                   <Lbl>Available Actions</Lbl>
                   <div style={{ marginTop: 12 }}>
