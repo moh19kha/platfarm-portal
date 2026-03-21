@@ -483,7 +483,7 @@ export function OdooShipDetail({ shipmentId, onBack, onNavigateToShipment, sourc
     { receiptId: selectedLoadId || 0 },
     { enabled: !!selectedLoadId }
   );
-  const receiptPhotos = receiptPhotosQuery.data;
+  const receiptPhotos = receiptPhotosQuery.data as { byType: Record<string, any[]>; unmatched: any[] } | undefined;
 
   if (isLoading) {
     return (
@@ -506,27 +506,15 @@ export function OdooShipDetail({ shipmentId, onBack, onNavigateToShipment, sourc
 
   const selectedLoad = selectedLoadId ? shipment.pickings.find((p: any) => p.id === selectedLoadId) : null;
 
-  const PHOTO_SLOT_DOCS = [
-      { code: "weight_ticket", label: "Weight Ticket" },
-      { code: "driver_contract", label: "Supply Contract (Signed)" },
-      { code: "driver_license", label: "Driver License" },
-      { code: "driver_id", label: "Driver ID Card" },
-      { code: "truck_plate", label: "Truck / License Plate" },
-      { code: "bale_condition", label: "Bale Condition" },
-    ];
-    const PHOTO_SLOT_CARGO = [
-      { code: "truck_right", label: "Right Side Picture" },
-      { code: "truck_left", label: "Left Side Picture" },
-      { code: "truck_back", label: "Back Side Picture" },
-    ];
-    const PHOTO_SLOT_RECEIVING = [
-      { code: "arrival", label: "Truck Arrival Condition" },
-    ];
-    const PHOTO_SLOT_QUALITY = [
-      { code: "moisture_reading", label: "Moisture Reading" },
-      { code: "nir_reading", label: "NIR Reading (Protein)" },
-      { code: "bale_cross_section", label: "Bale Cross Section" },
-    ];
+  const PHOTO_LABELS: Record<string, string> = {
+      weight_ticket: "Weight Ticket", driver_contract: "Supply Contract (Signed)",
+      driver_license: "Driver License", driver_id: "Driver ID Card",
+      truck_plate: "Truck / License Plate", bale_condition: "Bale Condition",
+      arrival: "Truck Arrival Condition", truck_right: "Right Side Picture",
+      truck_left: "Left Side Picture", truck_back: "Back Side Picture",
+      moisture_reading: "Moisture Reading", nir_reading: "NIR Reading (Protein)",
+      bale_cross_section: "Bale Cross Section",
+    };
 
     const handlePhotoPreview = (ph: any) => {
       const imgKey = `receipt-${ph.irAttId}`;
@@ -564,33 +552,27 @@ export function OdooShipDetail({ shipmentId, onBack, onNavigateToShipment, sourc
       }).catch(() => {});
     };
 
-    const renderPhotoSlotList = (
-      slots: { code: string; label: string }[],
-      photos: any[],
+    const renderPhotoSection = (
       sectionTitle: string,
+      codes: string[],
+      byType: Record<string, any[]>,
     ) => {
-      const byType: Record<string, any[]> = {};
-      for (const ph of photos || []) {
-        const k = ph.photoType || "_unknown";
-        if (!byType[k]) byType[k] = [];
-        byType[k].push(ph);
-      }
-
       return (
         <div style={{ marginBottom: 12 }}>
           <div style={{ fontSize: 11, fontWeight: 700, color: C.forest, marginBottom: 8, textTransform: "uppercase", letterSpacing: 0.5 }}>{sectionTitle}</div>
           <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
-            {slots.map(slot => {
-              const matched = byType[slot.code] || [];
-              if (matched.length === 0) {
+            {codes.map(code => {
+              const photos = byType[code] || [];
+              const label = PHOTO_LABELS[code] || code;
+              if (photos.length === 0) {
                 return (
-                  <div key={slot.code} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "6px 8px", borderRadius: 5, border: `1px solid ${C.border}`, background: "transparent" }}>
-                    <span style={{ fontSize: 10, fontWeight: 500, color: C.light }}>{slot.label}</span>
+                  <div key={code} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "6px 8px", borderRadius: 5, border: `1px solid ${C.border}`, background: "transparent" }}>
+                    <span style={{ fontSize: 10, fontWeight: 500, color: C.light }}>{label}</span>
                     <span style={{ fontSize: 9, color: C.light, fontStyle: "italic" }}>Not uploaded</span>
                   </div>
                 );
               }
-              return matched.map((ph: any, idx: number) => {
+              return photos.map((ph: any, idx: number) => {
                 const imgKey = `receipt-${ph.irAttId}`;
                 if (!imgCache[imgKey] && ph.irAttId) {
                   utils.offlineOps.attachmentImage.fetch({ irAttachmentId: ph.irAttId }).then((res: any) => {
@@ -599,10 +581,10 @@ export function OdooShipDetail({ shipmentId, onBack, onNavigateToShipment, sourc
                 }
                 const hasImg = !!imgCache[imgKey];
                 return (
-                  <div key={`${slot.code}-${idx}`} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "6px 8px", borderRadius: 5, border: `1px solid ${C.border}`, background: hasImg ? C.gBg : "transparent" }}>
+                  <div key={`${code}-${idx}`} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "6px 8px", borderRadius: 5, border: `1px solid ${C.border}`, background: hasImg ? C.gBg : "transparent" }}>
                     <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                      {hasImg && <img src={imgCache[imgKey]} alt={slot.label} style={{ width: 28, height: 28, borderRadius: 4, objectFit: "cover", border: `1px solid ${C.border}` }} />}
-                      <span style={{ fontSize: 10, fontWeight: 500 }}>{slot.label}{matched.length > 1 ? ` (${idx + 1})` : ""}</span>
+                      {hasImg && <img src={imgCache[imgKey]} alt={label} style={{ width: 28, height: 28, borderRadius: 4, objectFit: "cover", border: `1px solid ${C.border}` }} />}
+                      <span style={{ fontSize: 10, fontWeight: 500 }}>{label}{photos.length > 1 ? ` (${idx + 1})` : ""}</span>
                     </div>
                     <div style={{ display: "flex", gap: 4 }}>
                       <button onClick={() => handlePhotoPreview(ph)} style={{ fontSize: 9, padding: "2px 8px", borderRadius: 4, border: `1px solid ${C.gBdr2}`, background: C.gBg2, cursor: "pointer", color: C.forest, fontWeight: 600 }}>Preview</button>
@@ -617,14 +599,13 @@ export function OdooShipDetail({ shipmentId, onBack, onNavigateToShipment, sourc
       );
     };
 
-    const renderUnmatchedPhotos = (photos: any[], matchedCodes: string[]) => {
-      const unmatched = (photos || []).filter((p: any) => !matchedCodes.includes(p.photoType));
-      if (unmatched.length === 0) return null;
+    const renderUnmatchedPhotos = (photos: any[]) => {
+      if (!photos?.length) return null;
       return (
         <div style={{ marginTop: 8 }}>
-          <div style={{ fontSize: 11, fontWeight: 700, color: C.forest, marginBottom: 8, textTransform: "uppercase", letterSpacing: 0.5 }}>Other Photos</div>
+          <div style={{ fontSize: 11, fontWeight: 700, color: C.forest, marginBottom: 8, textTransform: "uppercase", letterSpacing: 0.5 }}>Other Attachments</div>
           <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
-            {unmatched.map((ph: any, i: number) => {
+            {photos.map((ph: any, i: number) => {
               const imgKey = `receipt-${ph.irAttId}`;
               if (!imgCache[imgKey] && ph.irAttId) {
                 utils.offlineOps.attachmentImage.fetch({ irAttachmentId: ph.irAttId }).then((res: any) => {
@@ -636,7 +617,7 @@ export function OdooShipDetail({ shipmentId, onBack, onNavigateToShipment, sourc
                 <div key={i} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "6px 8px", borderRadius: 5, border: `1px solid ${C.border}`, background: hasImg ? C.gBg : "transparent" }}>
                   <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
                     {hasImg && <img src={imgCache[imgKey]} alt={ph.label} style={{ width: 28, height: 28, borderRadius: 4, objectFit: "cover", border: `1px solid ${C.border}` }} />}
-                    <span style={{ fontSize: 10, fontWeight: 500 }}>{ph.label}</span>
+                    <span style={{ fontSize: 10, fontWeight: 500 }}>{ph.label || ph.name}</span>
                   </div>
                   <div style={{ display: "flex", gap: 4 }}>
                     <button onClick={() => handlePhotoPreview(ph)} style={{ fontSize: 9, padding: "2px 8px", borderRadius: 4, border: `1px solid ${C.gBdr2}`, background: C.gBg2, cursor: "pointer", color: C.forest, fontWeight: 600 }}>Preview</button>
@@ -650,7 +631,7 @@ export function OdooShipDetail({ shipmentId, onBack, onNavigateToShipment, sourc
       );
     };
 
-  // ─── LOAD DETAIL VIEW ──────────────────────────────────────────────────
+    // ─── LOAD DETAIL VIEW ──────────────────────────────────────────────────
   if (selectedLoad) {
 
     // Company-based visibility for Procurement/Received QA tabs
@@ -815,16 +796,9 @@ export function OdooShipDetail({ shipmentId, onBack, onNavigateToShipment, sourc
           <Card>
             <div style={{ fontSize: 11, fontWeight: 700, color: C.forest, marginBottom: 10, textTransform: "uppercase", letterSpacing: 0.5 }}>Receiving Photos</div>
             <div style={{ fontSize: 11, color: C.gray, marginBottom: 12, lineHeight: 1.4 }}>Photos taken during truck arrival and receiving confirmation, before quality assessment.</div>
-            {renderPhotoSlotList(PHOTO_SLOT_DOCS, receiptPhotos?.receiving || [], "Documents @Receiving")}
-            {renderPhotoSlotList(PHOTO_SLOT_RECEIVING, receiptPhotos?.receiving || [], "Truck Arrival")}
-            {renderPhotoSlotList(PHOTO_SLOT_CARGO, receiptPhotos?.receiving || [], "Load Pictures @Receiving")}
-            {renderUnmatchedPhotos(receiptPhotos?.receiving || [], [...PHOTO_SLOT_DOCS, ...PHOTO_SLOT_RECEIVING, ...PHOTO_SLOT_CARGO].map(s => s.code))}
-            {receiptPhotos?.other && receiptPhotos.other.length > 0 && (
-              <div style={{ marginTop: 8 }}>
-                {renderPhotoSlotList([], receiptPhotos.other, "Other Attachments")}
-                {renderUnmatchedPhotos(receiptPhotos.other, [])}
-              </div>
-            )}
+            {renderPhotoSection("Documents @Receiving", ["weight_ticket", "driver_contract", "driver_license", "driver_id", "truck_plate", "bale_condition"], receiptPhotos?.byType || {})}
+            {renderPhotoSection("Truck Arrival", ["arrival"], receiptPhotos?.byType || {})}
+            {renderPhotoSection("Load Pictures @Receiving", ["truck_right", "truck_left", "truck_back"], receiptPhotos?.byType || {})}
           </Card>
         )}
 
@@ -938,9 +912,9 @@ export function OdooShipDetail({ shipmentId, onBack, onNavigateToShipment, sourc
             {/* ── QUALITY CHECKER ─────────────────────────────────────────── */}
             <Card>
               <div style={{ marginBottom: 16 }}>
-                {renderPhotoSlotList(PHOTO_SLOT_DOCS, receiptPhotos?.procurement || [], "Documents @Source")}
-                {renderPhotoSlotList(PHOTO_SLOT_CARGO, receiptPhotos?.procurement || [], "Load Pictures @Source")}
-                {renderUnmatchedPhotos(receiptPhotos?.procurement || [], [...PHOTO_SLOT_DOCS, ...PHOTO_SLOT_CARGO].map(s => s.code))}
+                {renderPhotoSection("Documents @Source", ["weight_ticket", "driver_contract", "driver_license", "driver_id", "truck_plate", "bale_condition"], receiptPhotos?.byType || {})}
+                {renderPhotoSection("Load Pictures @Source", ["truck_right", "truck_left", "truck_back"], receiptPhotos?.byType || {})}
+                {renderUnmatchedPhotos(receiptPhotos?.unmatched || [])}
               </div>
               <div style={{ fontSize: 11, fontWeight: 700, color: C.forest, marginBottom: 10, textTransform: "uppercase", letterSpacing: 0.5 }}>Load Picture @Source</div>
               <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
@@ -1064,11 +1038,10 @@ export function OdooShipDetail({ shipmentId, onBack, onNavigateToShipment, sourc
             {/* ── LOAD PICTURES ───────────────────────────────────────────── */}
             <Card>
               <div style={{ marginBottom: 16 }}>
-                {renderPhotoSlotList(PHOTO_SLOT_DOCS, receiptPhotos?.quality || [], "Documents @Quality")}
-                {renderPhotoSlotList(PHOTO_SLOT_RECEIVING, receiptPhotos?.quality || [], "Truck Arrival")}
-                {renderPhotoSlotList(PHOTO_SLOT_CARGO, receiptPhotos?.quality || [], "Load Pictures @Quality")}
-                {renderPhotoSlotList(PHOTO_SLOT_QUALITY, receiptPhotos?.quality || [], "Quality Assessment Photos")}
-                {renderUnmatchedPhotos(receiptPhotos?.quality || [], [...PHOTO_SLOT_DOCS, ...PHOTO_SLOT_RECEIVING, ...PHOTO_SLOT_CARGO, ...PHOTO_SLOT_QUALITY].map(s => s.code))}
+                {renderPhotoSection("Documents @Quality", ["weight_ticket", "driver_contract", "driver_license", "driver_id", "truck_plate", "bale_condition"], receiptPhotos?.byType || {})}
+                {renderPhotoSection("Truck Arrival", ["arrival"], receiptPhotos?.byType || {})}
+                {renderPhotoSection("Load Pictures @Quality", ["truck_right", "truck_left", "truck_back"], receiptPhotos?.byType || {})}
+                {renderPhotoSection("Quality Assessment Photos", ["moisture_reading", "nir_reading", "bale_cross_section"], receiptPhotos?.byType || {})}
               </div>
               <div style={{ fontSize: 11, fontWeight: 700, color: C.forest, marginBottom: 10, textTransform: "uppercase", letterSpacing: 0.5 }}>Load Pictures</div>
               <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>

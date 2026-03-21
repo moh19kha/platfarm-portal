@@ -852,18 +852,10 @@ export const shipmentsRouter = router({
         weight_ticket: "Weight Ticket", driver_contract: "Supply Contract (Signed)",
         driver_license: "Driver License", driver_id: "Driver ID Card",
         truck_plate: "Truck / License Plate", bale_condition: "Bale Condition",
-        arrival: "Truck Arrival Condition", truck_right: "Load Right Side",
-        truck_left: "Load Left Side", truck_back: "Load Back Side",
+        arrival: "Truck Arrival Condition", truck_right: "Right Side Picture",
+        truck_left: "Left Side Picture", truck_back: "Back Side Picture",
         moisture_reading: "Moisture Reading", nir_reading: "NIR Reading (Protein)",
         bale_cross_section: "Bale Cross Section",
-      };
-
-      const categorize = (name: string): string => {
-        const lower = name.toLowerCase();
-        if (lower.startsWith("[procurement]")) return "procurement";
-        if (lower.startsWith("[receiving]")) return "receiving";
-        if (lower.startsWith("[quality]")) return "quality";
-        return "other";
       };
 
       const extractPhotoType = (name: string): string => {
@@ -880,18 +872,24 @@ export const shipmentsRouter = router({
         return "";
       };
 
-      const result = { procurement: [] as any[], receiving: [] as any[], quality: [] as any[], other: [] as any[] };
+      const byType: Record<string, { irAttId: number; name: string; label: string; photoType: string; mime: string; date: string }[]> = {};
+      const unmatched: typeof byType[""] = [];
+
       for (const att of atts) {
-        const category = categorize(att.name);
         const photoType = extractPhotoType(att.name);
-        const label = photoType && PHOTO_LABELS[photoType] ? PHOTO_LABELS[photoType] : att.name.replace(/^\[(Procurement|Receiving|Quality)\]\s*/i, "").trim();
+        const label = photoType && PHOTO_LABELS[photoType]
+          ? PHOTO_LABELS[photoType]
+          : att.name.replace(/^\[(Procurement|Receiving|Quality)\]\s*/i, "").trim();
         const item = { irAttId: att.id, name: att.name, label, photoType, mime: att.mimetype, date: att.create_date };
-        if (category === "procurement") result.procurement.push(item);
-        else if (category === "receiving") result.receiving.push(item);
-        else if (category === "quality") result.quality.push(item);
-        else result.other.push(item);
+        if (photoType) {
+          if (!byType[photoType]) byType[photoType] = [];
+          byType[photoType].push(item);
+        } else {
+          unmatched.push(item);
+        }
       }
-      return result;
+
+      return { byType, unmatched };
     }),
 
   gradeOptions: publicProcedure
