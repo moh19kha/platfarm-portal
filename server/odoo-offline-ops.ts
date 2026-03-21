@@ -358,36 +358,62 @@ export async function fetchShippingRecords(
  * Does NOT fetch file_data to avoid large payloads.
  */
 export async function fetchAttachments(
-  resModel: string,
-  resIds: number[],
-): Promise<OdooPfAttachment[]> {
-  if (resIds.length === 0) return [];
+    resModel: string,
+    resIds: number[],
+  ): Promise<OdooPfAttachment[]> {
+    if (resIds.length === 0) return [];
 
-  // Try using the specific FK field first, fall back to res_model/res_id
-  const fkField = resModel === "pf.procurement" ? "procurement_id"
-    : resModel === "pf.quality" ? "quality_id"
-    : resModel === "pf.pressing" ? "pressing_id"
-    : resModel === "pf.shipping" ? "shipping_id"
-    : null;
+    const fkField = resModel === "pf.procurement" ? "procurement_id"
+      : resModel === "pf.quality" ? "quality_id"
+      : resModel === "pf.pressing" ? "pressing_id"
+      : resModel === "pf.shipping" ? "shipping_id"
+      : null;
 
-  const domain = fkField
-    ? [[fkField, "in", resIds]]
-    : [["res_model", "=", resModel], ["res_id", "in", resIds]];
+    const fields = [
+      "id", "client_ref", "res_model", "res_id",
+      "photo_type", "photo_label", "file_name", "file_size", "mime_type",
+      "uploaded_at", "create_date", "ir_attachment_id",
+      ...(fkField ? [fkField] : []),
+    ];
 
-  return executeKw<OdooPfAttachment[]>(
-    "pf.attachment",
-    "search_read",
-    [domain],
-    {
-      fields: [
-        "id", "client_ref", "res_model", "res_id",
-        "photo_type", "photo_label", "file_name", "file_size", "mime_type",
-        "uploaded_at", "create_date", "ir_attachment_id",
-        ...(fkField ? [fkField] : []),
-      ],
+    let results: OdooPfAttachment[] = [];
+    if (fkField) {
+      results = await executeKw<OdooPfAttachment[]>(
+        "pf.attachment", "search_read",
+        [[[fkField, "in", resIds]]],
+        { fields }
+      );
     }
-  );
-}
+
+    // Also query ir.attachment directly (mobile app links photos via res_model/res_id)
+    const irAtts = await executeKw<{ id: number; name: string; mimetype: string; res_model: string; res_id: number }[]>(
+      "ir.attachment", "search_read",
+      [[["res_model", "=", resModel], ["res_id", "in", resIds]]],
+      { fields: ["id", "name", "mimetype", "res_model", "res_id"] }
+    );
+
+    const existingIrIds = new Set(results.map((r: any) => r.ir_attachment_id ? r.ir_attachment_id[0] : -1));
+    for (const irAtt of irAtts) {
+      if (!existingIrIds.has(irAtt.id)) {
+        results.push({
+          id: irAtt.id,
+          client_ref: "",
+          res_model: irAtt.res_model,
+          res_id: irAtt.res_id,
+          photo_type: (irAtt.mimetype || "").startsWith("image/") ? "photo" : "document",
+          photo_label: irAtt.name,
+          file_name: irAtt.name,
+          file_size: 0,
+          mime_type: irAtt.mimetype,
+          uploaded_at: "",
+          create_date: "",
+          ir_attachment_id: [irAtt.id, irAtt.name],
+        } as any);
+      }
+    }
+
+    return results;
+  }
 
 /**
  * Get total record counts for dashboard summary.

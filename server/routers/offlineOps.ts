@@ -501,7 +501,7 @@ export const offlineOpsRouter = router({
           }
 
           // Copy procurement attachments to receipt
-          const procAtts = await executeKw<{
+          let procAtts = await executeKw<{
             id: number;
             ir_attachment_id: [number, string] | false;
             file_name: string | false;
@@ -511,6 +511,20 @@ export const offlineOpsRouter = router({
             [[["procurement_id", "=", procurementOdooId]]],
             { fields: ["id", "ir_attachment_id", "file_name", "photo_label"] }
           );
+            // Also check ir.attachment directly (mobile app links via res_model/res_id)
+            if (procAtts.length === 0) {
+              const irAtts = await executeKw<{ id: number; name: string; mimetype: string }[]>(
+                "ir.attachment", "search_read",
+                [[["res_model", "=", "pf.procurement"], ["res_id", "=", procurementOdooId]]],
+                { fields: ["id", "name", "mimetype"] }
+              );
+              procAtts = irAtts.map(a => ({
+                id: a.id,
+                ir_attachment_id: [a.id, a.name] as [number, string],
+                file_name: a.name,
+                photo_label: a.name,
+              }));
+            }
           for (const pfa of procAtts) {
             if (!pfa.ir_attachment_id) continue;
             try {
