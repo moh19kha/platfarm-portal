@@ -386,7 +386,7 @@ export default function OfflineOpsModule(){
         .t td{font-size:11px;padding:8px 10px;border-bottom:1px solid #F2F0EC;color:#2C3E50;vertical-align:middle;transition:background .15s}
         .t tbody tr{cursor:pointer;transition:background .15s}.t tbody tr:hover td{background:#F8FAF8}
         .m{font-family:'JetBrains Mono',monospace;font-weight:600}
-        .dp{position:fixed;right:0;top:3px;bottom:0;width:380px;background:#FAFAF8;border-left:1.5px solid #E8E5E0;overflow-y:auto;z-index:45;box-shadow:-6px 0 24px rgba(0,0,0,.06);font-family:'DM Sans',system-ui,sans-serif}
+        .dp{position:fixed;right:0;top:3px;bottom:0;width:480px;background:#FAFAF8;border-left:1.5px solid #E8E5E0;overflow-y:auto;z-index:45;box-shadow:-6px 0 24px rgba(0,0,0,.06);font-family:'DM Sans',system-ui,sans-serif}
         input{font-family:'DM Sans',system-ui,sans-serif;transition:all .2s}
         input:focus{border-color:#4A7C59;box-shadow:0 0 0 3px rgba(45,90,61,.1);outline:none}
         button{transition:all .2s}
