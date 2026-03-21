@@ -500,17 +500,13 @@ export function OdooShipDetail({ shipmentId, onBack, onNavigateToShipment, sourc
 
   const selectedLoad = selectedLoadId ? shipment.pickings.find((p: any) => p.id === selectedLoadId) : null;
 
-  // ─── LOAD DETAIL VIEW ──────────────────────────────────────────────────
-  if (selectedLoad) {
+  const receiptPhotosQuery = trpc.shipments.receiptPhotos.useQuery(
+    { receiptId: selectedLoadId || 0 },
+    { enabled: !!selectedLoadId }
+  );
+  const receiptPhotos = receiptPhotosQuery.data;
 
-
-    const receiptPhotosQuery = trpc.shipments.receiptPhotos.useQuery(
-      { receiptId: selectedLoad?.id || 0 },
-      { enabled: !!selectedLoad?.id }
-    );
-    const receiptPhotos = receiptPhotosQuery.data;
-
-    const renderReceiptPhotos = (photos: any[], emptyMsg: string) => {
+  const renderReceiptPhotos = (photos: any[], emptyMsg: string) => {
       if (!photos?.length) return <div style={{ padding: 20, textAlign: "center", color: C.light, fontSize: 12 }}>{emptyMsg}</div>;
       return (
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(140px, 1fr))", gap: 10, padding: "10px 0" }}>
@@ -534,6 +530,9 @@ export function OdooShipDetail({ shipmentId, onBack, onNavigateToShipment, sourc
         </div>
       );
     };
+
+  // ─── LOAD DETAIL VIEW ──────────────────────────────────────────────────
+  if (selectedLoad) {
 
     // Company-based visibility for Procurement/Received QA tabs
     // Show for: Cairo (3), Sokhna (4), Alfaglobal (5)
