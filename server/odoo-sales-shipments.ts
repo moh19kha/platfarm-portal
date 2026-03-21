@@ -373,23 +373,24 @@ export async function createSaleOrder(input: CreateSaleOrderInput): Promise<numb
       { fields: ["id", "name", "company_id", "uom_id"] }
     ) as ProductInfo[];
     productMap = new Map(products.map(p => [p.id, p]));
-    const wrongProducts: string[] = [];
-    for (const line of input.lines) {
-      const prod = productMap.get(line.product_id);
-      if (prod && prod.company_id && prod.company_id[0] !== input.company_id) {
-        wrongProducts.push(
-          `Product "${prod.name}" (ID: ${prod.id}) belongs to company "${prod.company_id[1]}" ` +
-          `but this Sales Order is for company_id=${input.company_id}. ` +
-          `Please select a product that belongs to the correct company.`
-        );
-      }
-    }
-    if (wrongProducts.length > 0) {
-      throw new Error(
-        `Product-company mismatch detected:\n${wrongProducts.join("\n")}\n\n` +
-        `Each company must use its own products. Please go back to Step 2 and select the correct products for each company.`
-      );
-    }
+    // Company validation removed - products can be shared across companies
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
     vals.order_line = input.lines.map((line) => {
       // Use product's own UoM if not provided, to avoid category mismatch
