@@ -479,6 +479,12 @@ export function OdooShipDetail({ shipmentId, onBack, onNavigateToShipment, sourc
     fontSize: 11, fontFamily: MONO, outline: "none", width: "100%", background: C.gBg,
   };
 
+  const receiptPhotosQuery = trpc.shipments.receiptPhotos.useQuery(
+    { receiptId: selectedLoadId || 0 },
+    { enabled: !!selectedLoadId }
+  );
+  const receiptPhotos = receiptPhotosQuery.data;
+
   if (isLoading) {
     return (
       <>
@@ -499,12 +505,6 @@ export function OdooShipDetail({ shipmentId, onBack, onNavigateToShipment, sourc
   }
 
   const selectedLoad = selectedLoadId ? shipment.pickings.find((p: any) => p.id === selectedLoadId) : null;
-
-  const receiptPhotosQuery = trpc.shipments.receiptPhotos.useQuery(
-    { receiptId: selectedLoadId || 0 },
-    { enabled: !!selectedLoadId }
-  );
-  const receiptPhotos = receiptPhotosQuery.data;
 
   const renderReceiptPhotos = (photos: any[], emptyMsg: string) => {
       if (!photos?.length) return <div style={{ padding: 20, textAlign: "center", color: C.light, fontSize: 12 }}>{emptyMsg}</div>;
