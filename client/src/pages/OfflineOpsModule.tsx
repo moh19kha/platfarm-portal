@@ -615,7 +615,7 @@ export default function OfflineOpsModule(){
 
               {/* Tabs */}
               <div style={{display:"flex",gap:0,borderBottom:"1.5px solid #E8E5E0",padding:"0 18px"}}>
-                {(selType==="rcv"?["Timeline","Overview","Crew"]:selType==="qc"?["Grades","Details"]:selType==="dpr"?["Timeline","Overview","Crew"]:selType==="trf"?["Timeline","Overview","Receiving","Crew"]:["Overview","Crew","Attachments"]).map((t,i)=><button key={t} onClick={()=>setDetTab(i)} style={{padding:"8px 14px",fontSize:11,fontWeight:detTab===i?700:500,color:detTab===i?"#2D5A3D":"#95A09C",background:"none",border:"none",borderBottom:detTab===i?"2px solid #2D5A3D":"2px solid transparent",cursor:"pointer",fontFamily:"inherit"}}>{t}</button>)}
+                {(selType==="rcv"?["Timeline","Overview","Crew"]:selType==="qc"?["Grades","Details"]:selType==="dpr"?["Timeline","Overview","Crew"]:selType==="trf"?["Timeline","Overview","Receiving","Crew","Actions"]:["Overview","Crew","Attachments"]).map((t,i)=><button key={t} onClick={()=>setDetTab(i)} style={{padding:"8px 14px",fontSize:11,fontWeight:detTab===i?700:500,color:detTab===i?"#2D5A3D":"#95A09C",background:"none",border:"none",borderBottom:detTab===i?"2px solid #2D5A3D":"2px solid transparent",cursor:"pointer",fontFamily:"inherit"}}>{t}</button>)}
               </div>
             </div>
 
@@ -754,8 +754,71 @@ export default function OfflineOpsModule(){
                 {(sel.crew||[]).map((g,i)=><div key={i} style={{marginBottom:14}}><div style={{fontSize:10,fontWeight:700,color:"#95A09C",marginBottom:6}}>{g.role}</div>{g.ppl.map((p,j)=><div key={j} style={{fontSize:12,padding:"4px 0",color:"#2C3E50"}}>{p}</div>)}</div>)}
                 {(!sel.crew||sel.crew.length===0)&&<div style={{color:"#95A09C",fontSize:11}}>No crew data available</div>}
               </div>}
+
+              {/* TRF Actions */}
+              {selType==="trf"&&detTab===4&&<div>
+                <div style={{fontSize:11,fontWeight:700,color:"#475577",marginBottom:14}}>AVAILABLE ACTIONS</div>
+
+                {/* Create Internal Transfer */}
+                <div style={{padding:16,borderRadius:10,background:"#F2F7F3",border:"1px solid #D5E5D5",marginBottom:14}}>
+                  <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:12}}>
+                    <div style={{width:36,height:36,borderRadius:10,background:"#2D5A3D",display:"flex",alignItems:"center",justifyContent:"center",fontSize:18,color:"#fff"}}>⇄</div>
+                    <div>
+                      <div style={{fontSize:13,fontWeight:700,color:"#2D5A3D"}}>Create Internal Transfer</div>
+                      <div style={{fontSize:10,color:"#95A09C"}}>Move goods between warehouse locations in Odoo</div>
+                    </div>
+                  </div>
+                  <div style={{padding:10,borderRadius:8,background:"#fff",border:"1px solid #E8E5E0",marginBottom:12}}>
+                    <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:6}}>
+                      <div>
+                        <div style={{fontSize:9,color:"#95A09C",fontWeight:600}}>FROM</div>
+                        <div style={{fontSize:11,fontWeight:600,color:"#2C3E50"}}>{sel.from||"Dakhla Farm"}</div>
+                        <div style={{fontSize:9,color:"#95A09C"}}>Finished Goods</div>
+                      </div>
+                      <div style={{fontSize:16,color:"#2D5A3D"}}>→</div>
+                      <div style={{textAlign:"right"}}>
+                        <div style={{fontSize:9,color:"#95A09C",fontWeight:600}}>TO</div>
+                        <div style={{fontSize:11,fontWeight:600,color:"#2C3E50"}}>{sel.to||"Ain Sokhna"}</div>
+                        <div style={{fontSize:9,color:"#95A09C"}}>Finished Goods</div>
+                      </div>
+                    </div>
+                    <div style={{borderTop:"1px solid #F2F0EC",paddingTop:8,marginTop:4}}>
+                      <div style={{display:"flex",justifyContent:"space-between",fontSize:10,color:"#95A09C"}}>
+                        <span>Commodity: <strong style={{color:"#2C3E50"}}>{sel.commodity}</strong></span>
+                        <span>Weight: <strong style={{color:"#2C3E50"}}>{sel.weight>0?(sel.weight>=1000?(sel.weight/1000).toFixed(1)+"t":sel.weight+" kg"):"--"}</strong></span>
+                        <span>Bales: <strong style={{color:"#2C3E50"}}>{sel.bales}</strong></span>
+                      </div>
+                    </div>
+                  </div>
+                  <button onClick={()=>setShowNewTransfer(true)} style={{width:"100%",padding:"12px 0",borderRadius:8,background:"#2D5A3D",color:"#fff",border:"none",fontSize:12,fontWeight:700,cursor:"pointer",fontFamily:"inherit",display:"flex",alignItems:"center",justifyContent:"center",gap:8}}>
+                    <span>⇄</span> Create Transfer in Odoo
+                  </button>
+                </div>
+
+                {/* Shipment Info Card */}
+                <div style={{padding:14,borderRadius:10,background:"#FDF6EC",border:"1px solid #F5DDB8",marginBottom:14}}>
+                  <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:6}}>
+                    <span style={{fontSize:14}}>🚚</span>
+                    <div style={{fontSize:12,fontWeight:700,color:"#92400E"}}>Shipment: {sel.id}</div>
+                  </div>
+                  <div style={{display:"flex",gap:16,fontSize:10,color:"#92400E"}}>
+                    <span>Status: <strong>{sel.status}</strong></span>
+                    <span>Plate: <strong>{sel.plate||"—"}</strong></span>
+                    <span>Seal: <strong>{sel.seal||"—"}</strong></span>
+                  </div>
+                </div>
+
+                {/* Record Info */}
+                <div style={{padding:12,borderRadius:8,background:"#F7F6F3",border:"1px solid #E4E1DC"}}>
+                  <div style={{fontSize:10,fontWeight:600,color:"#95A09C",marginBottom:6}}>RECORD STATUS</div>
+                  {[["Record ID",sel.id],["Odoo ID",""+sel.odooId],["Sync",sel.sync],["Date",sel.date]].map(([l,v])=><div key={l} style={{display:"flex",justifyContent:"space-between",padding:"4px 0",borderBottom:"1px solid #F2F0EC"}}><span style={{fontSize:10,color:"#95A09C"}}>{l}</span><span className="m" style={{fontSize:10,color:"#2C3E50"}}>{v}</span></div>)}
+                </div>
+              </div>}
             </div>
           </div>}
+
+        {/* New Transfer Wizard */}
+        <NewTransferWizard open={showNewTransfer} onClose={()=>setShowNewTransfer(false)} prefill={sel && selType==="trf" ? { commodity: sel.commodity, weight: sel.weight, bales: sel.bales, shipmentId: sel.id } : null} />
     </div></div>
     </div>
   );
