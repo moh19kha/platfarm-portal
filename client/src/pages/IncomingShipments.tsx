@@ -397,19 +397,68 @@
 
               {activeTab === 1 && (
                 <div style={{ padding: "16px 20px" }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 8, padding: "8px 10px", borderRadius: 8, background: C.gBg, border: `1px solid ${C.gBdr}`, marginBottom: 16 }}>
+                    <span style={{ width: 28, height: 28, borderRadius: 14, background: C.forest, color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 13, fontWeight: 700, flexShrink: 0 }}>{(sel.procurementOfficer || sel.createdBy || "?")[0].toUpperCase()}</span>
+                    <div>
+                      <div style={{ fontSize: 9, fontWeight: 600, color: C.sage, textTransform: "uppercase", letterSpacing: 0.5 }}>Procurement Officer</div>
+                      <div style={{ fontSize: 12, fontWeight: 700, color: C.forest }}>{sel.procurementOfficer || sel.createdBy || "—"}</div>
+                    </div>
+                  </div>
                   <Lbl>Shipment Details</Lbl>
                   <div style={{ marginTop: 8 }}>
-                    {[["Supplier", sel.supplier], ["Commodity", sel.commodity], ["Grade", sel.grade], ["Site", sel.site], ["Driver", sel.driver], ["Plate", sel.plate], ["Bale Size", sel.baleSize], ["Date", sel.date + " " + (sel.time || "")]].map(([l, v]) => (
+                    {[
+                      ["Supplier", sel.supplier],
+                      ["Commodity", sel.commodity],
+                      ["Grade", sel.grade],
+                      ["Site", sel.site],
+                      ["Bale Size", sel.baleSize],
+                      ["Date", sel.date + " " + (sel.time || "")],
+                    ].map(([l, v]) => (
+                      <FieldRow key={l} label={l} value={v || "—"} />
+                    ))}
+                  </div>
+                  <div style={{ marginTop: 20 }}><Lbl>Transport</Lbl></div>
+                  <div style={{ marginTop: 8 }}>
+                    {[
+                      ["Driver", sel.driver],
+                      ["Truck Plate", sel.plate],
+                      ["Truck Included", sel.truckInc],
+                      ["Truck Cost Payer", sel.truckPayer !== "—" ? sel.truckPayer : ""],
+                      ["Trucking Cost", sel.truckCost ? `${sel.currency || ""} ${Number(sel.truckCost).toLocaleString()}`.trim() : ""],
+                    ].filter(([, v]) => v).map(([l, v]) => (
                       <FieldRow key={l} label={l} value={v || "—"} />
                     ))}
                   </div>
                   <div style={{ marginTop: 20 }}><Lbl>Weighbridge</Lbl></div>
                   <div style={{ marginTop: 8 }}>
-                    {[["Gross Weight", fK(sel.gross)], ["Tare Weight", fK(sel.tare)], ["Net Weight", fK(sel.net)], ["Bales", sel.bales], ["Avg Bale Weight", sel.avgBale ? sel.avgBale + " kg" : "—"]].map(([l, v]) => (
+                    {[
+                      ["Gross Weight", fK(sel.gross)],
+                      ["Tare Weight", fK(sel.tare)],
+                      ["Net Weight", fK(sel.net)],
+                      ["Bales", sel.bales],
+                      ["Avg Bale Weight", sel.avgBale ? sel.avgBale + " kg" : "—"],
+                    ].map(([l, v]) => (
                       <FieldRow key={l} label={l} value={v} mono />
                     ))}
                   </div>
-                  {sel.incoterm && <div style={{ marginTop: 20 }}><Lbl>Commercial</Lbl><div style={{ marginTop: 8 }}><FieldRow label="Incoterm" value={sel.incoterm} /><FieldRow label="Price" value={sel.price} mono /></div></div>}
+                  <div style={{ marginTop: 20 }}><Lbl>Commercial</Lbl></div>
+                  <div style={{ marginTop: 8 }}>
+                    {[
+                      ["Incoterm", sel.incoterm],
+                      ["Price Per Ton", sel.price ? `${sel.currency || ""} ${Number(sel.price).toLocaleString()}`.trim() : ""],
+                      ["Currency", sel.currency],
+                    ].filter(([, v]) => v).map(([l, v]) => (
+                      <FieldRow key={l} label={l} value={v || "—"} mono />
+                    ))}
+                  </div>
+                  {sel.notes && (
+                    <div style={{ marginTop: 20 }}>
+                      <Lbl>Field Notes</Lbl>
+                      <div style={{ marginTop: 8, padding: "10px 12px", borderRadius: 8, background: C.aBg, border: `1px solid ${C.aBdr}`, fontSize: 11, color: "#92400E", lineHeight: 1.6 }}>
+                        {sel.notes}
+                      </div>
+                    </div>
+                  )}
                   {sel.linkedPoName && (
                     <div style={{ marginTop: 20, padding: 14, borderRadius: 9, background: C.gBg, border: `1px solid ${C.gBdr}` }}>
                       <div style={{ display: "flex", alignItems: "center", gap: 8 }}>

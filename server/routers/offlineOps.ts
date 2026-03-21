@@ -116,6 +116,7 @@ function transformProcurement(r: any, attachments: any[]): any {
     baleSize: r.bale_size || "",
     notes: r.notes || "",
     createdBy: r.create_uid ? (Array.isArray(r.create_uid) ? r.create_uid[1] : String(r.create_uid)) : "",
+    procurementOfficer: r.user_id ? (Array.isArray(r.user_id) ? r.user_id[1] : String(r.user_id)) : "",
     att: recAttachments,
   };
 }
