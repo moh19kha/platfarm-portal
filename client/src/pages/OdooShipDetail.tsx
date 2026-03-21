@@ -1308,7 +1308,7 @@ export function OdooShipDetail({ shipmentId, onBack, onNavigateToShipment, sourc
 
               {renderPhotoSection("Documents", ["weight_ticket", "driver_contract", "driver_license", "driver_id", "truck_plate", "bale_condition"], receiptPhotos?.byType || {})}
               {renderPhotoSection("Truck Arrival", ["arrival"], receiptPhotos?.byType || {})}
-              {renderPhotoSection("", ["truck_right", "truck_left", "truck_back"], receiptPhotos?.byType || {}, true)}
+              {renderPhotoSection("Load / Cargo Pictures", ["truck_right", "truck_left", "truck_back"], receiptPhotos?.byType || {}, true)}
               {renderPhotoSection("Quality Assessment", ["moisture_reading", "nir_reading", "bale_cross_section"], receiptPhotos?.byType || {})}
               {renderUnmatchedPhotos(receiptPhotos?.unmatched || [])}
             </Card>
