@@ -639,8 +639,8 @@ export default function OfflineOpsModule(){
               </div>
 
               {/* Tabs */}
-              <div style={{display:"flex",gap:0,borderBottom:"1.5px solid #E8E5E0",padding:"0 18px"}}>
-                {(selType==="rcv"?["Timeline","Overview","Crew"]:selType==="qc"?["Grades","Details"]:selType==="dpr"?["Timeline","Overview","Crew"]:selType==="trf"?["Timeline","Overview","Receiving","Quality","Crew","Actions"]:["Overview","Crew","Attachments"]).map((t,i)=><button key={t} onClick={()=>setDetTab(i)} style={{padding:"8px 14px",fontSize:11,fontWeight:detTab===i?700:500,color:detTab===i?"#2D5A3D":"#95A09C",background:"none",border:"none",borderBottom:detTab===i?"2px solid #2D5A3D":"2px solid transparent",cursor:"pointer",fontFamily:"inherit"}}>{t}</button>)}
+              <div style={{display:"flex",gap:0,borderBottom:"1.5px solid #E8E5E0",padding:"0 18px",overflowX:"auto",scrollbarWidth:"none",msOverflowStyle:"none"}}>
+                {(selType==="rcv"?["Timeline","Overview","Crew"]:selType==="qc"?["Grades","Details"]:selType==="dpr"?["Timeline","Overview","Crew"]:selType==="trf"?["Timeline","Overview","Receiving","Quality","Crew","Actions"]:["Overview","Crew","Attachments"]).map((t,i)=>{const isAct=t==="Actions";return <button key={t} onClick={()=>setDetTab(i)} style={{padding:"8px 12px",fontSize:11,fontWeight:detTab===i?700:500,color:isAct?(detTab===i?"#C0714A":"#C0714A99"):detTab===i?"#2D5A3D":"#95A09C",background:"none",border:"none",borderBottom:detTab===i?"2px solid "+(isAct?"#C0714A":"#2D5A3D"):"2px solid transparent",cursor:"pointer",fontFamily:"inherit",flexShrink:0,whiteSpace:"nowrap"}}>{isAct?"⇄ "+t:t}</button>;})}
               </div>
             </div>
 
