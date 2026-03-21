@@ -12,7 +12,9 @@
     draft:    { bg: "#EFF6FF", c: "#1D4ED8", icon: "🚛", label: "In Transit" },
     shipped:  { bg: "#EFF6FF", c: "#1D4ED8", icon: "🚛", label: "Shipped" },
     received: { bg: C.gBg, c: "#166534", icon: "📦", label: "Received" },
-    qc_done:  { bg: C.gBg, c: "#166534", icon: "✅", label: "QC Done" },
+    qc_done:     { bg: C.gBg, c: "#166534", icon: "✅", label: "QC Done" },
+    po_created:  { bg: "#F0FDF4", c: "#166534", icon: "📋", label: "Shipment Created" },
+    in_transit:  { bg: "#EFF6FF", c: "#1D4ED8", icon: "🚛", label: "In Transit" },
   };
 
   export default function IncomingShipments() {
