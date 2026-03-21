@@ -1150,28 +1150,7 @@ export function OdooShipDetail({ shipmentId, onBack, onNavigateToShipment, sourc
 
             </Card>
 
-            {/* ── LADDER IMAGES ───────────────────────────────────────────── */}
-            <Card>
-              <div style={{ fontSize: 11, fontWeight: 700, color: C.forest, marginBottom: 10, textTransform: "uppercase", letterSpacing: 0.5 }}>Ladder Images</div>
-              <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
-                {[
-                  { field: "x_studio_ladder_image_1_right_side", label: "Ladder Image 1 \u2013 Right Side" },
-                  { field: "x_studio_ladder_image_2_right_side", label: "Ladder Image 2 \u2013 Right Side" },
-                  { field: "x_studio_ladder_image_1_left_side", label: "Ladder Image 1 \u2013 Left Side" },
-                ].map(att => {
-                  const isUp = uploadedFiles[`picking-${att.field}`];
-                  return (
-                    <div key={att.field} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "6px 8px", borderRadius: 5, background: isUp ? C.gBg : "transparent", border: `1px solid ${C.border}` }}>
-                      <span style={{ fontSize: 10, fontWeight: 500 }}>{att.label}</span>
-                      <div style={{ display: "flex", gap: 4 }}>
-                        {isUp && <button onClick={() => handleFilePreview("picking", selectedLoad.id, att.field, att.label)} style={{ fontSize: 9, padding: "2px 8px", borderRadius: 4, border: `1px solid ${C.gBdr2}`, background: C.gBg2, cursor: "pointer", color: C.forest, fontWeight: 600 }}>Preview</button>}
-                        <button onClick={() => handleFileUpload("picking", selectedLoad.id, att.field)} style={{ fontSize: 9, padding: "2px 8px", borderRadius: 4, border: `1px solid ${C.border}`, background: C.card, cursor: "pointer", color: C.forest, fontWeight: 600 }}>{isUp ? "Replace" : "Upload"}</button>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            </Card>
+            
 
             {/* ── ACCEPTED LOAD ───────────────────────────────────────────── */}
             <Card>
