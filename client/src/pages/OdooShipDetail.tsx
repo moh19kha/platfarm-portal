@@ -1344,7 +1344,39 @@ export function OdooShipDetail({ shipmentId, onBack, onNavigateToShipment, sourc
         type="purchase"
       />
 
-      {/* Linked Shipments Banner */}
+      {/* Linked to Procurement Activity */}
+        {shipment.procurementRef && (
+          <div style={{
+            display: "flex", alignItems: "center", gap: 10,
+            padding: "10px 16px", borderRadius: 8, marginBottom: 8,
+            background: "linear-gradient(135deg, #fef3c7, #fefce8)",
+            border: "1px solid #f59e0b",
+          }}>
+            <div style={{
+              width: 28, height: 28, borderRadius: "50%",
+              background: "#C0714A", display: "flex", alignItems: "center", justifyContent: "center",
+              fontSize: 12, color: "#fff", flexShrink: 0,
+            }}>📦</div>
+            <div style={{ flex: 1 }}>
+              <div style={{ fontSize: 9, fontWeight: 600, color: "#92400e", textTransform: "uppercase", letterSpacing: 0.8 }}>Linked to Procurement Activity</div>
+              <div style={{ fontSize: 13, fontWeight: 700, fontFamily: "'JetBrains Mono', monospace", color: "#78350f", marginTop: 2 }}>
+                {shipment.procurementRef}
+              </div>
+              {shipment.procurementData && (
+                <div style={{ fontSize: 10, color: "#92400e", marginTop: 4, lineHeight: 1.5 }}>
+                  {shipment.procurementData}
+                </div>
+              )}
+            </div>
+            <div style={{
+              padding: "3px 10px", borderRadius: 4,
+              background: "#C0714A", color: "#fff",
+              fontSize: 9, fontWeight: 600, letterSpacing: 0.5,
+            }}>FROM PROCUREMENT</div>
+          </div>
+        )}
+
+        {/* Linked Shipments Banner */}
       {shipment.linkedShipments && shipment.linkedShipments !== "—" && (() => {
         const linkedNames = shipment.linkedShipments.split(",").map((n: string) => n.trim()).filter(Boolean);
         return linkedNames.map((trimmed: string, i: number) => {

@@ -290,7 +290,7 @@ const PO_FIELDS = [
   "x_studio_total_shipment_weight_in_tons_1", "x_studio_selling_price_per_ton",
   "x_studio_payment_status", "x_studio_paid_amount_in_aed", "x_studio_shipment_documentation_status",
   "x_studio_shipment_acceptance_status",
-  "notes",
+  "notes", "x_studio_procurement_ref", "x_studio_procurement_data", "x_studio_procurement_id",
   "invoice_ids",
   "shipment_bl_number",
   "telex_release_bl_issued",

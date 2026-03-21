@@ -433,44 +433,46 @@ export const offlineOpsRouter = router({
         console.error(`[linkProcurementToPO] Failed to fetch receipts for PO ${poId}: ${err.message}`);
       }
 
-      // Read current notes so we can append rather than overwrite
-      const records = await executeKw<{ id: number; notes: string | false }[]>(
-        "pf.procurement",
-        "search_read",
-        [[["id", "=", procurementOdooId]]],
-        { fields: ["id", "notes"] }
-      );
-      const currentNotes = records[0]?.notes || "";
-      const poTag = `[Converted to ${poName} | PO ID: ${poId}]`;
-      const receiptTag = receiptNames.length > 0
-        ? `[Receipt: ${receiptNames.join(", ")} | Picking IDs: ${receiptIds.join(", ")}]`
-        : "";
-      // Only append if not already tagged
-      let newNotes = currentNotes;
-      if (!newNotes.includes(poTag)) {
-        newNotes = newNotes ? `${newNotes}\n${poTag}` : poTag;
-      }
-      if (receiptTag && !newNotes.includes(receiptTag)) {
-        newNotes = `${newNotes}\n${receiptTag}`;
-      }
+      // Write dedicated linked PO fields on pf.procurement (no notes)
+        const writeVals: Record<string, unknown> = {
+          x_studio_linked_po: poName,
+          x_studio_linked_po_id: poId,
+        };
+        if (receiptNames.length > 0) {
+          writeVals.x_linked_receipt = receiptNames.join(", ");
+          writeVals.x_linked_receipt_id = receiptIds[0];
+        }
+        await executeKw(
+          "pf.procurement",
+          "write",
+          [[procurementOdooId], writeVals]
+        );
 
-      // Write notes + dedicated linked PO fields (authoritative source for badge display)
-      const writeVals: Record<string, unknown> = {
-        notes: newNotes,
-        x_studio_linked_po: poName,
-        x_studio_linked_po_id: poId,
-      };
-      if (receiptNames.length > 0) {
-        writeVals.x_linked_receipt = receiptNames.join(", ");
-        writeVals.x_linked_receipt_id = receiptIds[0];
-      }
-      await executeKw(
-        "pf.procurement",
-        "write",
-        [[procurementOdooId], writeVals]
-      );
+        // Write procurement reference on purchase.order (dedicated fields)
+        const procRecords = await executeKw<any[]>(
+          "pf.procurement", "read", [[procurementOdooId]],
+          { fields: ["name", "supplier", "commodity", "grade", "net_weight", "price_per_ton", "bale_count", "plate_number"] }
+        );
+        const procRec = procRecords?.[0];
+        if (procRec) {
+          const procSummary = [
+            "Procurement Reference: " + (procRec.name || "N/A"),
+            "Supplier: " + (procRec.supplier || "N/A"),
+            "Commodity: " + (procRec.commodity || "N/A"),
+            "Grade: " + (procRec.grade || "N/A"),
+            "Net Weight: " + (procRec.net_weight || "N/A"),
+            "Price/ton: " + (procRec.price_per_ton || "N/A"),
+            "Bales: " + (procRec.bale_count || "N/A"),
+            "Truck Plate: " + (procRec.plate_number || "N/A"),
+          ].join(" | ");
+          await executeKw("purchase.order", "write", [[poId], {
+            x_studio_procurement_ref: procRec.name || "",
+            x_studio_procurement_data: procSummary,
+            x_studio_procurement_id: procurementOdooId,
+          }]);
+        }
 
-      // ── Push procurement data + attachments to the receipt ──
+              // ── Push procurement data + attachments to the receipt ──
       if (receiptIds.length > 0) {
         const firstReceiptId = receiptIds[0];
         try {

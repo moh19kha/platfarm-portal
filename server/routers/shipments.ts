@@ -127,6 +127,9 @@ export const shipmentsRouter = router({
         docStatus: po.x_studio_shipment_documentation_status || null,
         acceptanceStatus: po.x_studio_shipment_acceptance_status || null,
         linkedShipments: po.notes ? po.notes.replace(/<[^>]*>/g, '').trim() : null,
+        procurementRef: po.x_studio_procurement_ref || null,
+        procurementData: po.x_studio_procurement_data || null,
+        procurementId: po.x_studio_procurement_id || null,
       }));
 
       // Seed current statuses silently (no notifications on first encounter)
@@ -223,6 +226,9 @@ export const shipmentsRouter = router({
         acceptanceStatus: po.x_studio_shipment_acceptance_status || null,
         telexBLIssued: !!po.telex_release_bl_issued,
         linkedShipments: po.notes ? po.notes.replace(/<[^>]*>/g, '').trim() : null,
+        procurementRef: po.x_studio_procurement_ref || null,
+        procurementData: po.x_studio_procurement_data || null,
+        procurementId: po.x_studio_procurement_id || null,
         lines: lines.map((l) => ({
           id: l.id,
           product: l.product_id ? { id: l.product_id[0], name: l.product_id[1] } : null,
