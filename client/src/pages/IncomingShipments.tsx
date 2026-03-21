@@ -18,14 +18,22 @@
   export default function IncomingShipments() {
     const [, navigate] = useLocation();
     const utils = trpc.useUtils();
-    const { data, isLoading, error } = trpc.offlineOps.allData.useQuery({});
+    const { data, isLoading, error } = trpc.offlineOps.allData.useQuery({}, { staleTime: 60_000, refetchOnWindowFocus: false });
     const linkProcMutation = trpc.offlineOps.linkProcurementToPO.useMutation();
     const copyProcAttMutation = trpc.offlineOps.copyProcurementAttachments.useMutation();
     const copyQcAttMutation = trpc.offlineOps.copyQualityAttachments.useMutation();
     const pushQcToReceiptMutation = trpc.offlineOps.pushQualityToReceipt.useMutation();
 
-    const RCV = data?.RCV || [];
-    const QC = (data?.QC || []).filter((q: any) => q.type === "received");
+    const RCV = useMemo(() => {
+      const raw = data?.RCV || [];
+      const seen = new Set<number>();
+      return raw.filter((r: any) => {
+        if (seen.has(r.odooId)) return false;
+        seen.add(r.odooId);
+        return true;
+      });
+    }, [data?.RCV]);
+    const QC = useMemo(() => (data?.QC || []).filter((q: any) => q.type === "received"), [data?.QC]);
 
     const shipments = useMemo(() => {
       const qcByRef = new Map<string, any>();
