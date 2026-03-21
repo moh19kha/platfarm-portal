@@ -92,7 +92,7 @@ function transformProcurement(r: any, attachments: any[]): any {
     grade: r.grade || "",
     site: m2oName(r.site_id),
     plate: r.plate_number || "",
-    stage: r.state || "received",
+    stage: (r.state === "draft" && r.synced_at) ? "received" : (r.state || "received"),
     qcRef: "",  // Will be linked via quality source_ref
     driver: r.driver_name || "",
     linkedPoName: r.x_studio_linked_po || "",
