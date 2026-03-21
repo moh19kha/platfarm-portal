@@ -695,25 +695,47 @@ export default function OfflineOpsModule(){
                 {(sel.crew||[]).map((g,i)=><div key={i} style={{marginBottom:14}}><div style={{fontSize:10,fontWeight:700,color:"#95A09C",marginBottom:6}}>{g.role}</div>{g.ppl.map((p,j)=><div key={j} style={{fontSize:12,padding:"4px 0",color:"#2C3E50"}}>{p}</div>)}</div>)}
               </div>}
 
-              {/* TRF Timeline */}
+              {/* TRF Timeline — Transfer Stages */}
               {selType==="trf"&&detTab===0&&<div>
-                <div style={{fontSize:11,fontWeight:700,color:"#475577",marginBottom:14}}>SHIPMENT TIMELINE</div>
-                {[{icon:"📦",title:"Loaded at "+sel.from,sub:sel.loadDate+(sel.loadTime?" at "+sel.loadTime:""),color:"#475577"},{icon:"🚚",title:"In Transit",sub:sel.from+" \u2192 "+sel.to+" ("+sel.distance+")",color:"#475577"},sel.arrDate?{icon:"🏢",title:"Arrived at "+sel.to,sub:sel.arrDate+(sel.arrTime?" at "+sel.arrTime:""),color:"#2D5A3D"}:{icon:"\u23f3",title:"Awaiting Arrival",sub:"ETA: "+(sel.eta||"\u2014"),color:"#D4960A"},sel.condition?{icon:sel.condition==="Intact"?"\u2705":"\u26a0\ufe0f",title:"Condition: "+sel.condition,sub:sel.rcvWeight>0?"Received "+fK(sel.rcvWeight)+(sel.diff?" (diff: "+(sel.diff>0?"+":"")+fK(sel.diff)+")":""):"Awaiting weighing",color:sel.condition==="Intact"?"#2D5A3D":"#C94444"}:null,{icon:sel.sync==="synced"?"\u2601\ufe0f":"\u23f3",title:sel.sync==="synced"?"Synced to Odoo":"Pending Sync",sub:"Status: "+sel.status,color:sel.sync==="synced"?"#2D5A3D":"#D4960A"}].filter(Boolean).map((ev,i,arr)=><div key={i} style={{display:"flex",gap:12,marginBottom:0}}>
-                  <div style={{display:"flex",flexDirection:"column",alignItems:"center"}}>
-                    <div style={{width:28,height:28,borderRadius:14,background:ev.color+"18",display:"flex",alignItems:"center",justifyContent:"center",fontSize:13}}>{ev.icon}</div>
-                    {i<arr.length-1&&<div style={{width:2,height:24,background:"#E8E5E0"}}/>}
-                  </div>
-                  <div style={{paddingBottom:12}}>
-                    <div style={{fontSize:12,fontWeight:600,color:"#2C3E50"}}>{ev.title}</div>
-                    <div style={{fontSize:10,color:"#95A09C",marginTop:2}}>{ev.sub}</div>
-                  </div>
-                </div>)}
+                <div style={{fontSize:11,fontWeight:700,color:"#475577",marginBottom:14}}>TRANSFER PROGRESS</div>
+                {(()=>{
+                  const stg1=!!sel.loadDate;
+                  const stg2=!!sel.arrDate;
+                  const stg3=!!sel.condition;
+                  const stg4=sel.status==="done"||sel.status==="stock_updated"||sel.status==="received";
+                  const stages=[
+                    {n:1,label:"Shipped / In Transit",icon:"🚚",done:stg1,active:stg1&&!stg2,detail:stg1?(sel.loadDate+(sel.loadTime?" at "+sel.loadTime:"")+" — "+sel.from+" → "+sel.to+" ("+sel.distance+")"):"Awaiting dispatch"},
+                    {n:2,label:"Confirmed Receive",icon:"📦",done:stg2,active:stg2&&!stg3,detail:stg2?(sel.arrDate+(sel.arrTime?" at "+sel.arrTime:"")+(sel.rcvWeight>0?" — "+fK(sel.rcvWeight)+" received":"")):"Awaiting arrival"+(sel.eta?" (ETA: "+sel.eta+")":"")},
+                    {n:3,label:"Quality Check",icon:"🔍",done:stg3,active:stg3&&!stg4,detail:stg3?("Condition: "+sel.condition+(sel.diff?" — Variance: "+(sel.diff>0?"+":"")+fK(sel.diff):"")):"Pending inspection"},
+                    {n:4,label:"Stock Updated",icon:"✅",done:stg4,active:false,detail:stg4?"Inventory updated in Odoo":"Awaiting stock update"}
+                  ];
+                  const cc=stages.filter(s=>s.done).length;
+                  return (<div>
+                    <div style={{display:"flex",alignItems:"center",gap:0,marginBottom:20,padding:"0 4px"}}>
+                      {stages.map((s,i)=><div key={i} style={{flex:1,display:"flex",alignItems:"center"}}>
+                        <div style={{width:28,height:28,borderRadius:14,background:s.done?"#2D5A3D":s.active?"#D4960A":"#E8E5E0",color:s.done||s.active?"#fff":"#95A09C",display:"flex",alignItems:"center",justifyContent:"center",fontSize:11,fontWeight:700,flexShrink:0,border:s.active?"2px solid #D4960A":"none"}}>{s.done?"✓":s.n}</div>
+                        {i<3&&<div style={{flex:1,height:3,background:s.done?"#2D5A3D":"#E8E5E0",marginLeft:2,marginRight:2,borderRadius:2}}/>}
+                      </div>)}
+                    </div>
+                    <div style={{fontSize:10,color:"#95A09C",textAlign:"center",marginBottom:18}}>{cc} of 4 stages complete</div>
+                    {stages.map((s,i)=><div key={i} style={{display:"flex",gap:12,marginBottom:0}}>
+                      <div style={{display:"flex",flexDirection:"column",alignItems:"center"}}>
+                        <div style={{width:32,height:32,borderRadius:16,background:s.done?"#E4EFE6":s.active?"#FDF6EC":"#F7F6F3",border:"1.5px solid "+(s.done?"#2D5A3D":s.active?"#D4960A":"#E4E1DC"),display:"flex",alignItems:"center",justifyContent:"center",fontSize:15}}>{s.icon}</div>
+                        {i<3&&<div style={{width:2,height:28,background:s.done?"#2D5A3D":"#E8E5E0"}}/>}
+                      </div>
+                      <div style={{paddingBottom:14,flex:1}}>
+                        <div style={{display:"flex",alignItems:"center",gap:6}}>
+                          <div style={{fontSize:12,fontWeight:600,color:s.done?"#2D5A3D":s.active?"#D4960A":"#95A09C"}}>{s.label}</div>
+                          {s.done&&<span style={{fontSize:8,padding:"2px 6px",borderRadius:4,background:"#E4EFE6",color:"#2D5A3D",fontWeight:700}}>DONE</span>}
+                          {s.active&&<span style={{fontSize:8,padding:"2px 6px",borderRadius:4,background:"#FDF6EC",color:"#D4960A",fontWeight:700}}>CURRENT</span>}
+                        </div>
+                        <div style={{fontSize:10,color:"#95A09C",marginTop:3}}>{s.detail}</div>
+                      </div>
+                    </div>)}
+                  </div>);
+                })()}
               </div>}
 
-              {/* TRF Overview */}
-              
-
-              {/* TRF Timeline */}
               {/* TRF Overview — Loading Stage */}
               {selType==="trf"&&detTab===1&&<div>
                 <div style={{fontSize:11,fontWeight:700,color:"#475577",marginBottom:10}}>ROUTE</div>
