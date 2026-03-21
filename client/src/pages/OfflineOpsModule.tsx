@@ -699,14 +699,14 @@ export default function OfflineOpsModule(){
               {selType==="trf"&&detTab===0&&<div>
                 <div style={{fontSize:11,fontWeight:700,color:"#475577",marginBottom:14}}>TRANSFER PROGRESS</div>
                 {(()=>{
-                  const stg1=!!sel.loadDate;
-                  const stg2=!!sel.arrDate;
-                  const stg3=!!sel.condition;
-                  const stg4=sel.status==="done"||sel.status==="stock_updated"||sel.status==="received";
+                  const stg1=!!sel.loadDate||sel.status!=="draft";
+                  const stg2=sel.status==="received"||sel.status==="assessed";
+                  const stg3=sel.status==="assessed";
+                  const stg4=false;
                   const stages=[
                     {n:1,label:"Shipped / In Transit",icon:"🚚",done:stg1,active:stg1&&!stg2,detail:stg1?(sel.loadDate+(sel.loadTime?" at "+sel.loadTime:"")+" — "+sel.from+" → "+sel.to+" ("+sel.distance+")"):"Awaiting dispatch"},
-                    {n:2,label:"Confirmed Receive",icon:"📦",done:stg2,active:stg2&&!stg3,detail:stg2?(sel.arrDate+(sel.arrTime?" at "+sel.arrTime:"")+(sel.rcvWeight>0?" — "+fK(sel.rcvWeight)+" received":"")):"Awaiting arrival"+(sel.eta?" (ETA: "+sel.eta+")":"")},
-                    {n:3,label:"Quality Check",icon:"🔍",done:stg3,active:stg3&&!stg4,detail:stg3?("Condition: "+sel.condition+(sel.diff?" — Variance: "+(sel.diff>0?"+":"")+fK(sel.diff):"")):"Pending inspection"},
+                    {n:2,label:"Confirmed Receive",icon:"📦",done:stg2,active:stg2&&!stg3,detail:stg2?"Shipment confirmed at destination":"Awaiting arrival"+(sel.eta?" (ETA: "+sel.eta+")":"")},
+                    {n:3,label:"Quality Check",icon:"🔍",done:stg3,active:stg3&&!stg4,detail:stg3?"Quality assessment completed":"Pending inspection"},
                     {n:4,label:"Stock Updated",icon:"✅",done:stg4,active:false,detail:stg4?"Inventory updated in Odoo":"Awaiting stock update"}
                   ];
                   const cc=stages.filter(s=>s.done).length;
@@ -751,21 +751,16 @@ export default function OfflineOpsModule(){
 
               {/* TRF Receiving — Arrival Stage */}
               {selType==="trf"&&detTab===2&&<div>
-                {sel.condition&&<div style={{display:"flex",alignItems:"center",gap:10,padding:"10px 14px",borderRadius:10,background:sel.condition==="Intact"?"#E4EFE6":"#FEF2F2",border:"1px solid "+(sel.condition==="Intact"?"#D5E5D5":"#FECACA"),marginBottom:18}}>
-                  <span style={{width:32,height:32,borderRadius:16,background:sel.condition==="Intact"?"#2D5A3D":"#DC2626",color:"#fff",display:"flex",alignItems:"center",justifyContent:"center",fontSize:16,fontWeight:700}}>{sel.condition==="Intact"?"✓":"⚠"}</span>
+                {sel.condition&&<div style={{display:"flex",alignItems:"center",gap:10,padding:"10px 14px",borderRadius:10,background:"#E4EFE6",border:"1px solid #D5E5D5",marginBottom:18}}>
+                  <span style={{width:32,height:32,borderRadius:16,background:"#2D5A3D",color:"#fff",display:"flex",alignItems:"center",justifyContent:"center",fontSize:16,fontWeight:700}}>{sel.condition==="Intact"?"✓":"⚠"}</span>
                   <div>
-                    <div style={{fontSize:13,fontWeight:700,color:sel.condition==="Intact"?"#2D5A3D":"#DC2626"}}>{sel.condition}</div>
+                    <div style={{fontSize:13,fontWeight:700,color:"#2D5A3D"}}>Assessed</div>
                     <div style={{fontSize:10,color:"#95A09C"}}>Arrival Condition</div>
                   </div>
                 </div>}
-                <div style={{fontSize:11,fontWeight:700,color:"#475577",marginBottom:10}}>ARRIVAL DATA</div>
-                {[["Arrival Date",sel.arrDate||"—"],["Arrival Time",sel.arrTime||"—"],["Condition",sel.condition||"—"],["Received Weight",sel.rcvWeight?fK(sel.rcvWeight):"—"],["Weight Difference",sel.diff?((sel.diff>0?"+":"")+fK(sel.diff)):"—"]].map(([l,v])=><div key={l} style={{display:"flex",justifyContent:"space-between",padding:"6px 0",borderBottom:"1px solid #F2F0EC"}}><span style={{fontSize:11,color:"#95A09C"}}>{l}</span><span className="m" style={{fontSize:11,color:l==="Weight Difference"&&sel.diff&&sel.diff<0?"#C0392B":"#2C3E50"}}>{v}</span></div>)}
-                {sel.rcvWeight>0&&sel.weight>0&&<div style={{marginTop:12,padding:"8px 12px",borderRadius:8,background:Math.abs(sel.diff||0)/sel.weight>0.02?"#FEF2F2":"#E4EFE6",border:"1px solid "+(Math.abs(sel.diff||0)/sel.weight>0.02?"#FECACA":"#D5E5D5")}}>
-                  <div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}>
-                    <span style={{fontSize:10,color:"#95A09C"}}>Weight Variance</span>
-                    <span className="m" style={{fontSize:12,fontWeight:700,color:Math.abs(sel.diff||0)/sel.weight>0.02?"#C0392B":"#2D5A3D"}}>{((sel.diff||0)/sel.weight*100).toFixed(1)}%</span>
-                  </div>
-                </div>}
+                <div style={{fontSize:11,fontWeight:700,color:"#475577",marginBottom:10}}>SHIPMENT STATUS</div>
+                {[["Status",sel.status==="received"?"Received":sel.status==="assessed"?"Assessed":sel.status==="in_transit"?"In Transit":sel.status==="draft"?"Draft":sel.status],["ETA",sel.eta||"—"],["Loaded Weight",sel.weight>0?fK(sel.weight):"—"],["Bales",""+sel.bales],["Commodity",sel.commodity],["Route",sel.from+" → "+sel.to],["Distance",sel.distance]].map(([l,v])=><div key={l} style={{display:"flex",justifyContent:"space-between",padding:"6px 0",borderBottom:"1px solid #F2F0EC"}}><span style={{fontSize:11,color:"#95A09C"}}>{l}</span><span className="m" style={{fontSize:11,color:"#2C3E50"}}>{v}</span></div>)}
+
                 <div style={{fontSize:11,fontWeight:700,color:"#475577",marginBottom:10,marginTop:20}}>ARRIVAL PHOTOS</div>
                 {(()=>{const arrAtt=(sel.att||[]).filter(a=>["Arrival Truck","Bale Condition","Arrival Weighbridge","Tarp Damage"].includes(a.n));return arrAtt.length>0?(<div style={{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:6}}>{arrAtt.map((a,i)=><div key={i} style={{borderRadius:6,overflow:"hidden",border:"1px solid #E4E1DC",aspectRatio:"1",display:"flex",alignItems:"center",justifyContent:"center",background:"#F7F6F3"}}><div style={{textAlign:"center"}}><div style={{fontSize:16}}>{a.t==="photo"?"📷":"📄"}</div><div style={{fontSize:8,color:"#95A09C",marginTop:2,padding:"0 4px",lineHeight:1.3}}>{a.n}</div></div></div>)}</div>):(<div style={{padding:16,textAlign:"center",borderRadius:8,background:"#F7F6F3",border:"1px solid #E4E1DC",color:"#95A09C",fontSize:11}}>No arrival photos yet{!sel.arrDate?" — shipment still in transit":""}</div>)})()}
               </div>}
@@ -773,11 +768,11 @@ export default function OfflineOpsModule(){
               {/* TRF Quality */}
               {selType==="trf"&&detTab===3&&<div>
                 <div style={{fontSize:11,fontWeight:700,color:"#4A7C59",marginBottom:14}}>QUALITY INSPECTION</div>
-                {sel.condition?(<div>
-                  <div style={{display:"flex",alignItems:"center",gap:10,padding:"10px 14px",borderRadius:10,background:sel.condition==="Intact"?"#E4EFE6":"#FEF2F2",border:"1px solid "+(sel.condition==="Intact"?"#D5E5D5":"#FECACA"),marginBottom:18}}>
-                    <span style={{width:32,height:32,borderRadius:16,background:sel.condition==="Intact"?"#2D5A3D":"#DC2626",color:"#fff",display:"flex",alignItems:"center",justifyContent:"center",fontSize:16,fontWeight:700}}>{sel.condition==="Intact"?"✓":"⚠"}</span>
+                {sel.status==="assessed"?(<div>
+                  <div style={{display:"flex",alignItems:"center",gap:10,padding:"10px 14px",borderRadius:10,background:"#E4EFE6",border:"1px solid #D5E5D5",marginBottom:18}}>
+                    <span style={{width:32,height:32,borderRadius:16,background:"#2D5A3D",color:"#fff",display:"flex",alignItems:"center",justifyContent:"center",fontSize:16,fontWeight:700}}>{sel.condition==="Intact"?"✓":"⚠"}</span>
                     <div>
-                      <div style={{fontSize:13,fontWeight:700,color:sel.condition==="Intact"?"#2D5A3D":"#DC2626"}}>{sel.condition}</div>
+                      <div style={{fontSize:13,fontWeight:700,color:"#2D5A3D"}}>Assessed</div>
                       <div style={{fontSize:10,color:"#95A09C"}}>Arrival Condition Assessment</div>
                     </div>
                   </div>
