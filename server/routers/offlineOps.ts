@@ -546,17 +546,18 @@ export const offlineOpsRouter = router({
 
           for (const pfa of procAtts) {
             if (!pfa.ir_attachment_id) continue;
-            const label = pfa.photo_label || pfa.file_name || pfa.ir_attachment_id[1] || "Procurement_photo";
-            const attName = `[Procurement] ${label}`;
-            if (existingNames.has(attName)) continue;
+            const label = pfa.photo_label || pfa.file_name || pfa.ir_attachment_id[1] || "photo";
+            const photoType = (pfa as any).photo_type || "";
+            const RECEIVING_PHOTO_TYPES = new Set(["arrival", "ar", "bale_condition", "bc"]);
+            const category = RECEIVING_PHOTO_TYPES.has(photoType) ? "Receiving" : "Procurement";
+            const finalName = photoType ? `[${category}] ${photoType}_${label}` : `[Procurement] ${label}`;
+            if (existingNames.has(finalName)) continue;
             try {
               const irAtt = await executeKw<any[]>(
                 "ir.attachment", "read", [[pfa.ir_attachment_id[0]]],
                 { fields: ["datas", "name", "mimetype"] }
               );
               if (irAtt?.[0]?.datas) {
-                const photoType = pfa.photo_type || "";
-                const finalName = photoType ? `[Procurement] ${photoType}_${label}` : attName;
                 await executeKw("ir.attachment", "create", [{
                   name: finalName,
                   datas: irAtt[0].datas,
@@ -564,6 +565,7 @@ export const offlineOpsRouter = router({
                   res_model: "stock.picking",
                   res_id: firstReceiptId,
                 }]);
+                existingNames.add(finalName);
               }
             } catch (e: any) {
               console.error(`[linkProcurementToPO] Failed to copy proc attachment ${pfa.id} to receipt: ${e.message}`);
