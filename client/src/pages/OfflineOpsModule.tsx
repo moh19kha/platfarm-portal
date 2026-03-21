@@ -594,7 +594,7 @@ export default function OfflineOpsModule(){
                 <td className="m" style={{color:"#475577",fontSize:10}}>{r.id}</td>
                 <td style={{fontSize:10}}>{r.commodity}</td>
                 <td>{r.qcData?<span style={{display:"inline-flex",padding:"2px 8px",borderRadius:99,fontSize:9,fontWeight:600,background:"#E4EFE6",color:"#2D5A3D"}}>{(r.qcData.grade||"").replace("_"," ").replace(/\b\w/g,c=>c.toUpperCase())}</span>:<span style={{fontSize:10,color:"#B0BAB6"}}>—</span>}</td>
-                <td>{bd(r.sync)}</td>
+                <td>{(()=>{const s1=!!(r.loadDate||r.status!=="draft");const s2=r.status==="received"||r.status==="assessed";const s3=!!r.qcData||r.status==="assessed";const stg=s3?"Quality Check":s2?"Confirmed Receive":s1?"Shipped":"Draft";const clr=s3?"#2D5A3D":s2?"#4A7C59":s1?"#D4960A":"#95A09C";const bg=s3?"#E4EFE6":s2?"#E4EFE6":s1?"#FDF6EC":"#F7F6F3";const num=s3?3:s2?2:s1?1:0;return <span style={{display:"inline-flex",padding:"2px 8px",borderRadius:99,fontSize:9,fontWeight:600,background:bg,color:clr,whiteSpace:"nowrap",gap:4}}><span>{num}/4</span>{stg}</span>})()}</td>
                 <td className="m" style={{fontSize:10}}>{r.bales}</td>
                 <td className="m" style={{color:"#2D5A3D"}}>{fK(r.weight)}</td>
                 <td style={{fontSize:9,color:"#64706C"}}>{r.truck}<br/><span className="m">{r.plate}</span></td>
