@@ -235,16 +235,57 @@
 
               {activeTab === 1 && (
                 <div>
-                  <div style={{ fontSize: 11, fontWeight: 700, color: "#C0714A", marginBottom: 10, textTransform: "uppercase", letterSpacing: ".5px" }}>Crew & Personnel</div>
-                  {(sel.crew || []).map((g: any, i: number) => (
-                    <div key={i} style={{ marginBottom: 16 }}>
-                      <div style={{ fontSize: 10, fontWeight: 700, color: C.gray, marginBottom: 6 }}>{g.role}</div>
-                      {g.ppl.map((p: string, j: number) => (
-                        <div key={j} style={{ fontSize: 12, padding: "5px 0", color: "#2C3E50", borderBottom: "1px solid #F2F0EC" }}>{p}</div>
-                      ))}
-                    </div>
-                  ))}
-                  {(!sel.crew || sel.crew.length === 0) && <div style={{ color: C.gray, fontSize: 11 }}>No crew data available</div>}
+                  <div style={{ fontSize: 11, fontWeight: 700, color: "#C0714A", marginBottom: 14, textTransform: "uppercase", letterSpacing: ".5px" }}>Crew & Personnel</div>
+                  {(() => {
+                    const crew = sel.crew || [];
+                    if (crew.length === 0) return <div style={{ color: C.gray, fontSize: 11 }}>No crew data available</div>;
+
+                    const TEAM_GROUPS = [
+                      { title: "Supervisor", icon: "👔", color: "#C0714A", bg: "#FDF6EC", border: "#F5DDB8",
+                        match: (r: string) => r.toLowerCase().includes("sup") },
+                      { title: "Baling Team", icon: "🏭", color: "#2D5A3D", bg: "#E4EFE6", border: "#D5E5D5",
+                        match: (r: string) => (r.toLowerCase().includes("baling") || r.toLowerCase().includes("driver") || r.toLowerCase().includes("feed")) && !r.toLowerCase().includes("sup") },
+                      { title: "Quality Team", icon: "🔍", color: "#475577", bg: "#EFF1F5", border: "#D5D8E0",
+                        match: (r: string) => (r.toLowerCase().includes("quality") || r.toLowerCase().includes("qc")) && !r.toLowerCase().includes("sup") },
+                    ];
+
+                    const ROLE_LABELS: Record<string, string> = {
+                      "baling_sup": "Supervisor", "quality_sup": "Supervisor",
+                      "🚛 Drivers": "Driver", "🚛 Driver": "Driver",
+                      "👔 Baling Supervisors": "Supervisor",
+                      "🔍 Quality Supervisors": "Supervisor",
+                      "⚙ Baling Labors": "Labor",
+                      "👷 Quality Labors": "Labor",
+                    };
+
+                    return TEAM_GROUPS.map((grp, gi) => {
+                      const members = crew.filter((c: any) => grp.match(c.role));
+                      if (members.length === 0) return null;
+                      const totalPeople = members.reduce((s: number, m: any) => s + m.ppl.length, 0);
+                      return (
+                        <div key={gi} style={{ marginBottom: 14, borderRadius: 10, border: "1px solid " + grp.border, overflow: "hidden" }}>
+                          <div style={{ padding: "10px 14px", background: grp.bg, borderBottom: "1px solid " + grp.border, display: "flex", alignItems: "center", gap: 8 }}>
+                            <span style={{ fontSize: 16 }}>{grp.icon}</span>
+                            <span style={{ fontSize: 12, fontWeight: 700, color: grp.color }}>{grp.title}</span>
+                            <span style={{ marginLeft: "auto", fontSize: 9, color: C.gray, fontFamily: MONO }}>{totalPeople} {totalPeople === 1 ? "person" : "people"}</span>
+                          </div>
+                          <div style={{ padding: "8px 14px" }}>
+                            {members.map((m: any, mi: number) => (
+                              <div key={mi} style={{ marginBottom: mi < members.length - 1 ? 10 : 0 }}>
+                                <div style={{ fontSize: 9, fontWeight: 700, color: C.gray, textTransform: "uppercase", letterSpacing: ".5px", marginBottom: 4 }}>{ROLE_LABELS[m.role] || m.role.replace(/[^\w\s]/g, "").trim()}</div>
+                                {m.ppl.map((p: string, pi: number) => (
+                                  <div key={pi} style={{ display: "flex", alignItems: "center", gap: 8, padding: "5px 0", borderBottom: pi < m.ppl.length - 1 ? "1px solid #F2F0EC" : "none" }}>
+                                    <div style={{ width: 26, height: 26, borderRadius: 99, background: grp.bg, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 11, fontWeight: 700, color: grp.color }}>{p.charAt(0)}</div>
+                                    <span style={{ fontSize: 12, color: "#2C3E50" }}>{p}</span>
+                                  </div>
+                                ))}
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      );
+                    });
+                  })()}
                 </div>
               )}
 
