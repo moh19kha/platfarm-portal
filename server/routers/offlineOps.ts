@@ -395,7 +395,71 @@ export const offlineOpsRouter = router({
       });
       const QC = rawQuality.map((r) => transformQuality(r, qcAttachments));
       const DPR = rawPressing.map((r) => transformPressing(r, staffByPressing, pressAttachments));
-      const TRF = rawShipping.map((r) => transformShipping(r, shipAttachments));
+      // Match pf.quality (qc_type=received) to shipping records by timestamp proximity
+      const receivedQCs = rawQuality.filter(q => q.qc_type === "received");
+      const TRF = rawShipping.map((r) => {
+        const trfRec = transformShipping(r, shipAttachments);
+        // Find QC done within 2 hours of shipping recorded_at, at destination site (Ain Sokhna = site 2)
+        const shipTime = r.recorded_at ? new Date(r.recorded_at + "Z").getTime() : 0;
+        let bestQC: any = null;
+        let bestDelta = Infinity;
+        for (const q of receivedQCs) {
+          const qcTime = q.recorded_at ? new Date(q.recorded_at + "Z").getTime() : 0;
+          const delta = Math.abs(qcTime - shipTime);
+          if (delta < 2 * 3600 * 1000 && delta < bestDelta) {
+            bestDelta = delta;
+            bestQC = q;
+          }
+        }
+        if (bestQC) {
+          trfRec.qcData = {
+            id: bestQC.id,
+            name: bestQC.name || "",
+            verdict: bestQC.verdict || "",
+            grade: bestQC.final_grade || "",
+            moisture: bestQC.moisture || 0,
+            protein: bestQC.protein_nir || 0,
+            color: bestQC.color || "",
+            odor: bestQC.odor || "",
+            leafRatio: bestQC.leaf_ratio || "",
+            density: bestQC.density || "",
+            baleShape: bestQC.bale_shape || "",
+            baleTies: bestQC.bale_ties || "",
+            foreignMatter: bestQC.foreign_matter || "",
+            noWeeds: bestQC.no_weeds || "",
+            noInsects: bestQC.no_insects || "",
+            noBlackWood: bestQC.no_black_wood || "",
+            truckClean: bestQC.truck_clean || "",
+            hasCover: bestQC.has_cover || "",
+            stackGood: bestQC.stack_good || "",
+            strapGood: bestQC.strap_good || "",
+            avgBaleWeight: bestQC.avg_bale_weight || 0,
+            baleHeight: bestQC.bale_height || 0,
+            g1: bestQC.g1_bale_count || 0,
+            g2: bestQC.g2_bale_count || 0,
+            mix: bestQC.mix_bale_count || 0,
+            inspector: bestQC.user_id ? bestQC.user_id[1] : "",
+            recordedAt: bestQC.recorded_at || "",
+          };
+          // Also attach QC photos
+          const qcPhotos = qcAttachments
+            .filter((a: any) => {
+              if (a.quality_id) return a.quality_id[0] === bestQC.id;
+              return a.res_model === "pf.quality" && a.res_id === bestQC.id;
+            })
+            .map((a: any) => ({
+              n: a.photo_label || a.file_name || "QC Photo",
+              t: "photo",
+              pt: a.photo_type || "",
+              s: "✓",
+              irAttId: a.ir_attachment_id ? a.ir_attachment_id[0] : null,
+            }));
+          if (qcPhotos.length > 0) {
+            trfRec.att = [...(trfRec.att || []), ...qcPhotos];
+          }
+        }
+        return trfRec;
+      });
 
       return { RCV, QC, DPR, TRF };
     }),

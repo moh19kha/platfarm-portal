@@ -701,7 +701,7 @@ export default function OfflineOpsModule(){
                 {(()=>{
                   const stg1=!!sel.loadDate||sel.status!=="draft";
                   const stg2=sel.status==="received"||sel.status==="assessed";
-                  const stg3=sel.status==="assessed";
+                  const stg3=sel.status==="assessed"||!!sel.qcData;
                   const stg4=false;
                   const stages=[
                     {n:1,label:"Shipped / In Transit",icon:"🚚",done:stg1,active:stg1&&!stg2,detail:stg1?(sel.loadDate+(sel.loadTime?" at "+sel.loadTime:"")+" — "+sel.from+" → "+sel.to+" ("+sel.distance+")"):"Awaiting dispatch"},
@@ -768,24 +768,22 @@ export default function OfflineOpsModule(){
               {/* TRF Quality */}
               {selType==="trf"&&detTab===3&&<div>
                 <div style={{fontSize:11,fontWeight:700,color:"#4A7C59",marginBottom:14}}>QUALITY INSPECTION</div>
-                {(sel.status==="assessed"||(sel.att||[]).some(a=>["bale_cross_section","moisture_reading","nir_reading"].includes(a.pt)))?(<div>
-                  <div style={{display:"flex",alignItems:"center",gap:10,padding:"10px 14px",borderRadius:10,background:"#E4EFE6",border:"1px solid #D5E5D5",marginBottom:18}}>
-                    <span style={{width:32,height:32,borderRadius:16,background:"#2D5A3D",color:"#fff",display:"flex",alignItems:"center",justifyContent:"center",fontSize:16,fontWeight:700}}>{sel.condition==="Intact"?"✓":"⚠"}</span>
+                {sel.qcData?(<div>
+                  <div style={{display:"flex",alignItems:"center",gap:10,padding:"10px 14px",borderRadius:10,background:sel.qcData.verdict==="accepted"?"#E4EFE6":"#FEF2F2",border:"1px solid "+(sel.qcData.verdict==="accepted"?"#D5E5D5":"#FECACA"),marginBottom:18}}>
+                    <span style={{width:32,height:32,borderRadius:16,background:sel.qcData.verdict==="accepted"?"#2D5A3D":"#C94444",color:"#fff",display:"flex",alignItems:"center",justifyContent:"center",fontSize:16,fontWeight:700}}>{sel.qcData.verdict==="accepted"?"✓":"✗"}</span>
                     <div>
-                      <div style={{fontSize:13,fontWeight:700,color:"#2D5A3D"}}>Assessed</div>
-                      <div style={{fontSize:10,color:"#95A09C"}}>Arrival Condition Assessment</div>
+                      <div style={{fontSize:13,fontWeight:700,color:sel.qcData.verdict==="accepted"?"#2D5A3D":"#C94444"}}>{sel.qcData.verdict==="accepted"?"Accepted":"Rejected"}</div>
+                      <div style={{fontSize:10,color:"#95A09C"}}>QC Verdict — {sel.qcData.inspector||"Inspector"} — {sel.qcData.recordedAt?new Date(sel.qcData.recordedAt+"Z").toLocaleString():""}</div>
                     </div>
                   </div>
-                  <div style={{fontSize:11,fontWeight:700,color:"#4A7C59",marginBottom:10}}>WEIGHT VERIFICATION</div>
-                  {[["Loaded Weight",sel.weight>0?fK(sel.weight):"—"],["Received Weight",sel.rcvWeight>0?fK(sel.rcvWeight):"—"],["Difference",sel.diff?((sel.diff>0?"+":"")+fK(sel.diff)):"—"],["Tare Weight",sel.tare>0?fK(sel.tare):"—"]].map(([l,v])=><div key={l} style={{display:"flex",justifyContent:"space-between",padding:"6px 0",borderBottom:"1px solid #F2F0EC"}}><span style={{fontSize:11,color:"#95A09C"}}>{l}</span><span className="m" style={{fontSize:11,color:l==="Difference"&&sel.diff&&sel.diff<0?"#C0392B":"#2C3E50"}}>{v}</span></div>)}
-                  {sel.rcvWeight>0&&sel.weight>0&&<div style={{marginTop:12,padding:"8px 12px",borderRadius:8,background:Math.abs(sel.diff||0)/sel.weight>0.02?"#FEF2F2":"#E4EFE6",border:"1px solid "+(Math.abs(sel.diff||0)/sel.weight>0.02?"#FECACA":"#D5E5D5")}}>
-                    <div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}>
-                      <span style={{fontSize:10,color:"#95A09C"}}>Weight Variance</span>
-                      <span className="m" style={{fontSize:12,fontWeight:700,color:Math.abs(sel.diff||0)/sel.weight>0.02?"#C0392B":"#2D5A3D"}}>{((sel.diff||0)/sel.weight*100).toFixed(1)}%</span>
-                    </div>
-                  </div>}
-                  <div style={{fontSize:11,fontWeight:700,color:"#4A7C59",marginBottom:10,marginTop:16}}>CARGO DETAILS</div>
-                  {[["Commodity",sel.commodity],["Bales",""+sel.bales],["Seal",sel.seal||"—"]].map(([l,v])=><div key={l} style={{display:"flex",justifyContent:"space-between",padding:"6px 0",borderBottom:"1px solid #F2F0EC"}}><span style={{fontSize:11,color:"#95A09C"}}>{l}</span><span className="m" style={{fontSize:11,color:"#2C3E50"}}>{v}</span></div>)}
+                  <div style={{fontSize:11,fontWeight:700,color:"#4A7C59",marginBottom:10}}>GRADE & MEASUREMENTS</div>
+                  {[["Final Grade",(sel.qcData.grade||"").replace("_"," ").replace(/\b\w/g,c=>c.toUpperCase())],["Moisture",sel.qcData.moisture?sel.qcData.moisture+"%":"—"],["Protein (NIR)",sel.qcData.protein?sel.qcData.protein+"%":"—"],["Avg Bale Weight",sel.qcData.avgBaleWeight?sel.qcData.avgBaleWeight+" kg":"—"],["Bale Height",sel.qcData.baleHeight?sel.qcData.baleHeight+" cm":"—"],["G1 Bales",""+sel.qcData.g1],["G2 Bales",""+sel.qcData.g2],["Mix Bales",""+sel.qcData.mix]].map(([l,v])=><div key={l} style={{display:"flex",justifyContent:"space-between",padding:"6px 0",borderBottom:"1px solid #F2F0EC"}}><span style={{fontSize:11,color:"#95A09C"}}>{l}</span><span className="m" style={{fontSize:11,color:"#2C3E50"}}>{v}</span></div>)}
+                  <div style={{fontSize:11,fontWeight:700,color:"#4A7C59",marginBottom:10,marginTop:16}}>VISUAL ASSESSMENT</div>
+                  {[["Color",(sel.qcData.color||"").replace("_"," ").replace(/\b\w/g,c=>c.toUpperCase())],["Odor",(sel.qcData.odor||"").replace("_"," ").replace(/\b\w/g,c=>c.toUpperCase())],["Leaf Ratio",(sel.qcData.leafRatio||"").replace("_"," ").replace(/\b\w/g,c=>c.toUpperCase())],["Density",(sel.qcData.density||"").replace("_"," ").replace(/\b\w/g,c=>c.toUpperCase())]].map(([l,v])=><div key={l} style={{display:"flex",justifyContent:"space-between",padding:"6px 0",borderBottom:"1px solid #F2F0EC"}}><span style={{fontSize:11,color:"#95A09C"}}>{l}</span><span className="m" style={{fontSize:11,color:"#2C3E50"}}>{v||"—"}</span></div>)}
+                  <div style={{fontSize:11,fontWeight:700,color:"#4A7C59",marginBottom:10,marginTop:16}}>CONDITION CHECKS</div>
+                  <div style={{display:"grid",gridTemplateColumns:"repeat(2,1fr)",gap:6}}>
+                    {[["Bale Shape",sel.qcData.baleShape],["Bale Ties",sel.qcData.baleTies],["Foreign Matter",sel.qcData.foreignMatter],["No Weeds",sel.qcData.noWeeds],["No Insects",sel.qcData.noInsects],["No Black Wood",sel.qcData.noBlackWood],["Truck Clean",sel.qcData.truckClean],["Has Cover",sel.qcData.hasCover],["Stack Good",sel.qcData.stackGood],["Strap Good",sel.qcData.strapGood]].map(([l,v])=><div key={l} style={{padding:"6px 8px",borderRadius:6,background:v==="yes"||v==="none"?"#E4EFE6":v==="no"?"#FEF2F2":"#F7F6F3",border:"1px solid "+(v==="yes"||v==="none"?"#D5E5D5":v==="no"?"#FECACA":"#E4E1DC"),display:"flex",alignItems:"center",gap:6}}><span style={{fontSize:12}}>{v==="yes"||v==="none"?"✅":v==="no"?"❌":"➖"}</span><span style={{fontSize:9,color:"#2C3E50"}}>{l}</span></div>)}
+                  </div>
                   <div style={{fontSize:11,fontWeight:700,color:"#4A7C59",marginBottom:10,marginTop:16}}>QC INSPECTION PHOTOS</div>
                   {(()=>{const qcAtt=(sel.att||[]).filter(a=>["bale_cross_section","moisture_reading","nir_reading"].includes(a.pt));return qcAtt.length>0?(<div style={{display:"grid",gridTemplateColumns:"repeat(2,1fr)",gap:8}}>{qcAtt.map((a,i)=><div key={i} style={{borderRadius:8,overflow:"hidden",border:"1px solid #D5E5D5",background:"#F2F7F3",padding:10,textAlign:"center"}}><div style={{fontSize:20,marginBottom:4}}>{a.pt==="moisture_reading"?"💧":a.pt==="nir_reading"?"📊":"🌾"}</div><div style={{fontSize:10,fontWeight:600,color:"#2D5A3D"}}>{a.pt==="bale_cross_section"?"Bale Cross Section":a.pt==="moisture_reading"?"Moisture Reading":a.pt==="nir_reading"?"NIR Reading":a.n}</div><div style={{fontSize:9,color:"#95A09C",marginTop:2}}>{a.n}</div></div>)}</div>):(<div style={{padding:12,textAlign:"center",borderRadius:8,background:"#F7F6F3",border:"1px solid #E4E1DC",color:"#95A09C",fontSize:11}}>No QC photos captured</div>)})()}
                 </div>):(<div style={{padding:24,textAlign:"center",borderRadius:10,background:"#F7F6F3",border:"1px solid #E4E1DC"}}>
