@@ -402,32 +402,50 @@ export const offlineOpsRouter = router({
       });
       const QC = rawQuality.map((r) => transformQuality(r, qcAttachments));
       const DPR = rawPressing.map((r) => transformPressing(r, staffByPressing, pressAttachments));
-      // Match pf.quality (qc_type=received) to shipping records by timestamp proximity
+      // Match pf.quality (qc_type=received) to shipping records by exclusive 1:1 timestamp proximity
       const receivedQCs = rawQuality.filter(q => q.qc_type === "received");
-      const TRF = rawShipping.map((r) => {
-        const trfRec = transformShipping(r, shipAttachments);
-        // Find QC done within 2 hours of shipping recorded_at, at destination site (Ain Sokhna = site 2)
-        const shipTime = r.recorded_at ? new Date(r.recorded_at + "Z").getTime() : 0;
-        let bestQC: any = null;
-        let bestDelta = Infinity;
+
+      // Build all candidate pairs: (shipIdx, qcIdx, delta)
+      const trfTransformed = rawShipping.map((r) => transformShipping(r, shipAttachments));
+      const candidates: { si: number; qi: number; delta: number }[] = [];
+      for (let si = 0; si < rawShipping.length; si++) {
+        const r = rawShipping[si];
+        const trfRec = trfTransformed[si];
         const isReceived = r.state === "received" || r.state === "assessed";
         const hasArrivalPhotos = trfRec.att?.some((a: any) => ["arrival","bale_condition","bale_cross_section","moisture_reading","nir_reading"].includes(a.pt));
-        const effectivelyReceived = isReceived || hasArrivalPhotos;
-        if (effectivelyReceived) {
-          for (const q of receivedQCs) {
-            const qcTime = q.recorded_at ? new Date(q.recorded_at + "Z").getTime() : 0;
-            const delta = Math.abs(qcTime - shipTime);
-            if (delta < 2 * 3600 * 1000 && delta < bestDelta) {
-              bestDelta = delta;
-              bestQC = q;
-            }
-          }
-          if (!isReceived && (hasArrivalPhotos || bestQC)) {
-            trfRec.status = "received";
-            executeKw("pf.shipping", "write", [[r.id], { state: "received" }]).catch((e: any) =>
-              console.error(`[autofix] Failed to update pf.shipping ${r.id} state: ${e.message}`)
-            );
-          }
+        if (!isReceived && !hasArrivalPhotos) continue;
+        const shipTime = r.recorded_at ? new Date(r.recorded_at + "Z").getTime() : 0;
+        if (!shipTime) continue;
+        for (let qi = 0; qi < receivedQCs.length; qi++) {
+          const qcTime = receivedQCs[qi].recorded_at ? new Date(receivedQCs[qi].recorded_at + "Z").getTime() : 0;
+          const delta = Math.abs(qcTime - shipTime);
+          if (delta < 2 * 3600 * 1000) candidates.push({ si, qi, delta });
+        }
+      }
+      // Sort by delta (closest first), assign exclusively
+      candidates.sort((a, b) => a.delta - b.delta);
+      const usedQC = new Set<number>();
+      const usedShip = new Set<number>();
+      const qcMatch = new Map<number, any>(); // shipIdx -> QC record
+      for (const c of candidates) {
+        if (usedQC.has(c.qi) || usedShip.has(c.si)) continue;
+        usedQC.add(c.qi);
+        usedShip.add(c.si);
+        qcMatch.set(c.si, receivedQCs[c.qi]);
+      }
+
+      // Apply matches and auto-fix states
+      const TRF = rawShipping.map((r, si) => {
+        const trfRec = trfTransformed[si];
+        const isReceived = r.state === "received" || r.state === "assessed";
+        const hasArrivalPhotos = trfRec.att?.some((a: any) => ["arrival","bale_condition","bale_cross_section","moisture_reading","nir_reading"].includes(a.pt));
+        const bestQC = qcMatch.get(si) || null;
+
+        if (!isReceived && (hasArrivalPhotos || bestQC)) {
+          trfRec.status = "received";
+          executeKw("pf.shipping", "write", [[r.id], { state: "received" }]).catch((e: any) =>
+            console.error(`[autofix] Failed to update pf.shipping ${r.id} state: ${e.message}`)
+          );
         }
         if (bestQC) {
           trfRec.qcData = {
