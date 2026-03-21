@@ -564,7 +564,8 @@ export function OdooShipDetail({ shipmentId, onBack, onNavigateToShipment, sourc
           { key: "receiving", label: "Receiving" },
           { key: "quality", label: "Received Quality" },
         ];
-        const hasAny = codes.some(c => (byType[c] || []).length > 0);
+        const populatedStages = stageGroups.filter(sg => codes.some(c => (byType[c] || []).some((ph: any) => ph.stage === sg.key)));
+        const showStageHeaders = populatedStages.length > 1;
         return (
           <div style={{ marginBottom: 12 }}>
             <div style={{ fontSize: 11, fontWeight: 700, color: C.forest, marginBottom: 8, textTransform: "uppercase", letterSpacing: 0.5 }}>{sectionTitle}</div>
@@ -577,8 +578,8 @@ export function OdooShipDetail({ shipmentId, onBack, onNavigateToShipment, sourc
               });
               if (stageCount === 0) return null;
               return (
-                <div key={sg.key} style={{ marginBottom: 8, marginLeft: 6 }}>
-                  <div style={{ fontSize: 10, fontWeight: 600, color: C.gray, marginBottom: 4, borderBottom: `1px solid ${C.border}`, paddingBottom: 2 }}>{sg.label}</div>
+                <div key={sg.key} style={{ marginBottom: 8, marginLeft: showStageHeaders ? 6 : 0 }}>
+                  {showStageHeaders && <div style={{ fontSize: 10, fontWeight: 600, color: C.gray, marginBottom: 4, borderBottom: `1px solid ${C.border}`, paddingBottom: 2 }}>{sg.label}</div>}
                   <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
                     {codes.map(code => {
                       const photos = stagePhotos[code] || [];
