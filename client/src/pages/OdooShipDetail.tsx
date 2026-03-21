@@ -1377,7 +1377,7 @@ export function OdooShipDetail({ shipmentId, onBack, onNavigateToShipment, sourc
         )}
 
         {/* Linked Shipments Banner */}
-      {shipment.linkedShipments && shipment.linkedShipments !== "—" && (() => {
+      {!shipment.procurementRef && shipment.linkedShipments && shipment.linkedShipments !== "—" && (() => {
         const linkedNames = shipment.linkedShipments.split(",").map((n: string) => n.trim()).filter(Boolean);
         return linkedNames.map((trimmed: string, i: number) => {
           const company = companyFromShipmentName(trimmed);
