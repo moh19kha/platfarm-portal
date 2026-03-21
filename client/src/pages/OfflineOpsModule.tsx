@@ -593,7 +593,7 @@ export default function OfflineOpsModule(){
               {fTrf.map(r=>{const st=TRS[r.status]||TRS.in_transit;return(<tr key={r.id} onClick={()=>openDet(r,"trf")} style={{background:sel&&sel.id===r.id?"#E4EFE6":""}}>
                 <td className="m" style={{color:"#475577",fontSize:10}}>{r.id}</td>
                 <td style={{fontSize:10}}>{r.commodity}</td>
-                <td>{bd("synced",r.grade)}</td>
+                <td>{r.qcData?<span style={{display:"inline-flex",padding:"2px 8px",borderRadius:99,fontSize:9,fontWeight:600,background:"#E4EFE6",color:"#2D5A3D"}}>{(r.qcData.grade||"").replace("_"," ").replace(/\b\w/g,c=>c.toUpperCase())}</span>:<span style={{fontSize:10,color:"#B0BAB6"}}>—</span>}</td>
                 <td className="m" style={{fontSize:10}}>{r.bales}</td>
                 <td className="m" style={{color:"#2D5A3D"}}>{fK(r.weight)}</td>
                 <td style={{fontSize:9,color:"#64706C"}}>{r.truck}<br/><span className="m">{r.plate}</span></td>
