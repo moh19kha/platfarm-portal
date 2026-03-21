@@ -284,7 +284,14 @@ function transformShipping(r: any, attachments: any[]): any {
     arrDate: "",               // No arrival date field
     arrTime: "",               // No arrival time field
     condition: "",             // No condition field
-    status: r.state || "in_transit",
+    status: (() => {
+      const st = r.state || "draft";
+      if (st === "draft") {
+        const hasArrival = recAttachments.some((a: any) => ["arrival","bale_condition","bale_cross_section","moisture_reading","nir_reading"].includes(a.pt));
+        if (hasArrival) return "received";
+      }
+      return st === "draft" ? "in_transit" : st;
+    })(),
     sync: syncStatus,
     distance: "780 km",        // Default Dakhla→Sokhna distance
     notes: "",                 // No notes field on pf.shipping
