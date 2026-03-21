@@ -891,11 +891,25 @@ export const shipmentsRouter = router({
         }
       }
 
-      const MULTI_STAGE_TYPES = new Set(["truck_right", "truck_left", "truck_back"]);
+      const TRUCK_SIDE_TYPES = new Set(["truck_right", "truck_left", "truck_back"]);
       const dedupedByType: typeof byType = {};
       for (const [code, photos] of Object.entries(byType)) {
-        if (MULTI_STAGE_TYPES.has(code)) {
-          dedupedByType[code] = photos;
+        if (TRUCK_SIDE_TYPES.has(code)) {
+          const stagesWithPhotos = new Set(photos.map(ph => ph.stage));
+          if (stagesWithPhotos.size <= 1) {
+            const seen = new Set<number>();
+            const unique: typeof photos = [];
+            for (const ph of photos) {
+              if (!seen.has(ph.irAttId)) {
+                const isDuplicate = unique.some(u => u.label === ph.label && u.mime === ph.mime && u.date === ph.date);
+                if (!isDuplicate) unique.push(ph);
+              }
+              seen.add(ph.irAttId);
+            }
+            dedupedByType[code] = unique;
+          } else {
+            dedupedByType[code] = photos;
+          }
         } else {
           const seen = new Set<string>();
           dedupedByType[code] = photos.filter(ph => {
