@@ -167,9 +167,9 @@
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
                 <div>
                   <div style={{ fontFamily: MONO, fontSize: 16, fontWeight: 700, color: "#C0714A" }}>{sel.id}</div>
-                  <div style={{ fontSize: 11, color: C.gray, marginTop: 2 }}>{sel.line} \u00b7 {sel.commodity} \u00b7 {sel.site}</div>
+                  <div style={{ fontSize: 11, color: C.gray, marginTop: 2 }}>{sel.line} · {sel.commodity} · {sel.site}</div>
                 </div>
-                <button onClick={() => setSelectedId(null)} style={{ width: 28, height: 28, borderRadius: 8, border: "1px solid " + C.border, background: C.card, cursor: "pointer", fontSize: 14, display: "flex", alignItems: "center", justifyContent: "center" }}>\u00d7</button>
+                <button onClick={() => setSelectedId(null)} style={{ width: 28, height: 28, borderRadius: 8, border: "1px solid " + C.border, background: C.card, cursor: "pointer", fontSize: 14, display: "flex", alignItems: "center", justifyContent: "center" }}>×</button>
               </div>
               <div style={{ display: "flex", gap: 8, marginTop: 12, flexWrap: "wrap" }}>
                 {[
@@ -300,7 +300,7 @@
                       <div style={{ width: 36, height: 36, borderRadius: 8, background: "#FDF6EC", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 16 }}>{a.t === "photo" ? "\ud83d\udcf8" : "\ud83d\udcc4"}</div>
                       <div>
                         <div style={{ fontSize: 11, fontWeight: 600, color: "#2C3E50" }}>{a.n}</div>
-                        <div style={{ fontSize: 9, color: C.gray }}>{a.t} \u00b7 {a.s}</div>
+                        <div style={{ fontSize: 9, color: C.gray }}>{a.t} · {a.s}</div>
                       </div>
                     </div>
                   ))}
