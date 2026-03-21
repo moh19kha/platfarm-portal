@@ -410,12 +410,15 @@ export const offlineOpsRouter = router({
         const shipTime = r.recorded_at ? new Date(r.recorded_at + "Z").getTime() : 0;
         let bestQC: any = null;
         let bestDelta = Infinity;
-        for (const q of receivedQCs) {
-          const qcTime = q.recorded_at ? new Date(q.recorded_at + "Z").getTime() : 0;
-          const delta = Math.abs(qcTime - shipTime);
-          if (delta < 2 * 3600 * 1000 && delta < bestDelta) {
-            bestDelta = delta;
-            bestQC = q;
+        const isReceived = r.state === "received" || r.state === "assessed";
+        if (isReceived) {
+          for (const q of receivedQCs) {
+            const qcTime = q.recorded_at ? new Date(q.recorded_at + "Z").getTime() : 0;
+            const delta = Math.abs(qcTime - shipTime);
+            if (delta < 2 * 3600 * 1000 && delta < bestDelta) {
+              bestDelta = delta;
+              bestQC = q;
+            }
           }
         }
         if (bestQC) {
