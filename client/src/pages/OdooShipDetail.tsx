@@ -575,7 +575,7 @@ export function OdooShipDetail({ shipmentId, onBack, onNavigateToShipment, sourc
                 const filtered = (byType[c] || []).filter((ph: any) => ph.stage === sg.key);
                 if (filtered.length > 0) { stagePhotos[c] = filtered; stageCount += filtered.length; }
               });
-              if (stageCount === 0 && !hasAny) return null;
+              if (stageCount === 0) return null;
               return (
                 <div key={sg.key} style={{ marginBottom: 8, marginLeft: 6 }}>
                   <div style={{ fontSize: 10, fontWeight: 600, color: C.gray, marginBottom: 4, borderBottom: `1px solid ${C.border}`, paddingBottom: 2 }}>{sg.label}</div>
