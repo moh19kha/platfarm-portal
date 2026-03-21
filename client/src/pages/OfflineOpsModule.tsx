@@ -573,14 +573,7 @@ export default function OfflineOpsModule(){
           </div>
 
           {/* In-transit alert */}
-          {inTransit.length>0&&<div style={{padding:12,background:"#FDF6EC",borderRadius:9,border:"1px solid #F5DDB8",marginBottom:14}}>
-            {inTransit.map(r=>(<div key={r.id} style={{display:"flex",alignItems:"center",gap:12,padding:"6px 0"}}>
-              <span style={{fontSize:16}}>🚛</span>
-              <div style={{flex:1}}><div style={{display:"flex",alignItems:"center",gap:6}}><span className="m" style={{fontSize:12,color:"#D4960A"}}>{r.id}</span><span style={{fontSize:10,color:"#64706C"}}>{fK(r.weight)} · {r.bales} bales · {r.commodity}</span></div><div style={{fontSize:10,color:"#D4960A",marginTop:2}}>ETA: {r.eta} · {r.crew?.[0]?.ppl?.[0] || "—"} · Plate: {r.plate}</div></div>
-              <span style={{display:"inline-flex",padding:"3px 10px",borderRadius:99,fontSize:10,fontWeight:600,background:"#D4960A",color:"#fff"}}>In Transit</span>
-            </div>))}
-          </div>}
-
+          
           <div style={{display:"flex",gap:6,marginBottom:14,alignItems:"center"}}>
             <input value={sr} onChange={e=>setSr(e.target.value)} placeholder="Search ID, driver..." style={{width:240,height:36,padding:"0 14px",border:"1px solid #D5D0C8",borderRadius:8,fontFamily:"'DM Sans',system-ui,sans-serif",fontSize:12,color:"#2C3E50",background:"#fff"}}/>
             <div style={{display:"flex",gap:4}}>{[["all","All"],["in_transit","In Transit"],["delivered","Delivered"],["received","Received"]].map(([k,l])=>pl(l,trfSt===k,()=>setTrfSt(k)))}</div>
