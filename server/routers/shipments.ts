@@ -872,7 +872,7 @@ export const shipmentsRouter = router({
         return "";
       };
 
-      const byType: Record<string, { irAttId: number; name: string; label: string; photoType: string; mime: string; date: string }[]> = {};
+      const byType: Record<string, { irAttId: number; name: string; label: string; photoType: string; mime: string; date: string; stage: string }[]> = {};
       const unmatched: typeof byType[""] = [];
 
       for (const att of atts) {
@@ -880,7 +880,9 @@ export const shipmentsRouter = router({
         const label = photoType && PHOTO_LABELS[photoType]
           ? PHOTO_LABELS[photoType]
           : att.name.replace(/^\[(Procurement|Receiving|Quality)\]\s*/i, "").trim();
-        const item = { irAttId: att.id, name: att.name, label, photoType, mime: att.mimetype, date: att.create_date };
+        const stageMatch = att.name.match(/^\[(Procurement|Receiving|Quality)\]/i);
+        const stage = stageMatch ? stageMatch[1].toLowerCase() : "";
+        const item = { irAttId: att.id, name: att.name, label, photoType, mime: att.mimetype, date: att.create_date, stage };
         if (photoType) {
           if (!byType[photoType]) byType[photoType] = [];
           byType[photoType].push(item);

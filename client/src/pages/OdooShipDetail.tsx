@@ -556,7 +556,70 @@ export function OdooShipDetail({ shipmentId, onBack, onNavigateToShipment, sourc
       sectionTitle: string,
       codes: string[],
       byType: Record<string, any[]>,
+      groupByStage?: boolean,
     ) => {
+      if (groupByStage) {
+        const stageGroups = [
+          { key: "procurement", label: "Source (Procurement)" },
+          { key: "receiving", label: "Receiving" },
+          { key: "quality", label: "Received Quality" },
+        ];
+        const hasAny = codes.some(c => (byType[c] || []).length > 0);
+        return (
+          <div style={{ marginBottom: 12 }}>
+            <div style={{ fontSize: 11, fontWeight: 700, color: C.forest, marginBottom: 8, textTransform: "uppercase", letterSpacing: 0.5 }}>{sectionTitle}</div>
+            {stageGroups.map(sg => {
+              const stagePhotos: Record<string, any[]> = {};
+              let stageCount = 0;
+              codes.forEach(c => {
+                const filtered = (byType[c] || []).filter((ph: any) => ph.stage === sg.key);
+                if (filtered.length > 0) { stagePhotos[c] = filtered; stageCount += filtered.length; }
+              });
+              if (stageCount === 0 && !hasAny) return null;
+              return (
+                <div key={sg.key} style={{ marginBottom: 8, marginLeft: 6 }}>
+                  <div style={{ fontSize: 10, fontWeight: 600, color: C.gray, marginBottom: 4, borderBottom: `1px solid ${C.border}`, paddingBottom: 2 }}>{sg.label}</div>
+                  <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+                    {codes.map(code => {
+                      const photos = stagePhotos[code] || [];
+                      const label = PHOTO_LABELS[code] || code;
+                      if (photos.length === 0) {
+                        return (
+                          <div key={code} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "6px 8px", borderRadius: 5, border: `1px solid ${C.border}`, background: "transparent" }}>
+                            <span style={{ fontSize: 10, fontWeight: 500, color: C.light }}>{label}</span>
+                            <span style={{ fontSize: 9, color: C.light, fontStyle: "italic" }}>Not uploaded</span>
+                          </div>
+                        );
+                      }
+                      return photos.map((ph: any, idx: number) => {
+                        const imgKey = `receipt-${ph.irAttId}`;
+                        if (!imgCache[imgKey] && ph.irAttId) {
+                          utils.offlineOps.attachmentImage.fetch({ irAttachmentId: ph.irAttId }).then((res: any) => {
+                            if (res?.base64) setImgCache(prev => ({ ...prev, [imgKey]: `data:${ph.mime || "image/jpeg"};base64,${res.base64}` }));
+                          }).catch(() => {});
+                        }
+                        const hasImg = !!imgCache[imgKey];
+                        return (
+                          <div key={`${code}-${sg.key}-${idx}`} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "6px 8px", borderRadius: 5, border: `1px solid ${C.border}`, background: hasImg ? C.gBg : "transparent" }}>
+                            <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                              {hasImg && <img src={imgCache[imgKey]} alt={label} style={{ width: 28, height: 28, borderRadius: 4, objectFit: "cover", border: `1px solid ${C.border}` }} />}
+                              <span style={{ fontSize: 10, fontWeight: 500 }}>{label}{photos.length > 1 ? ` (${idx + 1})` : ""}{photos.length > 1 && ph.date ? <span style={{ fontWeight: 400, color: C.gray, marginLeft: 6 }}>{new Date(ph.date).toLocaleDateString("en-GB", { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" })}</span> : null}</span>
+                            </div>
+                            <div style={{ display: "flex", gap: 4 }}>
+                              <button onClick={() => handlePhotoPreview(ph)} style={{ fontSize: 9, padding: "2px 8px", borderRadius: 4, border: `1px solid ${C.gBdr2}`, background: C.gBg2, cursor: "pointer", color: C.forest, fontWeight: 600 }}>Preview</button>
+                              <button onClick={() => handlePhotoDownload(ph)} style={{ fontSize: 9, padding: "2px 8px", borderRadius: 4, border: `1px solid ${C.border}`, background: C.card, cursor: "pointer", color: C.forest, fontWeight: 600 }}>Download</button>
+                            </div>
+                          </div>
+                        );
+                      });
+                    })}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        );
+      }
       return (
         <div style={{ marginBottom: 12 }}>
           <div style={{ fontSize: 11, fontWeight: 700, color: C.forest, marginBottom: 8, textTransform: "uppercase", letterSpacing: 0.5 }}>{sectionTitle}</div>
@@ -1244,7 +1307,7 @@ export function OdooShipDetail({ shipmentId, onBack, onNavigateToShipment, sourc
 
               {renderPhotoSection("Documents", ["weight_ticket", "driver_contract", "driver_license", "driver_id", "truck_plate", "bale_condition"], receiptPhotos?.byType || {})}
               {renderPhotoSection("Truck Arrival", ["arrival"], receiptPhotos?.byType || {})}
-              {renderPhotoSection("Load / Cargo Pictures", ["truck_right", "truck_left", "truck_back"], receiptPhotos?.byType || {})}
+              {renderPhotoSection("Load / Cargo Pictures", ["truck_right", "truck_left", "truck_back"], receiptPhotos?.byType || {}, true)}
               {renderPhotoSection("Quality Assessment", ["moisture_reading", "nir_reading", "bale_cross_section"], receiptPhotos?.byType || {})}
               {renderUnmatchedPhotos(receiptPhotos?.unmatched || [])}
             </Card>
