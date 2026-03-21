@@ -475,59 +475,87 @@
 
               {activeTab === 2 && (
                 <div style={{ padding: "16px 20px" }}>
-                  <Lbl>Trucking & Transport</Lbl>
-                  <div style={{ marginTop: 8 }}>
-                    {[
-                      ["Driver Name", sel.driver || "—"],
-                      ["Truck Plate", sel.plate || "—"],
-                      ["Truck Included", sel.truckInc || "—"],
-                      ["Truck Cost Payer", sel.truckPayer || "—"],
-                      ["Trucking Cost", sel.truckCost ? `${sel.currency || ""} ${Number(sel.truckCost).toLocaleString()}`.trim() : "—"],
-                    ].map(([l, v]) => (
-                      <FieldRow key={l} label={l} value={v} />
-                    ))}
-                  </div>
-                  <div style={{ marginTop: 20 }}><Lbl>Commercial Terms</Lbl></div>
-                  <div style={{ marginTop: 8 }}>
-                    {[
-                      ["Incoterm", sel.incoterm || "—"],
-                      ["Price Per Ton", sel.price ? `${sel.currency || ""} ${Number(sel.price).toLocaleString()}`.trim() : "—"],
-                      ["Currency", sel.currency || "—"],
-                      ["Bale Size", sel.baleSize || "—"],
-                    ].map(([l, v]) => (
-                      <FieldRow key={l} label={l} value={v} mono />
-                    ))}
-                  </div>
-                  <div style={{ marginTop: 20 }}><Lbl>Weighbridge</Lbl></div>
-                  <div style={{ marginTop: 8 }}>
-                    {[
-                      ["Gross Weight", sel.gross ? `${Number(sel.gross).toLocaleString()} kg` : "—"],
-                      ["Tare Weight", sel.tare ? `${Number(sel.tare).toLocaleString()} kg` : "—"],
-                      ["Net Weight", sel.net ? `${Number(sel.net).toLocaleString()} kg` : "—"],
-                      ["Total Bales", sel.bales || "—"],
-                      ["Avg Bale Weight", sel.avgBale ? `${sel.avgBale} kg` : "—"],
-                    ].map(([l, v]) => (
-                      <FieldRow key={l} label={l} value={v} mono />
-                    ))}
-                  </div>
-                  {sel.notes && (
-                    <div style={{ marginTop: 20 }}>
-                      <Lbl>Field Notes</Lbl>
-                      <div style={{ marginTop: 8, padding: "10px 12px", borderRadius: 8, background: C.aBg, border: `1px solid ${C.aBdr}`, fontSize: 11, color: "#92400E", lineHeight: 1.6 }}>
-                        {sel.notes}
+                  {sel.qcData?.verdict && (
+                    <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "10px 14px", borderRadius: 10, background: sel.qcData.verdict === "accepted" ? C.gBg : "#FEF2F2", border: `1px solid ${sel.qcData.verdict === "accepted" ? C.gBdr : "#FECACA"}`, marginBottom: 18 }}>
+                      <span style={{ width: 32, height: 32, borderRadius: 16, background: sel.qcData.verdict === "accepted" ? C.forest : "#DC2626", color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 16 }}>{sel.qcData.verdict === "accepted" ? "✓" : "✗"}</span>
+                      <div>
+                        <div style={{ fontSize: 13, fontWeight: 700, color: sel.qcData.verdict === "accepted" ? C.forest : "#DC2626" }}>{sel.qcData.verdict === "accepted" ? "Accepted" : "Rejected"}</div>
+                        {sel.qcData.finalGrade && <div style={{ fontSize: 10, color: C.sage }}>Final Grade: {sel.qcData.finalGrade}</div>}
                       </div>
                     </div>
                   )}
-                  <div style={{ marginTop: 20 }}><Lbl>Record Info</Lbl></div>
+                  <Lbl>QC Assessment</Lbl>
                   <div style={{ marginTop: 8 }}>
                     {[
-                      ["Created By", sel.createdBy || "—"],
-                      ["Recorded At", (sel.date || "") + " " + (sel.time || "")],
-                      ["Site", sel.site || "—"],
-                    ].map(([l, v]) => (
-                      <FieldRow key={l} label={l} value={(v || "").trim() || "—"} />
+                      ["Inspector", sel.qcData?.inspector],
+                      ["Verdict", sel.qcData?.verdict],
+                      ["Final Grade", sel.qcData?.finalGrade],
+                      ["QC Date", sel.qcData?.date],
+                    ].filter(([, v]) => v).map(([l, v]) => (
+                      <FieldRow key={l} label={l} value={v || "—"} />
                     ))}
                   </div>
+                  {(sel.qcData?.g1 > 0 || sel.qcData?.g2 > 0 || sel.qcData?.mix > 0) && (
+                    <div style={{ marginTop: 16 }}>
+                      <Lbl>Grade Split</Lbl>
+                      <div style={{ display: "flex", gap: 10, marginTop: 8 }}>
+                        {[
+                          ["G1", sel.qcData?.g1, C.forest],
+                          ["G2", sel.qcData?.g2, C.sage],
+                          ["Mix", sel.qcData?.mix, C.terra],
+                        ].filter(([, v]) => v > 0).map(([label, count, color]) => (
+                          <div key={label} style={{ flex: 1, padding: "8px 0", textAlign: "center", borderRadius: 8, background: "#F9FAFB", border: "1px solid #E5E7EB" }}>
+                            <div style={{ fontSize: 16, fontWeight: 700, color, fontFamily: "JetBrains Mono, monospace" }}>{count}</div>
+                            <div style={{ fontSize: 9, color: C.light, fontWeight: 600, marginTop: 2 }}>{label} Bales</div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                  {sel.qcData?.moisture && (
+                    <div style={{ marginTop: 16 }}>
+                      <Lbl>Lab Results</Lbl>
+                      <div style={{ marginTop: 8 }}>
+                        {[
+                          ["Moisture", sel.qcData.moisture],
+                          ["Moisture Weight", sel.qcData.moistureWeight],
+                          ["Protein", sel.qcData.protein],
+                          ["Density", sel.qcData.density],
+                        ].filter(([, v]) => v).map(([l, v]) => (
+                          <FieldRow key={l} label={l} value={v} mono />
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                  <div style={{ marginTop: 20 }}><Lbl>PO & Receipt</Lbl></div>
+                  <div style={{ marginTop: 8 }}>
+                    {sel.linkedPoName ? (
+                      <div style={{ padding: 12, borderRadius: 9, background: C.gBg, border: `1px solid ${C.gBdr}` }}>
+                        <FieldRow label="Purchase Order" value={sel.linkedPoName} />
+                        {sel.linkedReceipt && <FieldRow label="Receipt" value={sel.linkedReceipt} />}
+                      </div>
+                    ) : (
+                      <div style={{ padding: 12, borderRadius: 9, background: "#FFF7ED", border: "1px solid #FED7AA", fontSize: 11, color: "#92400E" }}>No PO linked yet</div>
+                    )}
+                  </div>
+                  <div style={{ marginTop: 20 }}><Lbl>Record Status</Lbl></div>
+                  <div style={{ marginTop: 8 }}>
+                    {[
+                      ["Stage", sel.stage],
+                      ["Sync Status", sel.sync],
+                      ["Created By", sel.createdBy],
+                    ].filter(([, v]) => v).map(([l, v]) => (
+                      <FieldRow key={l} label={l} value={v || "—"} />
+                    ))}
+                  </div>
+                  {sel.qcData?.notes && (
+                    <div style={{ marginTop: 20 }}>
+                      <Lbl>QC Notes</Lbl>
+                      <div style={{ marginTop: 8, padding: "10px 12px", borderRadius: 8, background: C.aBg, border: `1px solid ${C.aBdr}`, fontSize: 11, color: "#92400E", lineHeight: 1.6 }}>
+                        {sel.qcData.notes}
+                      </div>
+                    </div>
+                  )}
                 </div>
               )}
 
