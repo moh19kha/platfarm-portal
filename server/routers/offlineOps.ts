@@ -348,14 +348,6 @@ export const offlineOpsRouter = router({
         fetchShippingRecords(limit, companyId),
       ]);
 
-      // Auto-correct: if procurement records are draft but synced, update Odoo to received
-      const draftSynced = rawProcurements.filter(r => r.state === "draft" && r.synced_at);
-      if (draftSynced.length > 0) {
-        const idsToFix = draftSynced.map(r => r.id);
-        executeKw("pf.procurement", "write", [idsToFix, { state: "received" }]).catch(() => {});
-        for (const r of draftSynced) r.state = "received";
-      }
-
       // Fetch staff for pressing records (shipping has no staff model)
       const pressingIds = rawPressing.map((r) => r.id);
       const pressingStaff = await fetchPressingStaff(pressingIds);
