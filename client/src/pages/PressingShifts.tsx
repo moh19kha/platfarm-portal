@@ -12,8 +12,6 @@
   export default function PressingShifts() {
     const utils = trpc.useUtils();
     const { data, isLoading, error } = trpc.offlineOps.allData.useQuery({});
-    const createPressMoMutation = trpc.offlineOps.createPressingMO.useMutation();
-
     const DPR = data?.DPR || [];
 
     const [search, setSearch] = useState("");
@@ -21,11 +19,8 @@
     const [siteFilter, setSiteFilter] = useState("All");
     const [selectedId, setSelectedId] = useState<string|null>(null);
     const [activeTab, setActiveTab] = useState(0);
-    const [convLoading, setConvLoading] = useState(false);
-    const [convError, setConvError] = useState<string|null>(null);
     const [dprConversionStatus, setDprConversionStatus] = useState<Record<string,{moId:number,moName:string}>>({});
-    const [showWizard, setShowWizard] = useState(false);
-    const [wizardStep, setWizardStep] = useState(0);
+    const [showCreateOrder, setShowCreateOrder] = useState(false);
 
     const filtered = useMemo(() => {
       let list = [...DPR];
@@ -51,30 +46,12 @@
       return null;
     }, [dprConversionStatus]);
 
-    const handleCreateMo = async (rec: any) => {
-      setConvLoading(true); setConvError(null); setWizardStep(1);
-      try {
-        const res = await createPressMoMutation.mutateAsync({
-          pressingOdooId: rec.odooId,
-          pressingName: rec.id,
-          commodity: rec.commodity || "alfalfa",
-          outWeight: rec.outWeight || 0,
-          outBales: rec.outBales || 0,
-          inWeight: rec.inWeight || 0,
-          inBales: rec.inBales || 0,
-          inGrade: rec.inGrade || "",
-          site: rec.site || "",
-          line: rec.line || "",
-          batch: rec.batch || "",
-          operator: rec.operator || "",
-          fuel: rec.fuel || 0,
-          sources: rec.sources || "",
-        });
-        setDprConversionStatus(prev => ({...prev, [rec.id]: { moId: res.moId, moName: res.moName }}));
-        setWizardStep(2);
-        utils.offlineOps.allData.invalidate();
-      } catch (e: any) { setConvError(e?.message || "Failed to create MO"); setWizardStep(0); }
-      finally { setConvLoading(false); }
+    const handleMoCreated = (moId: number, moName: string) => {
+      if (sel) {
+        setDprConversionStatus(prev => ({...prev, [sel.id]: { moId, moName }}));
+      }
+      setShowCreateOrder(false);
+      utils.offlineOps.allData.invalidate();
     };
 
     const filterPill = (label: string, active: boolean, onClick: () => void) => (
@@ -345,7 +322,7 @@
                         );
                         return (
                           <div>
-                            <button onClick={() => { setShowWizard(true); setWizardStep(0); setConvError(null); }} style={{ width: "100%", padding: "12px 16px", borderRadius: 10, border: "none", background: "#C0714A", color: "#fff", fontSize: 12, fontWeight: 700, cursor: "pointer", fontFamily: FONT }}>
+                            <button onClick={() => setShowCreateOrder(true)} style={{ width: "100%", padding: "12px 16px", borderRadius: 10, border: "none", background: "#C0714A", color: "#fff", fontSize: 12, fontWeight: 700, cursor: "pointer", fontFamily: FONT }}>
                               🏭 Create Manufacturing Order in Odoo
                             </button>
                             <div style={{ marginTop: 8, fontSize: 10, color: C.gray }}>This will create a manufacturing order in Odoo ERP linked to this pressing shift.</div>
@@ -359,105 +336,14 @@
           </div>
         )}
 
-          {showWizard && sel && !getLinkedMo(sel) && (
-            <div style={{ position: "fixed", inset: 0, zIndex: 9999, display: "flex", alignItems: "center", justifyContent: "center" }}>
-              <div onClick={() => { if (!convLoading) { setShowWizard(false); setConvError(null); } }} style={{ position: "absolute", inset: 0, background: "rgba(0,0,0,.45)" }} />
-              <div style={{ position: "relative", width: 480, maxHeight: "85vh", background: "#fff", borderRadius: 14, boxShadow: "0 20px 60px rgba(0,0,0,.2)", overflow: "hidden", display: "flex", flexDirection: "column" }}>
-                <div style={{ padding: "20px 24px 16px", borderBottom: "1px solid #F2F0EC", display: "flex", alignItems: "center", gap: 10 }}>
-                  <div style={{ width: 36, height: 36, borderRadius: 10, background: "#FDF6EC", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 18 }}>🏭</div>
-                  <div>
-                    <div style={{ fontSize: 14, fontWeight: 700, color: "#2C3E50", fontFamily: FONT }}>New Production Order</div>
-                    <div style={{ fontSize: 11, color: C.gray }}>Create MO from {sel.id}</div>
-                  </div>
-                  <button onClick={() => { if (!convLoading) { setShowWizard(false); setConvError(null); } }} style={{ marginLeft: "auto", width: 28, height: 28, borderRadius: 99, border: "none", background: "#F2F0EC", cursor: "pointer", fontSize: 14, color: C.gray, display: "flex", alignItems: "center", justifyContent: "center" }}>×</button>
-                </div>
 
-                {wizardStep === 0 && (
-                  <div style={{ padding: "20px 24px", overflow: "auto", flex: 1 }}>
-                    <div style={{ fontSize: 10, fontWeight: 700, color: "#C0714A", textTransform: "uppercase", letterSpacing: ".5px", marginBottom: 12 }}>Order Details</div>
-
-                    <div style={{ borderRadius: 10, border: "1px solid #F2F0EC", overflow: "hidden", marginBottom: 16 }}>
-                      {[
-                        ["Pressing Shift", sel.id],
-                        ["Product (Commodity)", sel.commodity || "alfalfa"],
-                        ["Site / Company", sel.site || "—"],
-                        ["Press Line", sel.line || "—"],
-                        ["Batch", sel.batch || "—"],
-                        ["Operator", sel.operator || "—"],
-                      ].map(([l, v]: any, i: number) => (
-                        <div key={i} style={{ display: "flex", justifyContent: "space-between", padding: "9px 14px", borderBottom: i < 5 ? "1px solid #F2F0EC" : "none", background: i % 2 === 0 ? "#FAFAF8" : "#fff" }}>
-                          <span style={{ fontSize: 11, color: C.gray }}>{l}</span>
-                          <span style={{ fontSize: 11, fontWeight: 600, color: "#2C3E50", fontFamily: MONO }}>{v}</span>
-                        </div>
-                      ))}
-                    </div>
-
-                    <div style={{ fontSize: 10, fontWeight: 700, color: "#C0714A", textTransform: "uppercase", letterSpacing: ".5px", marginBottom: 12 }}>Production Quantities</div>
-
-                    <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginBottom: 16 }}>
-                      {[
-                        ["Input Weight", fK(sel.inWeight || 0), "#E4EFE6", "#2D5A3D"],
-                        ["Output Weight", fK(sel.outWeight || 0), "#FDF6EC", "#C0714A"],
-                        ["Input Bales", String(sel.inBales || 0), "#E4EFE6", "#2D5A3D"],
-                        ["Output Bales", String(sel.outBales || 0), "#FDF6EC", "#C0714A"],
-                      ].map(([l, v, bg, cl]: any, i: number) => (
-                        <div key={i} style={{ padding: "12px 14px", borderRadius: 10, background: bg, textAlign: "center" }}>
-                          <div style={{ fontSize: 9, color: cl, fontWeight: 600, textTransform: "uppercase", letterSpacing: ".5px" }}>{l}</div>
-                          <div style={{ fontSize: 16, fontWeight: 700, color: cl, fontFamily: MONO, marginTop: 4 }}>{v}</div>
-                        </div>
-                      ))}
-                    </div>
-
-                    {(sel.fuel > 0 || sel.inGrade) && (
-                      <div style={{ display: "flex", gap: 10, marginBottom: 16 }}>
-                        {sel.fuel > 0 && (
-                          <div style={{ flex: 1, padding: "10px 14px", borderRadius: 10, background: "#EFF1F5", textAlign: "center" }}>
-                            <div style={{ fontSize: 9, color: "#475577", fontWeight: 600, textTransform: "uppercase" }}>Fuel</div>
-                            <div style={{ fontSize: 14, fontWeight: 700, color: "#475577", fontFamily: MONO, marginTop: 4 }}>{sel.fuel} L</div>
-                          </div>
-                        )}
-                        {sel.inGrade && (
-                          <div style={{ flex: 1, padding: "10px 14px", borderRadius: 10, background: "#EFF1F5", textAlign: "center" }}>
-                            <div style={{ fontSize: 9, color: "#475577", fontWeight: 600, textTransform: "uppercase" }}>Input Grade</div>
-                            <div style={{ fontSize: 14, fontWeight: 700, color: "#475577", fontFamily: MONO, marginTop: 4 }}>{sel.inGrade}</div>
-                          </div>
-                        )}
-                      </div>
-                    )}
-
-                    {convError && <div style={{ marginBottom: 12, padding: 12, borderRadius: 10, background: "#FDF0F0", border: "1px solid #FECACA", color: "#C94444", fontSize: 11 }}>{convError}</div>}
-
-                    <div style={{ display: "flex", gap: 10 }}>
-                      <button onClick={() => { setShowWizard(false); setConvError(null); }} style={{ flex: 1, padding: "11px 16px", borderRadius: 10, border: "1px solid #F2F0EC", background: "#fff", color: C.gray, fontSize: 12, fontWeight: 600, cursor: "pointer", fontFamily: FONT }}>Cancel</button>
-                      <button onClick={() => handleCreateMo(sel)} disabled={convLoading} style={{ flex: 2, padding: "11px 16px", borderRadius: 10, border: "none", background: "#C0714A", color: "#fff", fontSize: 12, fontWeight: 700, cursor: convLoading ? "default" : "pointer", fontFamily: FONT }}>
-                        Confirm & Create MO
-                      </button>
-                    </div>
-                  </div>
-                )}
-
-                {wizardStep === 1 && (
-                  <div style={{ padding: "40px 24px", textAlign: "center" }}>
-                    <div style={{ width: 48, height: 48, borderRadius: 99, border: "3px solid #F2F0EC", borderTopColor: "#C0714A", margin: "0 auto 16px", animation: "spin 1s linear infinite" }} />
-                    <div style={{ fontSize: 13, fontWeight: 600, color: "#2C3E50", fontFamily: FONT }}>Creating Manufacturing Order...</div>
-                    <div style={{ fontSize: 11, color: C.gray, marginTop: 6 }}>Setting up production in Odoo ERP</div>
-                    <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
-                  </div>
-                )}
-
-                {wizardStep === 2 && (
-                  <div style={{ padding: "40px 24px", textAlign: "center" }}>
-                    <div style={{ width: 48, height: 48, borderRadius: 99, background: "#dcfce7", margin: "0 auto 16px", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 24 }}>✓</div>
-                    <div style={{ fontSize: 14, fontWeight: 700, color: "#166534", fontFamily: FONT }}>Manufacturing Order Created!</div>
-                    {dprConversionStatus[sel.id] && (
-                      <div style={{ fontFamily: MONO, fontSize: 12, color: "#166534", marginTop: 8, padding: "8px 16px", borderRadius: 8, background: "#dcfce7", display: "inline-block" }}>{dprConversionStatus[sel.id].moName}</div>
-                    )}
-                    <div style={{ fontSize: 11, color: C.gray, marginTop: 10 }}>The MO has been linked to {sel.id} with attachments copied.</div>
-                    <button onClick={() => { setShowWizard(false); setWizardStep(0); }} style={{ marginTop: 20, padding: "10px 32px", borderRadius: 10, border: "none", background: "#C0714A", color: "#fff", fontSize: 12, fontWeight: 700, cursor: "pointer", fontFamily: FONT }}>Done</button>
-                  </div>
-                )}
-              </div>
-            </div>
+          {showCreateOrder && sel && (
+            <CreateProductionOrder
+              activeCompanyId={sel.site?.includes("Sokhna") ? 4 : sel.site?.includes("Abu Dhabi") ? 2 : 3}
+              onClose={() => setShowCreateOrder(false)}
+              onCreated={handleMoCreated}
+              pressingData={sel}
+            />
           )}
       </div>
     );
