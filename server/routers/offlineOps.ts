@@ -415,13 +415,21 @@ export const offlineOpsRouter = router({
       for (let si = 0; si < rawShipping.length; si++) {
         const r = rawShipping[si];
         const isReceived = r.state === "received" || r.state === "assessed";
-        if (!isReceived) continue; // strict gate — only confirmed received shipments
+        // Gate: Odoo state=received/assessed OR has arrival-type photos in ir.attachment (reliable)
+        const ARRIVAL_TYPES_GATE = ["arrival","bale_condition","bale_cross_section","moisture_reading","nir_reading","tarp_damage","arrival_weighbridge"];
+        const trfRec_gate = trfTransformed[si];
+        const hasArrivalGate = trfRec_gate.att?.some((a: any) => ARRIVAL_TYPES_GATE.includes(a.pt));
+        if (!isReceived && !hasArrivalGate) continue;
         const shipTime = r.recorded_at ? new Date(r.recorded_at + "Z").getTime() : 0;
         if (!shipTime) continue;
         for (let qi = 0; qi < receivedQCs.length; qi++) {
           const qcTime = receivedQCs[qi].recorded_at ? new Date(receivedQCs[qi].recorded_at + "Z").getTime() : 0;
-          const delta = Math.abs(qcTime - shipTime);
-          if (delta < 2 * 3600 * 1000) candidates.push({ si, qi, delta });
+          // Directional: QC must happen after dispatch (allow 5min early for clock skew)
+          // Cannot match a QC that happened before the shipment was recorded
+          const signed = qcTime - shipTime; // positive = QC after dispatch
+          if (signed > -(5 * 60 * 1000) && signed < 12 * 3600 * 1000) {
+            candidates.push({ si, qi, delta: Math.abs(signed) });
+          }
         }
       }
       // Sort by delta (closest first), assign exclusively

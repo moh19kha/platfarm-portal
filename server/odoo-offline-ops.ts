@@ -377,7 +377,9 @@ export async function fetchAttachments(
     ];
 
     let results: OdooPfAttachment[] = [];
-    if (fkField) {
+    // NOTE: pf.attachment.shipping_id search is broken in Odoo — returns ALL records for any shipping_id
+    // For pf.shipping, skip pf.attachment and rely solely on ir.attachment (reliable via res_model/res_id)
+    if (fkField && resModel !== "pf.shipping") {
       results = await executeKw<OdooPfAttachment[]>(
         "pf.attachment", "search_read",
         [[[fkField, "in", resIds]]],
@@ -385,7 +387,7 @@ export async function fetchAttachments(
       );
     }
 
-    // Also query ir.attachment directly (mobile app links photos via res_model/res_id)
+    // ir.attachment is the authoritative source for shipping photos (mobile app links via res_model/res_id)
     const irAtts = await executeKw<{ id: number; name: string; mimetype: string; res_model: string; res_id: number }[]>(
       "ir.attachment", "search_read",
       [[["res_model", "=", resModel], ["res_id", "in", resIds]]],
@@ -395,12 +397,20 @@ export async function fetchAttachments(
     const existingIrIds = new Set(results.map((r: any) => r.ir_attachment_id ? r.ir_attachment_id[0] : -1));
     for (const irAtt of irAtts) {
       if (!existingIrIds.has(irAtt.id)) {
+        // Extract photo_type from filename: "arrival_PHT-260322-....jpg" -> "arrival"
+        const knownTypes = ["arrival","bale_condition","bale_cross_section","moisture_reading",
+          "nir_reading","truck_back","truck_left","truck_right","truck_plate","weight_ticket",
+          "driver_id","driver_license","driver_contract","truck_loaded","tarp_damage",
+          "arrival_weighbridge","bale_cross","truck_front"];
+        const fname = irAtt.name || "";
+        const detectedType = knownTypes.find(t => fname.toLowerCase().startsWith(t)) || 
+          ((irAtt.mimetype || "").startsWith("image/") ? "photo" : "document");
         results.push({
           id: irAtt.id,
           client_ref: "",
           res_model: irAtt.res_model,
           res_id: irAtt.res_id,
-          photo_type: (irAtt.mimetype || "").startsWith("image/") ? "photo" : "document",
+          photo_type: detectedType,
           photo_label: irAtt.name,
           file_name: irAtt.name,
           file_size: 0,
