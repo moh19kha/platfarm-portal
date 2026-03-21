@@ -1314,47 +1314,42 @@ export function OdooShipDetail({ shipmentId, onBack, onNavigateToShipment, sourc
             </Card>
 
             <Card>
-              <div style={{ fontSize: 11, fontWeight: 700, color: C.forest, marginBottom: 10, textTransform: "uppercase", letterSpacing: 0.5 }}>Manual Uploads — Load Pictures @Source</div>
-              <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
-                {[
-                  { field: "x_studio_binary_field_7hm_1j45evrk9", label: "Left Side Picture" },
-                  { field: "x_studio_binary_field_5v_1j45ev8ib", label: "Right Side Picture" },
-                  { field: "x_studio_container_back_side", label: "Back Side Picture" },
-                ].map(ph => {
-                  const isUp = uploadedFiles[`picking-${ph.field}`];
-                  return (
-                    <div key={ph.field} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "6px 8px", borderRadius: 5, background: isUp ? C.gBg : "transparent", border: `1px solid ${C.border}` }}>
-                      <span style={{ fontSize: 10, fontWeight: 500 }}>{ph.label}</span>
-                      <div style={{ display: "flex", gap: 4 }}>
-                        {isUp && <button onClick={() => handleFilePreview("picking", selectedLoad.id, ph.field, ph.label)} style={{ fontSize: 9, padding: "2px 8px", borderRadius: 4, border: `1px solid ${C.gBdr2}`, background: C.gBg2, cursor: "pointer", color: C.forest, fontWeight: 600 }}>Preview</button>}
-                        <button onClick={() => handleFileUpload("picking", selectedLoad.id, ph.field)} style={{ fontSize: 9, padding: "2px 8px", borderRadius: 4, border: `1px solid ${C.border}`, background: C.card, cursor: "pointer", color: C.forest, fontWeight: 600 }}>{isUp ? "Replace" : "Upload"}</button>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            </Card>
-
-            <Card>
-              <div style={{ fontSize: 11, fontWeight: 700, color: C.forest, marginBottom: 10, textTransform: "uppercase", letterSpacing: 0.5 }}>Manual Uploads — Load Pictures @Quality</div>
-              <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
-                {[
-                  { field: "x_studio_binary_field_5v_1j45ev8ib", label: "Load Picture – Right Side" },
-                  { field: "x_studio_binary_field_7hm_1j45evrk9", label: "Load Picture – Left Side" },
-                  { field: "x_studio_container_back_side", label: "Load Picture – Back Side" },
-                ].map(att => {
-                  const isUp = uploadedFiles[`picking-${att.field}`];
-                  return (
-                    <div key={`q-${att.field}`} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "6px 8px", borderRadius: 5, background: isUp ? C.gBg : "transparent", border: `1px solid ${C.border}` }}>
-                      <span style={{ fontSize: 10, fontWeight: 500 }}>{att.label}</span>
-                      <div style={{ display: "flex", gap: 4 }}>
-                        {isUp && <button onClick={() => handleFilePreview("picking", selectedLoad.id, att.field, att.label)} style={{ fontSize: 9, padding: "2px 8px", borderRadius: 4, border: `1px solid ${C.gBdr2}`, background: C.gBg2, cursor: "pointer", color: C.forest, fontWeight: 600 }}>Preview</button>}
-                        <button onClick={() => handleFileUpload("picking", selectedLoad.id, att.field)} style={{ fontSize: 9, padding: "2px 8px", borderRadius: 4, border: `1px solid ${C.border}`, background: C.card, cursor: "pointer", color: C.forest, fontWeight: 600 }}>{isUp ? "Replace" : "Upload"}</button>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
+              <div style={{ fontSize: 11, fontWeight: 700, color: C.forest, marginBottom: 10, textTransform: "uppercase", letterSpacing: 0.5 }}>Manual Uploads — Load / Cargo Pictures</div>
+              {[
+                { stage: "Source", items: [
+                  { field: "x_studio_binary_field_5v_1j45ev8ib", label: "Right Side" },
+                  { field: "x_studio_binary_field_7hm_1j45evrk9", label: "Left Side" },
+                  { field: "x_studio_container_back_side", label: "Back Side" },
+                ]},
+                { stage: "Receiving", items: [
+                  { field: "container_right_side_picture_full_view", label: "Right Side" },
+                  { field: "container_left_side_picture_full_view", label: "Left Side" },
+                  { field: "container_back_side_picture_full_view", label: "Back Side" },
+                ]},
+                { stage: "Quality", items: [
+                  { field: "quality_right_side_picture", label: "Right Side" },
+                  { field: "quality_left_side_picture", label: "Left Side" },
+                  { field: "quality_back_side_picture", label: "Back Side" },
+                ]},
+              ].map(group => (
+                <div key={group.stage} style={{ marginBottom: 10 }}>
+                  <div style={{ fontSize: 10, fontWeight: 600, color: C.gray, marginBottom: 4, borderBottom: `1px solid ${C.border}`, paddingBottom: 2 }}>{group.stage}</div>
+                  <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+                    {group.items.map(ph => {
+                      const isUp = uploadedFiles[`picking-${ph.field}`];
+                      return (
+                        <div key={ph.field} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "6px 8px", borderRadius: 5, background: isUp ? C.gBg : "transparent", border: `1px solid ${C.border}` }}>
+                          <span style={{ fontSize: 10, fontWeight: 500 }}>{ph.label}</span>
+                          <div style={{ display: "flex", gap: 4 }}>
+                            {isUp && <button onClick={() => handleFilePreview("picking", selectedLoad.id, ph.field, ph.label)} style={{ fontSize: 9, padding: "2px 8px", borderRadius: 4, border: `1px solid ${C.gBdr2}`, background: C.gBg2, cursor: "pointer", color: C.forest, fontWeight: 600 }}>Preview</button>}
+                            <button onClick={() => handleFileUpload("picking", selectedLoad.id, ph.field)} style={{ fontSize: 9, padding: "2px 8px", borderRadius: 4, border: `1px solid ${C.border}`, background: C.card, cursor: "pointer", color: C.forest, fontWeight: 600 }}>{isUp ? "Replace" : "Upload"}</button>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              ))}
             </Card>
 
             <Card>

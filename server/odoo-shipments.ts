@@ -887,10 +887,18 @@ const ALL_PICKING_FILE_FIELDS = [
   "x_studio_ladder_image_1_right_side",
   "x_studio_ladder_image_2_left_side",
   "x_studio_ladder_image_2_right_side",
-  // Container side pictures
+  // Container side pictures — Source
   "x_studio_binary_field_5v_1j45ev8ib",   // Container Right Side
   "x_studio_binary_field_7hm_1j45evrk9",  // Container Left Side
   "x_studio_container_back_side",           // Container Back Side
+  // Container side pictures — Receiving
+  "container_right_side_picture_full_view",
+  "container_left_side_picture_full_view",
+  "container_back_side_picture_full_view",
+  // Container side pictures — Quality
+  "quality_right_side_picture",
+  "quality_left_side_picture",
+  "quality_back_side_picture",
   // Attachments
   "x_studio_attachments",
   "x_studio_binary_field_40q_1j01n2jbk",   // Bale Codes List attachment
