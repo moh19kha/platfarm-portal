@@ -406,12 +406,16 @@ export const offlineOpsRouter = router({
       const receivedQCs = rawQuality.filter(q => q.qc_type === "received");
 
       // Build all candidate pairs: (shipIdx, qcIdx, delta)
-      // Allow ANY shipment (including draft) to match a QC — QC presence at destination IS proof of receiving
-      // Exclusive 1:1 matching prevents false positives
+      // QC matching ONLY for shipments confirmed as received — draft/in-transit shipments are never QC candidates
+      // Evidence of receiving: (1) Odoo state=received/assessed, OR (2) arrival-type photos present
       const trfTransformed = rawShipping.map((r) => transformShipping(r, shipAttachments));
+      // pf.attachment.shipping_id search is broken in Odoo (returns all records for any id)
+      // ONLY use Odoo state as the reliable gate — draft/in-transit are never QC candidates
       const candidates: { si: number; qi: number; delta: number }[] = [];
       for (let si = 0; si < rawShipping.length; si++) {
         const r = rawShipping[si];
+        const isReceived = r.state === "received" || r.state === "assessed";
+        if (!isReceived) continue; // strict gate — only confirmed received shipments
         const shipTime = r.recorded_at ? new Date(r.recorded_at + "Z").getTime() : 0;
         if (!shipTime) continue;
         for (let qi = 0; qi < receivedQCs.length; qi++) {
