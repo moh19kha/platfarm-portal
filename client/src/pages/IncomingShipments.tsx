@@ -399,8 +399,8 @@
 
               {activeTab === 0 && renderTimeline(sel)}
               {activeTab === 2 && renderQuality(sel)}
-              {activeTab === 3 && renderPhotos(sel.attachments, "No shipment photos uploaded")}
-              {activeTab === 4 && renderPhotos(sel.qcData?.attachments, "No QC photos available")}
+              {activeTab === 3 && renderPhotos(sel.att, "No shipment photos uploaded")}
+              {activeTab === 4 && renderPhotos(sel.qcData?.att, "No QC photos available")}
 
               {activeTab === 5 && (
                 <div style={{ padding: "16px 20px" }}>
