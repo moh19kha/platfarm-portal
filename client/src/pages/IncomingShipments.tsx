@@ -414,7 +414,7 @@
                           {sel.linkedReceipt && <div style={{ fontSize: 10, color: C.sage }}>Receipt: {sel.linkedReceipt}</div>}
                         </div>
                       </div>
-                      <button onClick={() => navigate("/shipments")} style={{ width: "100%", padding: 10, borderRadius: 8, background: C.forest, color: C.white, border: "none", fontSize: 12, fontWeight: 700, cursor: "pointer", fontFamily: FONT }}>View PO in Shipments Module →</button>
+                      <button onClick={() => window.open(`https://odoo.platfarm.io/web#id=${sel.linkedPoId}&model=purchase.order&view_type=form`, "_blank")} style={{ width: "100%", padding: 10, borderRadius: 8, background: C.forest, color: C.white, border: "none", fontSize: 12, fontWeight: 700, cursor: "pointer", fontFamily: FONT }}>View PO in Odoo →</button>
                     </div>
                   ) : (
                     <div style={{ padding: 14, borderRadius: 9, background: C.tBg, border: `1px solid ${C.tBdr}`, marginBottom: 14 }}>
