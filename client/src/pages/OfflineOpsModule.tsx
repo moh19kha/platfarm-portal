@@ -7,6 +7,7 @@ import { CreateProductionOrder, type PressingData } from "@/components/CreatePro
 import { NewTransferWizard } from "@/components/NewTransferWizard";
 import { PlatfarmLogo } from "@/components/PlatfarmLogo";
 import IncomingShipments from "./IncomingShipments";
+import PressingShifts from "./PressingShifts";
 
 
 // Custom icon images (matching mobile app)
@@ -395,6 +396,7 @@ export default function OfflineOpsModule(){
           <div style={{fontSize:11,color:"#95A09C",marginBottom:12}}>{dataError.message || "Could not connect to Odoo. Showing empty state."}</div>
           <div style={{fontSize:10,color:"#64706C"}}>The Odoo offline_operations module may not be installed or the API may be unreachable. Check server logs for details.</div>
         </div>}
+        {pg==="dpr"&&<PressingShifts />}
         {pg==="incoming"&&<IncomingShipments />}
                 {/* ═══ DASHBOARD ═══ */}
         {!isLoadingData&&pg==="dash"&&<div style={{padding:18}}>
