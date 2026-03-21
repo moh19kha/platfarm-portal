@@ -253,6 +253,7 @@ function transformShipping(r: any, attachments: any[]): any {
     .map((a: any) => ({
       n: a.photo_label || a.file_name || "Attachment",
       t: a.photo_type === "photo" || (a.file_name || "").match(/\.(jpg|jpeg|png|webp)$/i) ? "photo" : "doc",
+      pt: a.photo_type || "",
       s: "✓",
       irAttId: a.ir_attachment_id ? a.ir_attachment_id[0] : null,
     }));
