@@ -261,7 +261,7 @@ function transformShipping(r: any, attachments: any[]): any {
 
   // pf.shipping has no origin_site_id/destination_site_id — transfers are always Dakhla→Sokhna
   return {
-    id: r.name || `TRF-${String(r.id).padStart(4, "0")}`,
+    id: (r.name && r.name !== "New") ? r.name : `SHP-${String(r.id).padStart(4, "0")}`,
     odooId: r.id,
     from: "Dakhla Farm",      // Hardcoded — model has no site fields
     to: "Ain Sokhna",         // Hardcoded — model has no site fields
