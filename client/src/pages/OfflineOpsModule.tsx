@@ -527,46 +527,6 @@ export default function OfflineOpsModule(){
           </div>
         </div>}
 
-        {/* ═══ PRESS OPS ═══ */}
-        {!isLoadingData&&pg==="dpr"&&<div style={{display:"flex",flexDirection:"column",height:"calc(100vh - 110px)",overflow:"hidden"}}>
-          <div style={{padding:"18px 18px 14px"}}>
-          <div style={{display:"grid",gridTemplateColumns:"repeat(5,1fr)",gap:10,marginBottom:14}}>
-            <div className="sc"><div className="sl">Batches</div><div className="sv" style={{fontSize:18}}>{pDpr.length}</div></div>
-            <div className="sc"><div className="sl">Output</div><div className="sv" style={{fontSize:18}}>{fK(totalOut)}</div></div>
-            <div className="sc"><div className="sl">Output Bales</div><div className="sv" style={{fontSize:18}}>{pDpr.reduce((s,r)=>s+r.outBales,0)}</div></div>
-            <div className="sc"><div className="sl">Avg Fuel</div><div className="sv" style={{fontSize:18}}>{pDpr.length>0?Math.round(pDpr.reduce((s,r)=>s+r.fuel,0)/pDpr.length):0} L</div></div>
-            <div className="sc"><div className="sl">Synced</div><div className="sv" style={{fontSize:18}}>{pDpr.filter(r=>r.sync==="synced").length}/{pDpr.length}</div></div>
-          </div>
-          <div style={{display:"flex",gap:6,marginBottom:14,alignItems:"center"}}>
-            <input value={sr} onChange={e=>setSr(e.target.value)} placeholder="Search batch, operator..." style={{width:240,height:36,padding:"0 14px",border:"1px solid #D5D0C8",borderRadius:8,fontFamily:"'DM Sans',system-ui,sans-serif",fontSize:12,color:"#2C3E50",background:"#fff"}}/>
-            <div style={{display:"flex",gap:4}}>{[["all","All"],["synced","Synced"],["processing","Processing"],["pending","Pending"]].map(([k,l])=>pl(l,syncF===k,()=>setSyncF(k)))}</div>
-            <div style={{marginLeft:"auto",display:"flex",gap:4}}>{["All","Sokhna","Dakhla"].map(s=>pl(s,siteF===s,()=>setSiteF(s)))}</div>
-          </div>
-          </div>
-          <div style={{flex:1,overflow:"auto",minHeight:0,padding:"0 18px 18px"}}>
-          <div className="xc"><div className="xh" style={{background:"#C0714A"}}><h3><ImgIcon src={ICON_PRESSING} size={18} /> Pressing Shifts</h3><span className="ct">{fDpr.length}</span></div>
-            <table className="t"><thead><tr><th>ID</th><th>Batch</th><th>Site</th><th>Line</th><th>Operator</th><th>Commodity</th><th>In</th><th>Out</th><th>Bales</th><th>Fuel</th><th>MO Status</th><th>Sync</th><th>Date</th></tr></thead><tbody>
-              {fDpr.map(r=>{const lmo=getLinkedMo(r);return(<tr key={r.id} onClick={()=>openDet(r,"dpr")} style={{background:sel&&sel.id===r.id?"#E4EFE6":""}}>
-                <td className="m" style={{color:"#C0714A",fontSize:10}}>{r.id}</td>
-                <td className="m" style={{fontSize:10}}>{r.batch}</td>
-                <td>{siteBd(r.site)}</td>
-                <td>{bd(r.line==="Press 1"?"synced":"pending",r.line)}</td>
-                <td style={{fontSize:10}}>{r.operator}</td>
-                <td style={{fontSize:10}}>{r.commodity}</td>
-                <td className="m" style={{fontSize:10}}>{fK(r.inWeight)}</td>
-                <td className="m" style={{fontSize:10,color:"#2D5A3D"}}>{fK(r.outWeight)}</td>
-                <td className="m" style={{fontSize:10}}>{r.outBales}</td>
-                <td className="m" style={{fontSize:10}}>{r.fuel}L</td>
-                <td>{lmo?<span style={{display:"inline-flex",alignItems:"center",gap:3,padding:"2px 7px",borderRadius:99,background:"#dcfce7",color:"#166534",fontSize:9,fontWeight:700,whiteSpace:"nowrap"}}>✓ {lmo.moName}</span>:<span style={{display:"inline-flex",padding:"2px 7px",borderRadius:99,background:"#F2F0EC",color:"#95A09C",fontSize:9,fontWeight:600}}>Pending</span>}</td>
-                <td>{bd(r.sync)}</td>
-                <td className="m" style={{fontSize:10,color:"#95A09C"}}>{r.date}</td>
-              </tr>);})}
-              {fDpr.length===0&&<tr><td colSpan={13} style={{textAlign:"center",padding:24,color:"#95A09C",fontSize:12}}>No pressing shifts match the current filters</td></tr>}
-            </tbody></table>
-          </div>
-          </div>
-        </div>}
-
         {/* ═══ TRANSFERS ═══ */}
         {!isLoadingData&&pg==="trf"&&<div style={{display:"flex",flexDirection:"column",height:"calc(100vh - 110px)",overflow:"hidden"}}>
           <div style={{padding:"18px 18px 14px"}}>

@@ -287,17 +287,26 @@
                             <span style={{ marginLeft: "auto", fontSize: 9, color: C.gray, fontFamily: MONO }}>{totalPeople} {totalPeople === 1 ? "person" : "people"}</span>
                           </div>
                           <div style={{ padding: "8px 14px" }}>
-                            {members.map((m: any, mi: number) => (
+                            {members.map((m: any, mi: number) => {
+                              const roleLabel = ROLE_LABELS[m.role] || m.role.replace(/[^\w\s]/g, "").trim();
+                              const isCountOnly = m.ppl.length === 1 && /^\d+$/.test(m.ppl[0]?.trim());
+                              return (
                               <div key={mi} style={{ marginBottom: mi < members.length - 1 ? 10 : 0 }}>
-                                <div style={{ fontSize: 9, fontWeight: 700, color: C.gray, textTransform: "uppercase", letterSpacing: ".5px", marginBottom: 4 }}>{ROLE_LABELS[m.role] || m.role.replace(/[^\w\s]/g, "").trim()}</div>
-                                {m.ppl.map((p: string, pi: number) => (
+                                <div style={{ fontSize: 9, fontWeight: 700, color: C.gray, textTransform: "uppercase", letterSpacing: ".5px", marginBottom: 4 }}>{roleLabel}</div>
+                                {isCountOnly ? (
+                                  <div style={{ display: "flex", alignItems: "center", gap: 8, padding: "5px 0" }}>
+                                    <div style={{ width: 26, height: 26, borderRadius: 99, background: grp.bg, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 11, fontWeight: 700, color: grp.color }}>{m.ppl[0]}</div>
+                                    <span style={{ fontSize: 12, color: "#2C3E50" }}>{m.ppl[0]} {parseInt(m.ppl[0]) === 1 ? "worker" : "workers"}</span>
+                                  </div>
+                                ) : m.ppl.map((p: string, pi: number) => (
                                   <div key={pi} style={{ display: "flex", alignItems: "center", gap: 8, padding: "5px 0", borderBottom: pi < m.ppl.length - 1 ? "1px solid #F2F0EC" : "none" }}>
                                     <div style={{ width: 26, height: 26, borderRadius: 99, background: grp.bg, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 11, fontWeight: 700, color: grp.color }}>{p.charAt(0)}</div>
                                     <span style={{ fontSize: 12, color: "#2C3E50" }}>{p}</span>
                                   </div>
                                 ))}
                               </div>
-                            ))}
+                              );
+                            })}
                           </div>
                         </div>
                       );
