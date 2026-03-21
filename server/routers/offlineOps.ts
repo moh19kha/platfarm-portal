@@ -411,7 +411,9 @@ export const offlineOpsRouter = router({
         let bestQC: any = null;
         let bestDelta = Infinity;
         const isReceived = r.state === "received" || r.state === "assessed";
-        if (isReceived) {
+        const hasArrivalPhotos = trfRec.att?.some((a: any) => ["arrival","bale_condition","bale_cross_section","moisture_reading","nir_reading"].includes(a.pt));
+        const effectivelyReceived = isReceived || hasArrivalPhotos;
+        if (effectivelyReceived) {
           for (const q of receivedQCs) {
             const qcTime = q.recorded_at ? new Date(q.recorded_at + "Z").getTime() : 0;
             const delta = Math.abs(qcTime - shipTime);
@@ -419,6 +421,12 @@ export const offlineOpsRouter = router({
               bestDelta = delta;
               bestQC = q;
             }
+          }
+          if (!isReceived && (hasArrivalPhotos || bestQC)) {
+            trfRec.status = "received";
+            executeKw("pf.shipping", "write", [[r.id], { state: "received" }]).catch((e: any) =>
+              console.error(`[autofix] Failed to update pf.shipping ${r.id} state: ${e.message}`)
+            );
           }
         }
         if (bestQC) {
