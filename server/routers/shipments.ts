@@ -34,7 +34,7 @@ import {
   fetchInvoicesByIds,
   resolveEmployeeIds,
 } from "../odoo-shipments";
-import { fetchWarehouses, fetchAggregatedStock, fetchStockLocations, fetchProductStockByLocation, fetchAllStockAtLocation } from "../odoo";
+import { fetchWarehouses, fetchAggregatedStock, fetchStockLocations, fetchProductStockByLocation, fetchAllStockAtLocation, executeKw } from "../odoo";
 
 export const shipmentsRouter = router({
   // ─── List Shipments ────────────────────────────────────────────────────
