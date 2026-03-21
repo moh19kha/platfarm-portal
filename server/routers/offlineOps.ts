@@ -702,6 +702,24 @@ export const offlineOpsRouter = router({
 
     }),
 
+  uploadReceiptAttachment: publicProcedure
+    .input(z.object({
+      pickingId: z.number(),
+      fileName: z.string(),
+      base64Data: z.string(),
+      mimetype: z.string().default("image/jpeg"),
+    }))
+    .mutation(async ({ input }) => {
+      await executeKw("ir.attachment", "create", [{
+        name: input.fileName,
+        datas: input.base64Data,
+        mimetype: input.mimetype,
+        res_model: "stock.picking",
+        res_id: input.pickingId,
+      }]);
+      return { success: true };
+    }),
+
   /**
    * Copy attachments from a pf.quality record to a purchase.order.
    * Reads pf.attachment records linked to the quality assessment and creates

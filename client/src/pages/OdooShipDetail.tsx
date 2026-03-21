@@ -632,7 +632,33 @@ export function OdooShipDetail({ shipmentId, onBack, onNavigateToShipment, sourc
                 return (
                   <div key={code} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "6px 8px", borderRadius: 5, border: `1px solid ${C.border}`, background: "transparent" }}>
                     <span style={{ fontSize: 10, fontWeight: 500, color: C.light }}>{label}</span>
-                    <span style={{ fontSize: 9, color: C.light, fontStyle: "italic" }}>Not uploaded</span>
+                    <div style={{ display: "flex", gap: 4, alignItems: "center" }}>
+                      <span style={{ fontSize: 9, color: C.light, fontStyle: "italic" }}>Not uploaded</span>
+                      {selectedLoad && <button onClick={() => {
+                        const input = document.createElement("input");
+                        input.type = "file";
+                        input.accept = "image/*";
+                        input.onchange = async (e: any) => {
+                          const file = e.target.files?.[0];
+                          if (!file) return;
+                          const reader = new FileReader();
+                          reader.onload = async () => {
+                            const base64 = (reader.result as string).split(",")[1];
+                            try {
+                              await utils.client.offlineOps.uploadReceiptAttachment.mutate({
+                                pickingId: selectedLoad.id,
+                                fileName: `[Manual] ${code}_${file.name}`,
+                                base64Data: base64,
+                                mimetype: file.type || "image/jpeg",
+                              });
+                              receiptPhotosQuery.refetch();
+                            } catch (err) { console.error("Upload failed:", err); }
+                          };
+                          reader.readAsDataURL(file);
+                        };
+                        input.click();
+                      }} style={{ fontSize: 9, padding: "2px 8px", borderRadius: 4, border: `1px solid ${C.border}`, background: C.card, cursor: "pointer", color: C.forest, fontWeight: 600 }}>Upload</button>}
+                    </div>
                   </div>
                 );
               }
