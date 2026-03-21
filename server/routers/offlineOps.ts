@@ -406,14 +406,12 @@ export const offlineOpsRouter = router({
       const receivedQCs = rawQuality.filter(q => q.qc_type === "received");
 
       // Build all candidate pairs: (shipIdx, qcIdx, delta)
+      // Allow ANY shipment (including draft) to match a QC — QC presence at destination IS proof of receiving
+      // Exclusive 1:1 matching prevents false positives
       const trfTransformed = rawShipping.map((r) => transformShipping(r, shipAttachments));
       const candidates: { si: number; qi: number; delta: number }[] = [];
       for (let si = 0; si < rawShipping.length; si++) {
         const r = rawShipping[si];
-        const trfRec = trfTransformed[si];
-        const isReceived = r.state === "received" || r.state === "assessed";
-        const hasArrivalPhotos = trfRec.att?.some((a: any) => ["arrival","bale_condition","bale_cross_section","moisture_reading","nir_reading"].includes(a.pt));
-        if (!isReceived && !hasArrivalPhotos) continue;
         const shipTime = r.recorded_at ? new Date(r.recorded_at + "Z").getTime() : 0;
         if (!shipTime) continue;
         for (let qi = 0; qi < receivedQCs.length; qi++) {
