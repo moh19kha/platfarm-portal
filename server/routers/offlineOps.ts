@@ -13,6 +13,7 @@
  * Field names verified via fields_get introspection on 2026-03-16.
  */
 
+import { createManufacturingOrder, fetchManufacturingOrderById } from "../odoo-production";
 import { z } from "zod";
 import { publicProcedure, router } from "../_core/trpc";
 import {
@@ -692,7 +693,179 @@ export const offlineOpsRouter = router({
    * write the MO name back to pf.pressing.notes so the record is marked as converted.
    * Also stores the MO ID for the badge display.
    */
-  linkPressingToMO: publicProcedure
+
+    /**
+     * Create a Manufacturing Order from a pressing shift record.
+     * 1. Search for product by commodity name
+     * 2. Find a matching BOM
+     * 3. Create mrp.production
+     * 4. Link back to pf.pressing
+     * 5. Copy attachments
+     */
+    createPressingMO: publicProcedure
+      .input(
+        z.object({
+          pressingOdooId: z.number(),
+          pressingName: z.string(),
+          commodity: z.string(),
+          outWeight: z.number(),
+          outBales: z.number().optional(),
+          inWeight: z.number().optional(),
+          inBales: z.number().optional(),
+          inGrade: z.string().optional(),
+          site: z.string().optional(),
+          line: z.string().optional(),
+          batch: z.string().optional(),
+          operator: z.string().optional(),
+          fuel: z.number().optional(),
+          oilTemp: z.string().optional(),
+          oilPressure: z.string().optional(),
+          sources: z.string().optional(),
+          productId: z.number().optional(),
+          bomId: z.number().optional(),
+          companyId: z.number().optional(),
+        })
+      )
+      .mutation(async ({ input }) => {
+        let productId = input.productId;
+        let bomId = input.bomId;
+        let productUomId: number | undefined;
+
+        // Step 1: If no productId, search by commodity name
+        if (!productId) {
+          const commoditySearch = input.commodity.trim().toLowerCase();
+          const products = await executeKw<{ id: number; name: string; uom_id: [number, string] }[]>(
+            "product.product",
+            "search_read",
+            [[["name", "ilike", commoditySearch]]],
+            { fields: ["id", "name", "uom_id"], limit: 5 }
+          );
+          if (products.length === 0) {
+            throw new Error(`No product found matching "${input.commodity}". Please select a product manually.`);
+          }
+          productId = products[0].id;
+          if (products[0].uom_id) productUomId = products[0].uom_id[0];
+        }
+
+        // Step 2: If no bomId, find a BOM for this product
+        if (!bomId) {
+          const boms = await executeKw<{ id: number; product_id: [number, string]; product_qty: number }[]>(
+            "mrp.bom",
+            "search_read",
+            [[["product_id", "=", productId]]],
+            { fields: ["id", "product_id", "product_qty"], limit: 1 }
+          );
+          if (boms.length > 0) bomId = boms[0].id;
+        }
+
+        // Step 3: Determine company from site
+        let companyId = input.companyId;
+        if (!companyId && input.site) {
+          if (input.site.includes("Sokhna")) companyId = 4;
+          else if (input.site.includes("Cairo")) companyId = 3;
+          else if (input.site.includes("Abu Dhabi")) companyId = 2;
+          else if (input.site.includes("Dakhla")) companyId = 3;
+          else companyId = 3;
+        }
+
+        // Step 4: Build notes from pressing data
+        const noteLines = [
+          `Source: ${input.pressingName}`,
+          input.batch ? `Batch: ${input.batch}` : null,
+          input.line ? `Press Line: ${input.line}` : null,
+          input.operator ? `Operator: ${input.operator}` : null,
+          input.inWeight ? `Input: ${input.inWeight}kg (${input.inBales || 0} bales)` : null,
+          `Output: ${input.outWeight}kg (${input.outBales || 0} bales)`,
+          input.fuel ? `Fuel: ${input.fuel}L` : null,
+          input.sources ? `Material Source: ${input.sources}` : null,
+        ].filter(Boolean).join("\n");
+
+        // Step 5: Create the MO via existing function
+        const moVals: Record<string, unknown> = {
+          product_id: productId,
+          product_qty: input.outWeight || 1,
+        };
+        if (productUomId) moVals.product_uom_id = productUomId;
+        if (bomId) moVals.bom_id = bomId;
+        if (companyId) moVals.company_id = companyId;
+        if (input.fuel) moVals.diesel_consumption_liters = input.fuel;
+        if (input.inGrade) moVals.input_product_quality_grade = input.inGrade;
+        if (input.sources) moVals.x_studio_input_material_source = input.sources;
+        moVals.general_observations_notes = noteLines;
+
+        const moId = await executeKw<number>("mrp.production", "create", [moVals]);
+
+        // Fetch MO name
+        let moName = `MO-${moId}`;
+        try {
+          const mos = await executeKw<{ id: number; name: string }[]>(
+            "mrp.production",
+            "search_read",
+            [[["id", "=", moId]]],
+            { fields: ["id", "name"], limit: 1 }
+          );
+          if (mos.length > 0 && mos[0].name) moName = mos[0].name;
+        } catch {}
+
+        // Step 6: Link MO back to pressing record
+        try {
+          const records = await executeKw<{ id: number; notes: string | false }[]>(
+            "pf.pressing",
+            "search_read",
+            [[["id", "=", input.pressingOdooId]]],
+            { fields: ["id", "notes"] }
+          );
+          const existing = records[0]?.notes || "";
+          const tag = `[Converted to ${moName} | MO ID: ${moId}]`;
+          const newNotes = existing ? `${existing}\n${tag}` : tag;
+          await executeKw("pf.pressing", "write", [[[input.pressingOdooId], {
+            notes: newNotes,
+            x_studio_linked_mo: moName,
+            x_studio_linked_mo_id: moId,
+          }]]);
+        } catch (err) {
+          console.error("[createPressingMO] Link-back failed:", err);
+        }
+
+        // Step 7: Copy attachments
+        try {
+          const pfAttachments = await executeKw<{
+            id: number;
+            ir_attachment_id: [number, string] | false;
+            file_name: string | false;
+            photo_label: string | false;
+          }[]>(
+            "pf.attachment",
+            "search_read",
+            [[["pressing_id", "=", input.pressingOdooId]]],
+            { fields: ["id", "ir_attachment_id", "file_name", "photo_label"] }
+          );
+          for (const pfa of pfAttachments) {
+            if (!pfa.ir_attachment_id) continue;
+            try {
+              const originals = await executeKw<{ id: number; name: string; datas: string | false; mimetype: string }[]>(
+                "ir.attachment", "search_read",
+                [[["id", "=", pfa.ir_attachment_id[0]]]],
+                { fields: ["id", "name", "datas", "mimetype"] }
+              );
+              if (!originals.length || !originals[0].datas) continue;
+              const orig = originals[0];
+              await executeKw("ir.attachment", "create", [{
+                name: pfa.photo_label || pfa.file_name || orig.name,
+                datas: orig.datas, mimetype: orig.mimetype,
+                res_model: "mrp.production", res_id: moId,
+                description: `Copied from pressing ${input.pressingOdooId}`,
+              }]);
+            } catch {}
+          }
+        } catch (err) {
+          console.error("[createPressingMO] Attachment copy failed:", err);
+        }
+
+        return { success: true, moId, moName };
+      }),
+
+    linkPressingToMO: publicProcedure
     .input(
       z.object({
         pressingOdooId: z.number(),
