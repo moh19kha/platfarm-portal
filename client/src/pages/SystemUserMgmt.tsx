@@ -40,6 +40,7 @@ const MODULES = [
   { id: "accounting",   title: "Finance" },
   { id: "inventory",    title: "Inventory & Warehouse" },
   { id: "operations",   title: "Operations Dashboard" },
+  { id: "offline-ops",  title: "Offline Operations" },
   { id: "meetings",     title: "Periodic Meetings" },
   { id: "crm",          title: "CRM" },
   { id: "reports",      title: "Reports & Analytics" },
