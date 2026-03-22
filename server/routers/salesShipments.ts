@@ -27,7 +27,7 @@ import {
   fetchSaleOrderByName,
 } from "../odoo-sales-shipments";
 import { fetchAllStockAtLocation } from "../odoo";
-import { fetchPOVesselNameByPOName, distributeWeightAcrossPickings, fetchInvoicesByIds } from "../odoo-shipments";
+import { fetchPOVesselNameByPOName, distributeWeightAcrossPickings, fetchInvoicesByIds, fetchPaymentTermLines } from "../odoo-shipments";
 
 export const salesShipmentsRouter = router({
   // ─── List Sales Orders ──────────────────────────────────────────────────
@@ -109,6 +109,54 @@ export const salesShipmentsRouter = router({
         truckingCompany: so.local_trucking_company ? { id: so.local_trucking_company[0], name: so.local_trucking_company[1] } : null,
         productNames: lineProductMap.get(so.id) || [],
       }));
+
+      // ── Compute payment due dates from PaymentReferenceDate + payment term ──
+      const uniqueTermIds = [...new Set(
+        sos.map((so: any) => so.payment_term_id ? so.payment_term_id[0] : null).filter(Boolean)
+      )] as number[];
+      const termNbDaysMap = new Map<number, { nbDays: number; delayType: string }>();
+      if (uniqueTermIds.length > 0) {
+        await Promise.all(uniqueTermIds.map(async (termId) => {
+          try {
+            const lines = await fetchPaymentTermLines(termId);
+            const balanceLine = lines.find((l: any) => l.value === "balance") || lines[lines.length - 1];
+            if (balanceLine) termNbDaysMap.set(termId, { nbDays: balanceLine.nb_days || 0, delayType: balanceLine.delay_type || "days_after" });
+          } catch { /* skip */ }
+        }));
+      }
+      function computeDueDate(refDate: string, nbDays: number, delayType: string): string {
+        const base = new Date(refDate);
+        if (delayType === "days_after_end_of_month") {
+          const eom = new Date(base.getFullYear(), base.getMonth() + 1, 0);
+          eom.setDate(eom.getDate() + nbDays);
+          return eom.toISOString().slice(0, 10);
+        }
+        if (delayType === "days_after_end_of_next_month") {
+          const eonm = new Date(base.getFullYear(), base.getMonth() + 2, 0);
+          eonm.setDate(eonm.getDate() + nbDays);
+          return eonm.toISOString().slice(0, 10);
+        }
+        const d = new Date(refDate);
+        d.setDate(d.getDate() + nbDays);
+        return d.toISOString().slice(0, 10);
+      }
+      const todayStr = new Date().toISOString().slice(0, 10);
+      for (const item of mapped) {
+        const termId = sos.find((s: any) => s.id === item.id)?.payment_term_id?.[0] || null;
+        const refDate = sos.find((s: any) => s.id === item.id)?.x_payment_reference_date || null;
+        if (refDate && termId && termNbDaysMap.has(termId)) {
+          const { nbDays, delayType } = termNbDaysMap.get(termId)!;
+          const dueDate = computeDueDate(refDate, nbDays, delayType);
+          (item as any).paymentDueDate = dueDate;
+          (item as any).paymentOverdueDays = Math.floor((new Date(todayStr).getTime() - new Date(dueDate).getTime()) / 86400000);
+          (item as any).paymentReferenceDate = refDate;
+        } else {
+          (item as any).paymentDueDate = null;
+          (item as any).paymentOverdueDays = null;
+          (item as any).paymentReferenceDate = refDate;
+        }
+        (item as any).paymentTerm = termId ? (sos.find((s: any) => s.id === item.id)?.payment_term_id ? { id: sos.find((s: any) => s.id === item.id).payment_term_id[0], name: sos.find((s: any) => s.id === item.id).payment_term_id[1] } : null) : null;
+      }
 
       // Seed current statuses silently (no notifications on first encounter)
       seedCurrentStatuses(

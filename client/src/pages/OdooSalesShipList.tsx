@@ -295,6 +295,7 @@ export function OdooSalesShipList({ activeCompanyId, onSelectShipment, onNew, on
                   <SortTh column="loads" currentColumn={sort.column} currentDirection={sort.direction} onSort={toggleSort}>Loads</SortTh>
                   <SortTh column="amount" currentColumn={sort.column} currentDirection={sort.direction} onSort={toggleSort} right>Amount</SortTh>
                   <SortTh column="dateOrder" currentColumn={sort.column} currentDirection={sort.direction} onSort={toggleSort}>SO Date</SortTh>
+                  <th style={{ padding: "6px 10px", fontSize: 9, fontWeight: 700, color: "#4A7C59", textTransform: "uppercase", letterSpacing: 0.5, whiteSpace: "nowrap" }}>Payment Due</th>
                 </tr>
               </thead>
               <tbody>
@@ -332,6 +333,17 @@ export function OdooSalesShipList({ activeCompanyId, onSelectShipment, onNew, on
                       {sh.currency?.name || ""} {fmt(sh.amountTotal)}
                     </Td>
                     <Td mono>{fmtDateStr(sh.dateOrder)}</Td>
+                    <td style={{ padding: "4px 10px", whiteSpace: "nowrap" }}>
+                      {(() => {
+                        const due = (sh as any).paymentDueDate;
+                        const days = (sh as any).paymentOverdueDays;
+                        if (!due) return <span style={{ fontSize: 9, color: "#95A09C" }}>—</span>;
+                        if (days === null) return <span style={{ fontSize: 9, color: "#95A09C" }}>—</span>;
+                        if (days > 0) return <span style={{ background: "#C0714A", color: "#fff", borderRadius: 4, padding: "2px 6px", fontSize: 9, fontWeight: 700 }}>OVERDUE {days}d</span>;
+                        if (days === 0) return <span style={{ background: "#b45309", color: "#fff", borderRadius: 4, padding: "2px 6px", fontSize: 9, fontWeight: 700 }}>DUE TODAY</span>;
+                        return <span style={{ background: "#4A7C59", color: "#fff", borderRadius: 4, padding: "2px 6px", fontSize: 9, fontWeight: 700 }}>IN {Math.abs(days)}d</span>;
+                      })()}
+                    </td>
                   </tr>
                 ))}
                 {sortedFiltered.length === 0 && (
