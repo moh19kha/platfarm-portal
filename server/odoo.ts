@@ -873,12 +873,6 @@ export async function createPurchaseAgreement(
   if (input.reference) vals.reference = input.reference;
   if (input.date_start) vals.date_start = input.date_start;
   if (input.date_end) vals.date_end = input.date_end;
-  if (input.x_studio_purchase_currency) vals.x_studio_purchase_currency = input.x_studio_purchase_currency;
-  if (input.x_studio_insurance_included !== undefined) vals.x_studio_insurance_included = input.x_studio_insurance_included;
-  if (input.x_studio_total_po_quantity_in_tons !== undefined) vals.x_studio_total_po_quantity_in_tons = input.x_studio_total_po_quantity_in_tons;
-  if (input.x_studio_payment_terms) vals.x_studio_payment_terms = input.x_studio_payment_terms;
-  if (input.x_studio_notes) vals.x_studio_notes = input.x_studio_notes;
-  if (input.x_studio_supply_start_date) vals.x_studio_supply_start_date = input.x_studio_supply_start_date;
 
   // Create lines using Odoo one2many command: (0, 0, {vals})
   if (input.lines.length > 0) {
@@ -940,12 +934,6 @@ export async function updatePurchaseAgreement(
   if (input.date_start !== undefined) vals.date_start = input.date_start;
   if (input.date_end !== undefined) vals.date_end = input.date_end;
   if (input.currency_id !== undefined) vals.currency_id = input.currency_id;
-  if (input.x_studio_purchase_currency !== undefined) vals.x_studio_purchase_currency = input.x_studio_purchase_currency;
-  if (input.x_studio_insurance_included !== undefined) vals.x_studio_insurance_included = input.x_studio_insurance_included;
-  if (input.x_studio_total_po_quantity_in_tons !== undefined) vals.x_studio_total_po_quantity_in_tons = input.x_studio_total_po_quantity_in_tons;
-  if (input.x_studio_payment_terms !== undefined) vals.x_studio_payment_terms = input.x_studio_payment_terms;
-  if (input.x_studio_notes !== undefined) vals.x_studio_notes = input.x_studio_notes;
-  if (input.x_studio_supply_start_date !== undefined) vals.x_studio_supply_start_date = input.x_studio_supply_start_date;
 
   const lineCommands: unknown[] = [];
   if (input.addLines) {
@@ -1019,15 +1007,6 @@ export async function createSalesAgreement(
   };
 
   if (input.company_id) vals.company_id = input.company_id;
-  if (input.x_studio_customer) vals.x_studio_customer = input.x_studio_customer;
-  if (input.x_studio_ultimate_customer) vals.x_studio_ultimate_customer = input.x_studio_ultimate_customer;
-  if (input.x_studio_sales_incoterm_condition) vals.x_studio_sales_incoterm_condition = input.x_studio_sales_incoterm_condition;
-  if (input.x_studio_sales_currency) vals.x_studio_sales_currency = input.x_studio_sales_currency;
-  if (input.x_studio_insurance_included !== undefined) vals.x_studio_insurance_included = input.x_studio_insurance_included;
-  if (input.x_studio_total_po_quantity_in_tons !== undefined) vals.x_studio_total_po_quantity_in_tons = input.x_studio_total_po_quantity_in_tons;
-  if (input.x_studio_supply_start_date) vals.x_studio_supply_start_date = input.x_studio_supply_start_date;
-  if (input.x_studio_notes) vals.x_studio_notes = input.x_studio_notes;
-  if (input.x_studio_payment_terms) vals.x_studio_payment_terms = input.x_studio_payment_terms;
   if (input.number_of_days !== undefined) vals.number_of_days = input.number_of_days;
 
   // Product lines: use Odoo one2many command [0, 0, vals] to create new lines
@@ -1084,15 +1063,6 @@ export async function updateSalesAgreement(
 
   if (input.name !== undefined) vals.name = input.name;
   if (input.partner_id !== undefined) vals.partner_id = input.partner_id;
-  if (input.x_studio_customer !== undefined) vals.x_studio_customer = input.x_studio_customer;
-  if (input.x_studio_ultimate_customer !== undefined) vals.x_studio_ultimate_customer = input.x_studio_ultimate_customer;
-  if (input.x_studio_sales_incoterm_condition !== undefined) vals.x_studio_sales_incoterm_condition = input.x_studio_sales_incoterm_condition;
-  if (input.x_studio_sales_currency !== undefined) vals.x_studio_sales_currency = input.x_studio_sales_currency;
-  if (input.x_studio_insurance_included !== undefined) vals.x_studio_insurance_included = input.x_studio_insurance_included;
-  if (input.x_studio_total_po_quantity_in_tons !== undefined) vals.x_studio_total_po_quantity_in_tons = input.x_studio_total_po_quantity_in_tons;
-  if (input.x_studio_supply_start_date !== undefined) vals.x_studio_supply_start_date = input.x_studio_supply_start_date;
-  if (input.x_studio_notes !== undefined) vals.x_studio_notes = input.x_studio_notes;
-  if (input.x_studio_payment_terms !== undefined) vals.x_studio_payment_terms = input.x_studio_payment_terms;
   if (input.number_of_days !== undefined) vals.number_of_days = input.number_of_days;
 
   // Product lines: use Odoo one2many commands

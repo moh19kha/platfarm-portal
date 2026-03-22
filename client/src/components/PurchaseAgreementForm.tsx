@@ -763,19 +763,21 @@ export default function PurchaseAgreementForm({
             background: "transparent", fontSize: 11, fontWeight: 600, color: C.gray,
             cursor: "pointer",
           }}>Cancel</button>
+          <style>{`@keyframes agrSpin{to{transform:rotate(360deg)}}`}</style>
           <button
             onClick={handleSubmit}
             disabled={submitting}
             style={{
               padding: "8px 24px", borderRadius: 6, border: "none",
-              background: submitting ? C.border : C.forest,
+              background: submitting ? "#1E4230" : C.forest,
               color: C.white, fontSize: 12, fontWeight: 700,
               cursor: submitting ? "not-allowed" : "pointer",
-              opacity: submitting ? 0.6 : 1,
+              display: "flex", alignItems: "center", gap: 8,
             }}
           >
+            {submitting && <span style={{width:13,height:13,borderRadius:"50%",border:"2px solid rgba(255,255,255,0.3)",borderTopColor:"#fff",display:"inline-block",animation:"agrSpin 0.65s linear infinite"}}/>}
             {submitting
-              ? (mode === "create" ? "Creating..." : "Saving...")
+              ? (mode === "create" ? "Creating agreement…" : "Saving changes…")
               : (mode === "create" ? "Create Agreement" : "Save Changes")}
           </button>
         </div>
