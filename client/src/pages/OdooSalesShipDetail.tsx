@@ -58,6 +58,131 @@ function SalesPaymentScheduleCard({ termId, totalAmount, currency }: { termId: n
   );
 }
 
+
+// ─── Payment Due Tracker ─────────────────────────────────────────────────────
+function PaymentDueTracker({
+  referenceDate, termId, totalAmount, currency, invoices
+}: {
+  referenceDate: string | null;
+  termId: number | null;
+  totalAmount: number;
+  currency: string;
+  invoices: Array<{ amountResidual: number; paymentState: string }>;
+}) {
+  const { data: lines } = trpc.shipments.paymentTermLines.useQuery(
+    { termId: termId! },
+    { enabled: !!termId, staleTime: 300_000 }
+  );
+
+  const totalOutstanding = invoices.reduce((s, inv) => s + (inv.amountResidual || 0), 0);
+  const isFullyPaid = invoices.length > 0 && totalOutstanding <= 0;
+
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+
+  function calcDueDate(baseStr: string, nbDays: number, delayType: string): Date {
+    const base = new Date(baseStr);
+    if (delayType === "days_after_end_of_month") {
+      const eom = new Date(base.getFullYear(), base.getMonth() + 1, 0);
+      eom.setDate(eom.getDate() + nbDays);
+      return eom;
+    }
+    if (delayType === "days_after_end_of_next_month") {
+      const eonm = new Date(base.getFullYear(), base.getMonth() + 2, 0);
+      eonm.setDate(eonm.getDate() + nbDays);
+      return eonm;
+    }
+    const d = new Date(base);
+    d.setDate(d.getDate() + nbDays);
+    return d;
+  }
+
+  function fmtDate(d: Date) {
+    return d.toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" });
+  }
+
+  function daysDiff(d: Date) {
+    return Math.round((today.getTime() - d.getTime()) / 86400000);
+  }
+
+  const statusBadge = (dueDate: Date, paid: boolean) => {
+    if (paid) return <span style={{ background: "#2D5A3D", color: "#fff", borderRadius: 4, padding: "2px 7px", fontSize: 10, fontWeight: 700 }}>PAID</span>;
+    const diff = daysDiff(dueDate);
+    if (diff > 0) return <span style={{ background: "#C0714A", color: "#fff", borderRadius: 4, padding: "2px 7px", fontSize: 10, fontWeight: 700 }}>OVERDUE {diff}d</span>;
+    if (diff === 0) return <span style={{ background: "#b45309", color: "#fff", borderRadius: 4, padding: "2px 7px", fontSize: 10, fontWeight: 700 }}>DUE TODAY</span>;
+    return <span style={{ background: "#4A7C59", color: "#fff", borderRadius: 4, padding: "2px 7px", fontSize: 10, fontWeight: 700 }}>IN {Math.abs(diff)}d</span>;
+  };
+
+  if (!referenceDate) {
+    return (
+      <Card>
+        <div style={{ fontSize: 11, fontWeight: 700, color: C.terra, marginBottom: 8 }}>Payment Due Tracker</div>
+        <div style={{ fontSize: 11, color: C.muted, padding: "10px 0" }}>
+          Set a <strong>Payment Reference Date</strong> in Order Information to enable due-date tracking.
+        </div>
+      </Card>
+    );
+  }
+
+  if (!termId || !lines || lines.length === 0) {
+    return (
+      <Card>
+        <div style={{ fontSize: 11, fontWeight: 700, color: C.terra, marginBottom: 8 }}>Payment Due Tracker</div>
+        <FieldRow label="Reference Date" value={fmtDateStr(referenceDate)} mono />
+        <div style={{ fontSize: 11, color: C.muted, paddingTop: 8 }}>No payment term set — cannot calculate due dates.</div>
+      </Card>
+    );
+  }
+
+  const installments = lines.map((line: any, i: number) => {
+    const pct = line.valueAmount;
+    const amt = totalAmount > 0 ? (totalAmount * pct / 100) : 0;
+    const dueDate = calcDueDate(referenceDate, line.nbDays, line.delayType);
+    const diff = daysDiff(dueDate);
+    return { i, pct, amt, dueDate, diff, nbDays: line.nbDays };
+  });
+
+  return (
+    <Card>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 10 }}>
+        <div style={{ fontSize: 11, fontWeight: 700, color: C.terra }}>Payment Due Tracker</div>
+        {isFullyPaid
+          ? <span style={{ background: "#2D5A3D", color: "#fff", borderRadius: 4, padding: "2px 10px", fontSize: 10, fontWeight: 700 }}>FULLY PAID</span>
+          : <span style={{ fontSize: 11, color: C.muted }}>Outstanding: <strong style={{ color: C.forest, fontFamily: MONO }}>{currency} {fmt(Math.round(totalOutstanding))}</strong></span>
+        }
+      </div>
+      <FieldRow label="Reference Date" value={fmtDateStr(referenceDate)} mono />
+      <div style={{ marginTop: 10 }}>
+        <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 11, fontFamily: MONO }}>
+          <thead>
+            <tr>
+              <th style={{ textAlign: "left", fontFamily: "DM Sans,sans-serif", fontSize: 9, fontWeight: 600, color: C.sage, textTransform: "uppercase", letterSpacing: 0.5, paddingBottom: 4 }}>#</th>
+              <th style={{ textAlign: "left", fontFamily: "DM Sans,sans-serif", fontSize: 9, fontWeight: 600, color: C.sage, textTransform: "uppercase", letterSpacing: 0.5, paddingBottom: 4 }}>Due Date</th>
+              <th style={{ textAlign: "right", fontFamily: "DM Sans,sans-serif", fontSize: 9, fontWeight: 600, color: C.sage, textTransform: "uppercase", letterSpacing: 0.5, paddingBottom: 4 }}>Amount ({currency})</th>
+              <th style={{ textAlign: "right", fontFamily: "DM Sans,sans-serif", fontSize: 9, fontWeight: 600, color: C.sage, textTransform: "uppercase", letterSpacing: 0.5, paddingBottom: 4 }}>Status</th>
+            </tr>
+          </thead>
+          <tbody>
+            {installments.map(({ i, pct, amt, dueDate, diff }) => (
+              <tr key={i} style={{ borderTop: `1px solid ${C.border}` }}>
+                <td style={{ padding: "6px 0" }}>Payment {i + 1}{pct < 100 ? ` (${pct}%)` : ""}</td>
+                <td style={{ padding: "6px 0" }}>{fmtDate(dueDate)}</td>
+                <td style={{ padding: "6px 0", textAlign: "right" }}>{fmt(Math.round(amt))}</td>
+                <td style={{ padding: "6px 4px", textAlign: "right" }}>{statusBadge(dueDate, isFullyPaid)}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+      {invoices.length === 0 && (
+        <div style={{ fontSize: 10, color: C.muted, marginTop: 8, fontFamily: "DM Sans,sans-serif" }}>
+          No invoices linked yet — payment status based on reference date only.
+        </div>
+      )}
+    </Card>
+  );
+}
+
 interface OdooSalesShipDetailProps {
   shipmentId: number;
   onBack: () => void;
@@ -1615,6 +1740,14 @@ export function OdooSalesShipDetail({ shipmentId, onBack, onNavigateToShipment, 
           </div>
           {/* Payment Schedule */}
           {termId && <SalesPaymentScheduleCard termId={termId} totalAmount={shipment.amountTotal} currency={shipment.currency?.name || ""} />}
+          {/* Payment Due Tracker */}
+          <PaymentDueTracker
+            referenceDate={shipment.paymentReferenceDate || null}
+            termId={shipment.paymentTerm?.id || null}
+            totalAmount={shipment.amountTotal}
+            currency={shipment.currency?.name || ""}
+            invoices={invoices}
+          />
           {/* Invoicing Entities Row */}
           <div className="mob-detail-grid" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
             <Card>
