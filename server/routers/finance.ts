@@ -346,6 +346,7 @@ export const financeRouter = router({
         overdue: overdueList.sort((a, b) => b.daysOverdue - a.daysOverdue).slice(0, 250),
         topCustomers,
         topConcentration: topCustomers.length > 0 ? topCustomers[0].share : 0,
+        customerTotals: Object.fromEntries(Object.values(customerMap).map(cx => [cx.name, Math.round(cx.amount)])),
       };
     }),
 
