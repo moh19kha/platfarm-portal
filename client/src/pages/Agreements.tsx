@@ -354,6 +354,7 @@ function ViewPurchaseDetail({ agr, onClose, onEdit }: {
             <div className="mob-detail-grid" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
               <FieldRow label="Reference" value={agr.reference || "—"} mono />
               <FieldRow label="Vendor" value={agr.vendor || "—"} />
+              <FieldRow label="Ultimate Customer" value={agr.ultimateCustomer || "—"} />
               <FieldRow label="Company" value={agr.companyName || "—"} />
               <FieldRow label="Type" value={agr.type ? agr.type.replace(/_/g, " ").replace(/\b\w/g, c => c.toUpperCase()) : "—"} />
               <FieldRow label="Start Date" value={fmtDateStr(agr.dateStart)} mono />
