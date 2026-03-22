@@ -262,7 +262,7 @@ export const financeRouter = router({
           d61: { amount: Math.round(aging.d61.amount), count: aging.d61.count, pct: totalAR > 0 ? Math.round((aging.d61.amount / totalAR) * 100) : 0 },
           d90: { amount: Math.round(aging.d90.amount), count: aging.d90.count, pct: totalAR > 0 ? Math.round((aging.d90.amount / totalAR) * 100) : 0 },
         },
-        overdue: overdueList.sort((a, b) => b.daysOverdue - a.daysOverdue).slice(0, 20),
+        overdue: overdueList.sort((a, b) => b.daysOverdue - a.daysOverdue).slice(0, 250),
         topCustomers,
         topConcentration: topCustomers.length > 0 ? topCustomers[0].share : 0,
       };
