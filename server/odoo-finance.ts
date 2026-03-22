@@ -78,6 +78,7 @@ export interface OdooMove {
   company_id: OdooM2O;
   payment_state: string;
   ref: string | false;
+  invoice_origin: string | false;
 }
 
 export interface OdooAccount {
@@ -186,7 +187,7 @@ const MOVE_FIELDS = [
   "id", "name", "move_type", "partner_id", "invoice_date",
   "invoice_date_due", "date", "state", "amount_total",
   "amount_residual", "amount_untaxed", "currency_id", "company_id",
-  "payment_state", "ref",
+  "payment_state", "ref", "invoice_origin",
 ];
 
 const ACCOUNT_FIELDS = [

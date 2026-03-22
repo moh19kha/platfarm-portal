@@ -204,7 +204,7 @@ export const financeRouter = router({
       const aging = { current: { amount: 0, count: 0 }, d31: { amount: 0, count: 0 }, d61: { amount: 0, count: 0 }, d90: { amount: 0, count: 0 } };
       const overdueList: Array<{
         id: number; ref: string; customer: string; amount: number;
-        dueDate: string; daysOverdue: number; risk: string;
+        dueDate: string; daysOverdue: number; risk: string; soRef: string; soId: number | null;
       }> = [];
 
       invoices.forEach(inv => {
@@ -223,9 +223,21 @@ export const financeRouter = router({
             dueDate,
             daysOverdue: daysOld,
             risk: daysOld > 90 ? "high" : daysOld > 30 ? "medium" : "low",
+            soRef: (inv.invoice_origin as string) || "",
+            soId: null,
           });
         }
       });
+
+      // Batch-lookup SO ids so we can link overdue rows to the portal shipment page
+      const { executeKw: exKw2 } = await import("../odoo");
+      const soNames2 = [...new Set(overdueList.map(o => o.soRef).filter(Boolean))];
+      if (soNames2.length > 0) {
+        const sos2 = await exKw2<{id:number;name:string}[]>("sale.order","search_read",[[["name","in",soNames2]]],{fields:["id","name"],limit:2000});
+        const soIdMap2: Record<string,number> = {};
+        sos2.forEach(s => { soIdMap2[s.name] = s.id; });
+        overdueList.forEach(o => { if (o.soRef && soIdMap2[o.soRef]) o.soId = soIdMap2[o.soRef]; });
+      }
 
       // Customer concentration
       const customerMap: Record<string, { name: string; amount: number; invoiceCount: number; oldestDays: number }> = {};
