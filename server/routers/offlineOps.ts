@@ -427,7 +427,8 @@ export const offlineOpsRouter = router({
           // Directional: QC must happen after dispatch (allow 5min early for clock skew)
           // Cannot match a QC that happened before the shipment was recorded
           const signed = qcTime - shipTime; // positive = QC after dispatch
-          if (signed > -(5 * 60 * 1000) && signed < 12 * 3600 * 1000) {
+          // 72h window covers overnight or multi-day transit from Dakhla → El-Sokhna (780 km)
+          if (signed > -(5 * 60 * 1000) && signed < 72 * 3600 * 1000) {
             candidates.push({ si, qi, delta: Math.abs(signed) });
           }
         }
