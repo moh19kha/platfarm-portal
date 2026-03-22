@@ -203,7 +203,7 @@ export const financeRouter = router({
         return tot > 0 ? (Number(inv.amount_total_signed) || 0) * (Number(inv.amount_residual) / tot) : 0;
       };
       const totalAR = invoices.reduce((s, inv) => s + aedOut(inv), 0);
-      const dso = revenue > 0 ? Math.round((totalAR / revenue) * 365) : 0;
+      // DSO computed after forEach (needs portal due dates)
 
       // Aging buckets
       const aging = { current: { amount: 0, count: 0 }, d31: { amount: 0, count: 0 }, d61: { amount: 0, count: 0 }, d90: { amount: 0, count: 0 } };
@@ -271,12 +271,15 @@ export const financeRouter = router({
         return (inv.invoice_date_due as string) || (inv.date as string);
       }
 
+      let _dsoWeightedSum = 0, _dsoWeightTotal = 0;
       invoices.forEach((inv: any) => {
         const dueDate = effectiveDueDate(inv);
         const daysOld = daysBetween(dueDate, t);
         const bucket = daysOld <= 0 ? "current" : daysOld <= 30 ? "d31" : daysOld <= 60 ? "d61" : "d90";
         aging[bucket].amount += aedOut(inv);
         aging[bucket].count++;
+        _dsoWeightedSum += aedOut(inv) * Math.max(0, daysOld);
+        _dsoWeightTotal += aedOut(inv);
 
         const soName = (inv.invoice_origin as string) || "";
         const so = soName ? soMap[soName] : null;
@@ -301,6 +304,8 @@ export const financeRouter = router({
           });
         }
       });
+
+      const dso = _dsoWeightTotal > 0 ? Math.round(_dsoWeightedSum / _dsoWeightTotal) : 0;
 
       // Customer concentration
       const customerMap: Record<string, { name: string; amount: number; invoiceCount: number; oldestDays: number }> = {};
@@ -757,7 +762,7 @@ export const financeRouter = router({
       const totalAR = receivables.reduce((s, inv) => s + inv.amount_residual, 0);
       const totalAP = payables.reduce((s, b) => s + b.amount_residual, 0);
 
-      const dso = revenue > 0 ? Math.round((totalAR / revenue) * 365) : 0;
+      // DSO computed after forEach (needs portal due dates)
       const dpo = cogs > 0 ? Math.round((totalAP / cogs) * 365) : 0;
       // DIO — approximate from inventory if available, otherwise use 40 as default
       const dio = 40;
