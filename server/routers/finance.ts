@@ -204,7 +204,7 @@ export const financeRouter = router({
       const aging = { current: { amount: 0, count: 0 }, d31: { amount: 0, count: 0 }, d61: { amount: 0, count: 0 }, d90: { amount: 0, count: 0 } };
       const overdueList: Array<{
         id: number; ref: string; customer: string; amount: number;
-        dueDate: string; daysOverdue: number; risk: string; soRef: string; soId: number | null; paymentTerm: string; refDate: string;
+        dueDate: string; daysOverdue: number; risk: string; soRef: string; soId: number | null; paymentTerm: string; refDate: string; paid: number;
       }> = [];
 
       // ── Portal due-date logic: Payment Reference Date + payment term days ────
@@ -289,6 +289,7 @@ export const financeRouter = router({
             soId: so ? so.soId : null,
             paymentTerm: so ? so.termName : "",
             refDate: so ? so.refDate : "",
+            paid: Math.round(inv.amount_total - inv.amount_residual),
           });
         }
       });
