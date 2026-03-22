@@ -328,7 +328,7 @@ export const financeRouter = router({
           risk: c.oldestDays > 90 ? "high" : c.oldestDays > 30 ? "medium" : "low",
         }));
 
-      const collectionRate = revenue > 0 ? Math.round(((revenue - totalAR) / revenue) * 100) : 0;
+      const collectionRate = totalAR > 0 ? Math.round((aging.current.amount / totalAR) * 100) : 100;
       const badDebt = Math.round(aging.d90.amount * 0.5 + aging.d61.amount * 0.2 + aging.d31.amount * 0.05);
 
       return {
