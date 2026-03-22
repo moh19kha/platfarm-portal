@@ -321,6 +321,7 @@ export function OdooSalesShipDetail({ shipmentId, onBack, onNavigateToShipment, 
       _trucking_company: shipment.truckingCompany ? { id: shipment.truckingCompany.id, name: shipment.truckingCompany.name } : null,
       incoterm: shipment.incoterm?.id || null,
       payment_term_id: shipment.paymentTerm?.id || null,
+      x_payment_reference_date: shipment.paymentReferenceDate || "",
     });
     setEditing(true);
   }, [shipment]);
@@ -1264,11 +1265,15 @@ export function OdooSalesShipDetail({ shipmentId, onBack, onNavigateToShipment, 
                     {(paymentTerms || []).map((t: any) => <option key={t.id} value={t.id}>{t.name}</option>)}
                   </select>
                 </div>
+                <div><Lbl>Payment Reference Date</Lbl>
+                  <input type="date" value={editFields.x_payment_reference_date || ""} onChange={e => setEditFields(p => ({ ...p, x_payment_reference_date: e.target.value }))} style={inputStyle} />
+                </div>
               </div>
             ) : (
               <>
                 <FieldRow label="Incoterm" value={shipment.incoterm?.name || "—"} />
                 <FieldRow label="Payment Term" value={shipment.paymentTerm?.name || "—"} />
+                <FieldRow label="Payment Reference Date" value={fmtDateStr(shipment.paymentReferenceDate)} mono />
               </>
             )}
             <FieldRow label="Pricelist" value={shipment.pricelist?.name || "—"} />

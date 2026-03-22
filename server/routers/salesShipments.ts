@@ -219,6 +219,7 @@ export const salesShipmentsRouter = router({
         clearanceTruckingInvoicingEntity: so.x_studio_clearance_trucking_invoicing_entity || null,
         notesPayment: so.x_studio_notespayment || null,
         notesPayment1: so.x_studio_notespayment_1 || null,
+        paymentReferenceDate: so.x_payment_reference_date || null,
         saleOrderTemplateId: so.sale_order_template_id ? { id: so.sale_order_template_id[0], name: so.sale_order_template_id[1] } : null,
         // Lines
         lines: lines.map((l: Record<string, any>) => ({
@@ -363,6 +364,7 @@ export const salesShipmentsRouter = router({
         x_studio_clearance_trucking_invoicing_entity: z.string().optional(),
         x_studio_notespayment: z.string().optional(),
         x_studio_notespayment_1: z.string().optional(),
+        x_payment_reference_date: z.string().optional(),
         client_order_ref: z.string().optional(),
         sale_order_template_id: z.number().optional(),
         warehouse_id: z.number().optional(),
@@ -427,6 +429,7 @@ export const salesShipmentsRouter = router({
         x_studio_clearance_trucking_invoicing_entity: z.string().optional(),
         x_studio_notespayment: z.string().optional(),
         x_studio_notespayment_1: z.string().optional(),
+        x_payment_reference_date: z.string().optional(),
         client_order_ref: z.string().optional(),
       })
     )

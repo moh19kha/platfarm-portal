@@ -126,6 +126,7 @@ const SO_FIELDS = [
   "x_studio_clearance_trucking_invoiced_entity",
   "x_studio_clearance_trucking_invoicing_entity",
   "x_studio_notespayment", "x_studio_notespayment_1",
+  "x_payment_reference_date",
   "sale_order_template_id",
   "invoice_ids",
   "bl_telex_release_date",
