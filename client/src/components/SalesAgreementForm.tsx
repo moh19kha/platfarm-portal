@@ -247,7 +247,7 @@ export default function SalesAgreementForm({
           x_studio_supply_start_date: supplyStartDate || undefined,
           x_studio_supply_end_date: supplyEndDate || undefined,
           x_studio_notes: notes || undefined,
-          x_studio_payment_terms: paymentTerms || undefined,
+          x_studio_payment_term_1: paymentTerms || undefined,
           lines: validLines.length > 0 ? validLines.map(l => ({
             product_id: l.product_id!,
             product_uom_qty: l.product_uom_qty,
@@ -291,7 +291,7 @@ export default function SalesAgreementForm({
           x_studio_supply_start_date: supplyStartDate || undefined,
           x_studio_supply_end_date: supplyEndDate || undefined,
           x_studio_notes: notes || undefined,
-          x_studio_payment_terms: paymentTerms || undefined,
+          x_studio_payment_term_1: paymentTerms || undefined,
           addLines: addLines.length > 0 ? addLines : undefined,
           updateLines: updateLines.length > 0 ? updateLines : undefined,
           deleteLineIds: deleteLineIds.length > 0 ? deleteLineIds : undefined,
@@ -496,8 +496,8 @@ export default function SalesAgreementForm({
                 style={inputStyle}
               >
                 <option value="">Select payment terms…</option>
-                {paymentTermsOptions.map(t => (
-                  <option key={t.id} value={t.name}>{t.name}</option>
+                {["Advance Payment","Cash Against Document","Cash Against Delivery","Letter of Credit","Post Dated Cheque","Cash Credit"].map(t => (
+                  <option key={t} value={t}>{t}</option>
                 ))}
               </select>
             </div>

@@ -160,7 +160,7 @@ export const odooRouter = router({
       supplyStartDate: a.x_studio_supply_start_date || null,
       supplyEndDate: null,
       notes: a.x_studio_notes || null,
-      paymentTerms: a.x_studio_payment_terms || null,
+      paymentTerms: a.x_studio_payment_term_1 || a.x_studio_payment_terms || null,
       salesOrderCount: a.sale_order_count,
       companyId: a.company_id ? a.company_id[0] : null,
       companyName: a.company_id ? a.company_id[1] : null,
@@ -340,7 +340,7 @@ export const odooRouter = router({
         x_studio_supply_start_date: z.string().optional(),
         x_studio_supply_end_date: z.string().optional(),
         x_studio_notes: z.string().optional(),
-        x_studio_payment_terms: z.string().optional(),
+        x_studio_payment_term_1: z.string().optional(),
         number_of_days: z.number().optional(),
         lines: z.array(z.object({
           product_id: z.number(),
@@ -370,7 +370,7 @@ export const odooRouter = router({
         x_studio_supply_start_date: z.string().optional(),
         x_studio_supply_end_date: z.string().optional(),
         x_studio_notes: z.string().optional(),
-        x_studio_payment_terms: z.string().optional(),
+        x_studio_payment_term_1: z.string().optional(),
         number_of_days: z.number().optional(),
         addLines: z.array(z.object({
           product_id: z.number(),

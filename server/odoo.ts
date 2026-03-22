@@ -87,6 +87,7 @@ export interface OdooSalesAgreement {
   x_studio_supply_end_date: string | false;
   x_studio_notes: string | false;
   x_studio_payment_terms: string | false;
+  x_studio_payment_term_1: string | false;
   sale_order_count: number;
   sale_order_template_line_ids: number[];
   company_id: [number, string] | false;
@@ -326,6 +327,7 @@ export async function fetchSalesAgreements(): Promise<OdooSalesAgreement[]> {
         "x_studio_supply_start_date",
         "x_studio_notes",
         "x_studio_payment_terms",
+        "x_studio_payment_term_1",
       ],
     }
   );
@@ -998,6 +1000,7 @@ export interface CreateSalesAgreementInput {
   x_studio_supply_end_date?: string;
   x_studio_notes?: string;
   x_studio_payment_terms?: string;
+  x_studio_payment_term_1?: string;
   number_of_days?: number;
   lines?: {
     product_id: number;
@@ -1028,7 +1031,7 @@ export async function createSalesAgreement(
   if (input.x_studio_total_po_quantity_in_tons !== undefined) vals.x_studio_total_po_quantity_in_tons = input.x_studio_total_po_quantity_in_tons;
   if (input.x_studio_supply_start_date) vals.x_studio_supply_start_date = input.x_studio_supply_start_date;
   if (input.x_studio_notes) vals.x_studio_notes = input.x_studio_notes;
-  if (input.x_studio_payment_terms) vals.x_studio_payment_terms = input.x_studio_payment_terms;
+  if (input.x_studio_payment_term_1) vals.x_studio_payment_term_1 = input.x_studio_payment_term_1;
 
   // Product lines: use Odoo one2many command [0, 0, vals] to create new lines
   if (input.lines && input.lines.length > 0) {
@@ -1058,7 +1061,7 @@ export interface UpdateSalesAgreementInput {
   x_studio_supply_start_date?: string;
   x_studio_supply_end_date?: string;
   x_studio_notes?: string;
-  x_studio_payment_terms?: string;
+  x_studio_payment_term_1?: string;
   number_of_days?: number;
   addLines?: {
     product_id: number;
@@ -1093,7 +1096,7 @@ export async function updateSalesAgreement(
   if (input.x_studio_total_po_quantity_in_tons !== undefined) vals.x_studio_total_po_quantity_in_tons = input.x_studio_total_po_quantity_in_tons;
   if (input.x_studio_supply_start_date !== undefined) vals.x_studio_supply_start_date = input.x_studio_supply_start_date;
   if (input.x_studio_notes !== undefined) vals.x_studio_notes = input.x_studio_notes;
-  if (input.x_studio_payment_terms !== undefined) vals.x_studio_payment_terms = input.x_studio_payment_terms;
+  if (input.x_studio_payment_term_1 !== undefined) vals.x_studio_payment_term_1 = input.x_studio_payment_term_1;
 
   // Product lines: use Odoo one2many commands
   const lineCommands: unknown[] = [];
