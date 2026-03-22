@@ -526,7 +526,12 @@ export default function PurchaseAgreementForm({
               <div style={labelStyle}>Purchase Currency</div>
               <select
                 value={purchaseCurrency}
-                onChange={e => setPurchaseCurrency(e.target.value)}
+                onChange={e => {
+                  const val = e.target.value;
+                  setPurchaseCurrency(val);
+                  const match = currencies?.find(c => c.name === val);
+                  setCurrencyId(match ? match.id : null);
+                }}
                 style={selectStyle}
               >
                 <option value="">Select currency...</option>
