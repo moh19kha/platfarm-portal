@@ -27,7 +27,7 @@ const EMPTY_QC=[];
 const EMPTY_DPR=[];
 const EMPTY_TRF=[];
 
-const TRS={in_transit:{bg:"#FDF6EC",c:"#D4960A",l:"🚛 In Transit"},delivered:{bg:"#E4EFE6",c:"#2D5A3D",l:"📍 Delivered"},received:{bg:"#E4EFE6",c:"#4A7C59",l:"✓ Received & Weighed"},loading:{bg:"#F2F7F3",c:"#4A7C59",l:"⟳ Loading"}};
+const TRS={in_transit:{bg:"#FDF6EC",c:"#D4960A",l:"🚛 In Transit"},delivered:{bg:"#E4EFE6",c:"#2D5A3D",l:"📍 Delivered"},received:{bg:"#E4EFE6",c:"#4A7C59",l:"✓ Received & Weighed"},assessed:{bg:"#E4EFE6",c:"#2D5A3D",l:"✅ QC Assessed"},loading:{bg:"#F2F7F3",c:"#4A7C59",l:"⟳ Loading"}};
 
 // Shipment stages
 const RCV_STAGES=["shipped","received","qc_done"];
@@ -386,7 +386,7 @@ export default function OfflineOpsModule(){
 
           {/* Pipeline cards */}
           <div style={{display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:14,marginBottom:16}}>
-            {[[ICON_PROCUREMENT,"Procurement",pRcv.length,fK(totalNet),pRcv.filter(r=>r.sync==="synced").length,"#2D5A3D","incoming"],[null,"Double Press Quality",pQc.length,pQc.filter(q=>q.verdict==="Approved").length+" approved",pQc.filter(r=>r.sync==="synced").length,"#4A7C59","qc"],[ICON_PRESSING,"Pressing Shifts",pDpr.length,fK(totalOut)+" output",pDpr.filter(r=>r.sync==="synced").length,"#C0714A","dpr"],[ICON_TRANSFER,"Transfers",pTrf.length,inTransit.length>0?inTransit.length+" in transit":"All delivered",pTrf.filter(r=>r.sync==="synced").length,"#475577","trf"]].map(([ic,l,ct,sub,sy,col,nav])=>(<div className="sc" key={l} style={{cursor:"pointer",borderColor:col+"40"}} onClick={()=>setPg(nav)}>
+            {[[ICON_PROCUREMENT,"Procurement",pRcv.length,fK(totalNet),pRcv.filter(r=>r.sync==="synced").length,"#2D5A3D","incoming"],[null,"Double Press Quality",pQc.length,pQc.filter(q=>q.verdict==="accepted").length+" approved",pQc.filter(r=>r.sync==="synced").length,"#4A7C59","qc"],[ICON_PRESSING,"Pressing Shifts",pDpr.length,fK(totalOut)+" output",pDpr.filter(r=>r.sync==="synced").length,"#C0714A","dpr"],[ICON_TRANSFER,"Transfers",pTrf.length,inTransit.length>0?inTransit.length+" in transit":"All delivered",pTrf.filter(r=>r.sync==="synced").length,"#475577","trf"]].map(([ic,l,ct,sub,sy,col,nav])=>(<div className="sc" key={l} style={{cursor:"pointer",borderColor:col+"40"}} onClick={()=>setPg(nav)}>
               <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:10}}>
                 <div style={{width:40,height:40,borderRadius:10,background:col+"15",display:"flex",alignItems:"center",justifyContent:"center",fontSize:18}}>{ic ? <ImgIcon src={ic} size={24} /> : "🔍"}</div>
                 <div className="m" style={{fontSize:24,color:col}}>{ct}</div>
@@ -460,9 +460,9 @@ export default function OfflineOpsModule(){
         {!isLoadingData&&pg==="qc"&&<div style={{display:"flex",flexDirection:"column",height:"calc(100vh - 110px)",overflow:"hidden"}}>
           <div style={{padding:"18px 18px 14px"}}><div style={{display:"grid",gridTemplateColumns:"repeat(5,1fr)",gap:10,marginBottom:14}}>
             <div className="sc"><div className="sl">Double Press QC</div><div className="sv" style={{fontSize:16}}>{pQc.length}</div></div>
-            <div className="sc"><div className="sl">Approved</div><div className="sv" style={{fontSize:16,color:"#2D5A3D"}}>{pQc.filter(q=>q.verdict==="Approved").length}</div></div>
-            <div className="sc"><div className="sl">Rejected</div><div className="sv" style={{fontSize:16,color:"#C94444"}}>{pQc.filter(q=>q.verdict==="Rejected").length}</div></div>
-            <div className="sc"><div className="sl">Pending Review</div><div className="sv" style={{fontSize:16}}>{pQc.filter(q=>q.verdict!=="Approved"&&q.verdict!=="Rejected").length}</div></div>
+            <div className="sc"><div className="sl">Approved</div><div className="sv" style={{fontSize:16,color:"#2D5A3D"}}>{pQc.filter(q=>q.verdict==="accepted").length}</div></div>
+            <div className="sc"><div className="sl">Rejected</div><div className="sv" style={{fontSize:16,color:"#C94444"}}>{pQc.filter(q=>q.verdict==="rejected").length}</div></div>
+            <div className="sc"><div className="sl">Pending Review</div><div className="sv" style={{fontSize:16}}>{pQc.filter(q=>q.verdict!=="accepted"&&q.verdict!=="rejected").length}</div></div>
             <div className="sc"><div className="sl">Total Reports</div><div className="sv" style={{fontSize:16}}>{pQc.length}</div></div>
           </div>
           <div style={{display:"flex",gap:6,marginBottom:14,alignItems:"center"}}>
@@ -482,7 +482,7 @@ export default function OfflineOpsModule(){
                 <td style={{fontSize:10}}>{r.commodity}</td>
                 <td style={{fontSize:10}}>{r.grade} → <strong>{r.finalGrade}</strong></td>
                 <td className="m" style={{fontSize:10,color:parseFloat(r.moisture)>13?"#D4960A":"#2D5A3D"}}>{r.moisture}</td>
-                <td>{bd(r.verdict==="Approved"?"synced":"error",r.verdict)}</td>
+                <td>{bd(r.verdict==="accepted"?"synced":"error",r.verdict)}</td>
                 <td className="m" style={{fontSize:10}}>{r.g1}/{r.g2}/{r.mix}</td>
                 <td>{bd(r.sync)}</td>
                 <td className="m" style={{fontSize:10,color:"#95A09C"}}>{r.date}</td>
@@ -508,7 +508,7 @@ export default function OfflineOpsModule(){
           
           <div style={{display:"flex",gap:6,marginBottom:14,alignItems:"center"}}>
             <input value={sr} onChange={e=>setSr(e.target.value)} placeholder="Search ID, driver..." style={{width:240,height:36,padding:"0 14px",border:"1px solid #D5D0C8",borderRadius:8,fontFamily:"'DM Sans',system-ui,sans-serif",fontSize:12,color:"#2C3E50",background:"#fff"}}/>
-            <div style={{display:"flex",gap:4}}>{[["all","All"],["in_transit","In Transit"],["delivered","Delivered"],["received","Received"]].map(([k,l])=>pl(l,trfSt===k,()=>setTrfSt(k)))}</div>
+            <div style={{display:"flex",gap:4}}>{[["all","All"],["in_transit","In Transit"],["received","Received"],["assessed","Assessed"],["delivered","Delivered"]].map(([k,l])=>pl(l,trfSt===k,()=>setTrfSt(k)))}</div>
 
           </div>
           </div>
@@ -551,9 +551,9 @@ export default function OfflineOpsModule(){
                 {selType==="rcv"&&<><div style={{padding:"6px 14px",borderRadius:8,background:"#E4EFE6",border:"1px solid #D5E5D5"}}><div className="m" style={{fontSize:14,color:"#2D5A3D"}}>{fK(sel.net)}</div><div style={{fontSize:8,color:"#95A09C",marginTop:1}}>Net Weight</div></div>
                 <div style={{padding:"6px 14px",borderRadius:8,background:"#E4EFE6",border:"1px solid #D5E5D5"}}><div className="m" style={{fontSize:14,color:"#2D5A3D"}}>{sel.bales}</div><div style={{fontSize:8,color:"#95A09C",marginTop:1}}>Bales</div></div>
                 <div style={{padding:"6px 14px",borderRadius:8,background:"#E4EFE6",border:"1px solid #D5E5D5"}}><div className="m" style={{fontSize:14,color:"#2D5A3D"}}>{sel.grade||"—"}</div><div style={{fontSize:8,color:"#95A09C",marginTop:1}}>Grade</div></div>
-                {sel.hasQc&&<div style={{padding:"6px 14px",borderRadius:8,background:sel.qcData?.verdict==="Approved"?"#E4EFE6":"#FDF0F0",border:"1px solid "+(sel.qcData?.verdict==="Approved"?"#D5E5D5":"#F5C4C4")}}><div className="m" style={{fontSize:14,color:sel.qcData?.verdict==="Approved"?"#2D5A3D":"#C94444"}}>{sel.qcData?.verdict||"—"}</div><div style={{fontSize:8,color:"#95A09C",marginTop:1}}>QC Verdict</div></div>}</>}
+                {sel.hasQc&&<div style={{padding:"6px 14px",borderRadius:8,background:sel.qcData?.verdict==="accepted"?"#E4EFE6":"#FDF0F0",border:"1px solid "+(sel.qcData?.verdict==="accepted"?"#D5E5D5":"#F5C4C4")}}><div className="m" style={{fontSize:14,color:sel.qcData?.verdict==="accepted"?"#2D5A3D":"#C94444"}}>{sel.qcData?.verdict||"—"}</div><div style={{fontSize:8,color:"#95A09C",marginTop:1}}>QC Verdict</div></div>}</>}
                 {selType==="qc"&&<><div style={{padding:"6px 14px",borderRadius:8,background:"#E4EFE6",border:"1px solid #D5E5D5"}}><div className="m" style={{fontSize:14,color:"#2D5A3D"}}>{sel.finalGrade}</div><div style={{fontSize:8,color:"#95A09C",marginTop:1}}>Grade</div></div>
-                <div style={{padding:"6px 14px",borderRadius:8,background:sel.verdict==="Approved"?"#E4EFE6":"#FDF0F0",border:"1px solid "+(sel.verdict==="Approved"?"#D5E5D5":"#F5C4C4")}}><div className="m" style={{fontSize:14,color:sel.verdict==="Approved"?"#2D5A3D":"#C94444"}}>{sel.verdict}</div><div style={{fontSize:8,color:"#95A09C",marginTop:1}}>Verdict</div></div>
+                <div style={{padding:"6px 14px",borderRadius:8,background:sel.verdict==="accepted"?"#E4EFE6":"#FDF0F0",border:"1px solid "+(sel.verdict==="accepted"?"#D5E5D5":"#F5C4C4")}}><div className="m" style={{fontSize:14,color:sel.verdict==="accepted"?"#2D5A3D":"#C94444"}}>{sel.verdict}</div><div style={{fontSize:8,color:"#95A09C",marginTop:1}}>Verdict</div></div>
                 <div style={{padding:"6px 14px",borderRadius:8,background:"#E4EFE6",border:"1px solid #D5E5D5"}}><div className="m" style={{fontSize:14,color:"#2D5A3D"}}>{sel.moisture||"—"}</div><div style={{fontSize:8,color:"#95A09C",marginTop:1}}>Moisture</div></div></>}
                 {selType==="dpr"&&<><div style={{padding:"6px 14px",borderRadius:8,background:"#FDF6EC",border:"1px solid #F5DDB8"}}><div className="m" style={{fontSize:14,color:"#C0714A"}}>{sel.outBales}</div><div style={{fontSize:8,color:"#95A09C",marginTop:1}}>Output Bales</div></div>
                 <div style={{padding:"6px 14px",borderRadius:8,background:"#FDF6EC",border:"1px solid #F5DDB8"}}><div className="m" style={{fontSize:14,color:"#C0714A"}}>{fK(sel.outWeight)}</div><div style={{fontSize:8,color:"#95A09C",marginTop:1}}>Output Weight</div></div>
@@ -573,7 +573,7 @@ export default function OfflineOpsModule(){
               {/* RCV Timeline */}
               {selType==="rcv"&&detTab===0&&<div>
                 <div style={{fontSize:11,fontWeight:700,color:"#2D5A3D",marginBottom:14}}>RECORD TIMELINE</div>
-                {[{icon:"📋",title:"Record Created",sub:sel.date+(sel.time?" at "+sel.time:""),color:"#2D5A3D"},{icon:"\u2696\ufe0f",title:"Weighed",sub:sel.net>0?fK(sel.net)+" net ("+fK(sel.gross)+" gross \u2212 "+fK(sel.tare)+" tare)":"Pending",color:sel.net>0?"#2D5A3D":"#95A09C"},sel.hasQc?{icon:"🔍",title:"Quality Inspected",sub:(sel.qcData?.verdict||"Pending")+" \u2014 "+(sel.qcData?.finalGrade||""),color:sel.qcData?.verdict==="Approved"?"#2D5A3D":"#C94444"}:null,sel.linkedPoName?{icon:"📦",title:"Linked to PO",sub:sel.linkedPoName,color:"#2D5A3D"}:null,{icon:sel.sync==="synced"?"\u2601\ufe0f":"\u23f3",title:sel.sync==="synced"?"Synced to Odoo":"Pending Sync",sub:sel.sync==="synced"?"Data synchronized":"Awaiting synchronization",color:sel.sync==="synced"?"#2D5A3D":"#D4960A"}].filter(Boolean).map((ev,i)=><div key={i} style={{display:"flex",gap:12,marginBottom:0}}>
+                {[{icon:"📋",title:"Record Created",sub:sel.date+(sel.time?" at "+sel.time:""),color:"#2D5A3D"},{icon:"\u2696\ufe0f",title:"Weighed",sub:sel.net>0?fK(sel.net)+" net ("+fK(sel.gross)+" gross \u2212 "+fK(sel.tare)+" tare)":"Pending",color:sel.net>0?"#2D5A3D":"#95A09C"},sel.hasQc?{icon:"🔍",title:"Quality Inspected",sub:(sel.qcData?.verdict||"Pending")+" \u2014 "+(sel.qcData?.finalGrade||""),color:sel.qcData?.verdict==="accepted"?"#2D5A3D":"#C94444"}:null,sel.linkedPoName?{icon:"📦",title:"Linked to PO",sub:sel.linkedPoName,color:"#2D5A3D"}:null,{icon:sel.sync==="synced"?"\u2601\ufe0f":"\u23f3",title:sel.sync==="synced"?"Synced to Odoo":"Pending Sync",sub:sel.sync==="synced"?"Data synchronized":"Awaiting synchronization",color:sel.sync==="synced"?"#2D5A3D":"#D4960A"}].filter(Boolean).map((ev,i)=><div key={i} style={{display:"flex",gap:12,marginBottom:0}}>
                   <div style={{display:"flex",flexDirection:"column",alignItems:"center"}}>
                     <div style={{width:28,height:28,borderRadius:14,background:ev.color+"18",display:"flex",alignItems:"center",justifyContent:"center",fontSize:13}}>{ev.icon}</div>
                     {i<4&&<div style={{width:2,height:24,background:"#E8E5E0"}}/>}
