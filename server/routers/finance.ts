@@ -763,7 +763,8 @@ export const financeRouter = router({
       const totalAR = receivables.reduce((s, inv) => s + inv.amount_residual, 0);
       const totalAP = payables.reduce((s, b) => s + b.amount_residual, 0);
 
-      // DSO computed after forEach (needs portal due dates)
+      // Simple DSO for scorecard: AR / (revenue / 365)
+      const dso = revenue > 0 ? Math.round((totalAR / revenue) * 365) : 0;
       const dpo = cogs > 0 ? Math.round((totalAP / cogs) * 365) : 0;
       // DIO — approximate from inventory if available, otherwise use 40 as default
       const dio = 40;
