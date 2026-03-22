@@ -88,6 +88,10 @@ export function OdooSalesShipDetail({ shipmentId, onBack, onNavigateToShipment, 
   const loadedGradeOpts = gradeOptions?.loadedGrade || [];
   const receivedGradeOpts = gradeOptions?.overallReceivedGrade || [];
 
+  // Incoterms + payment terms for Order Information edit dropdowns
+  const { data: incoterms } = trpc.shipments.incoterms.useQuery(undefined, { staleTime: 300_000 });
+  const { data: paymentTerms } = trpc.shipments.paymentTerms.useQuery(undefined, { staleTime: 300_000 });
+
   // Invoices query - must be at top level (not inside conditional render) to avoid React hooks error #310
   const invoicesQuery = trpc.salesShipments.invoices.useQuery(
     { orderId: shipmentId },
@@ -315,6 +319,8 @@ export function OdooSalesShipDetail({ shipmentId, onBack, onNavigateToShipment, 
       _salesperson: shipment.salesperson ? { id: shipment.salesperson.id, name: shipment.salesperson.name } : null,
       _clearance_agent: shipment.clearanceAgent ? { id: shipment.clearanceAgent.id, name: shipment.clearanceAgent.name } : null,
       _trucking_company: shipment.truckingCompany ? { id: shipment.truckingCompany.id, name: shipment.truckingCompany.name } : null,
+      incoterm: shipment.incoterm?.id || null,
+      payment_term_id: shipment.paymentTerm?.id || null,
     });
     setEditing(true);
   }, [shipment]);
@@ -1244,8 +1250,27 @@ export function OdooSalesShipDetail({ shipmentId, onBack, onNavigateToShipment, 
             <FieldRow label="Customer" value={shipment.customer?.name || "—"} />
             <FieldRow label="Company" value={shipment.company?.name || "—"} />
             <FieldRow label="SO Creation Date" value={fmtDateStr(shipment.dateOrder)} mono />
-            <FieldRow label="Incoterm" value={shipment.incoterm?.name || "—"} />
-            <FieldRow label="Payment Term" value={shipment.paymentTerm?.name || "—"} />
+            {editing ? (
+              <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+                <div><Lbl>Incoterm</Lbl>
+                  <select value={editFields.incoterm || ""} onChange={e => setEditFields(p => ({ ...p, incoterm: Number(e.target.value) || null }))} style={inputStyle}>
+                    <option value="">— Not set —</option>
+                    {(incoterms || []).map((i: any) => <option key={i.id} value={i.id}>{i.code} — {i.name}</option>)}
+                  </select>
+                </div>
+                <div><Lbl>Payment Term</Lbl>
+                  <select value={editFields.payment_term_id || ""} onChange={e => setEditFields(p => ({ ...p, payment_term_id: Number(e.target.value) || null }))} style={inputStyle}>
+                    <option value="">— Not set —</option>
+                    {(paymentTerms || []).map((t: any) => <option key={t.id} value={t.id}>{t.name}</option>)}
+                  </select>
+                </div>
+              </div>
+            ) : (
+              <>
+                <FieldRow label="Incoterm" value={shipment.incoterm?.name || "—"} />
+                <FieldRow label="Payment Term" value={shipment.paymentTerm?.name || "—"} />
+              </>
+            )}
             <FieldRow label="Pricelist" value={shipment.pricelist?.name || "—"} />
 
           </Card>
