@@ -264,14 +264,6 @@ export async function fetchPurchaseAgreements(): Promise<OdooPurchaseAgreement[]
         "product_id",
         "order_count",
         "line_ids",
-        "x_studio_total_po_quantity_in_tons",
-        "x_studio_purchase_incoterm_condition",
-        "x_studio_purchase_currency",
-        "x_studio_insurance_included",
-        "x_studio_payment_terms",
-        "x_studio_notes",
-        "x_studio_supply_start_date",
-        "x_studio_supply_end_date",
       ],
     }
   );
@@ -316,16 +308,6 @@ export async function fetchSalesAgreements(): Promise<OdooSalesAgreement[]> {
         "name",
         "display_name",
         "partner_id",
-        "x_studio_customer",
-        "x_studio_ultimate_customer",
-        "x_studio_sales_incoterm_condition",
-        "x_studio_sales_currency",
-        "x_studio_insurance_included",
-        "x_studio_total_po_quantity_in_tons",
-        "x_studio_supply_start_date",
-        "x_studio_supply_end_date",
-        "x_studio_notes",
-        "x_studio_payment_terms",
         "sale_order_count",
         "sale_order_template_line_ids",
         "company_id",
@@ -891,14 +873,12 @@ export async function createPurchaseAgreement(
   if (input.reference) vals.reference = input.reference;
   if (input.date_start) vals.date_start = input.date_start;
   if (input.date_end) vals.date_end = input.date_end;
-  if (input.x_studio_purchase_incoterm_condition) vals.x_studio_purchase_incoterm_condition = input.x_studio_purchase_incoterm_condition;
   if (input.x_studio_purchase_currency) vals.x_studio_purchase_currency = input.x_studio_purchase_currency;
   if (input.x_studio_insurance_included !== undefined) vals.x_studio_insurance_included = input.x_studio_insurance_included;
   if (input.x_studio_total_po_quantity_in_tons !== undefined) vals.x_studio_total_po_quantity_in_tons = input.x_studio_total_po_quantity_in_tons;
   if (input.x_studio_payment_terms) vals.x_studio_payment_terms = input.x_studio_payment_terms;
   if (input.x_studio_notes) vals.x_studio_notes = input.x_studio_notes;
   if (input.x_studio_supply_start_date) vals.x_studio_supply_start_date = input.x_studio_supply_start_date;
-  if (input.x_studio_supply_end_date) vals.x_studio_supply_end_date = input.x_studio_supply_end_date;
 
   // Create lines using Odoo one2many command: (0, 0, {vals})
   if (input.lines.length > 0) {
@@ -960,14 +940,12 @@ export async function updatePurchaseAgreement(
   if (input.date_start !== undefined) vals.date_start = input.date_start;
   if (input.date_end !== undefined) vals.date_end = input.date_end;
   if (input.currency_id !== undefined) vals.currency_id = input.currency_id;
-  if (input.x_studio_purchase_incoterm_condition !== undefined) vals.x_studio_purchase_incoterm_condition = input.x_studio_purchase_incoterm_condition;
   if (input.x_studio_purchase_currency !== undefined) vals.x_studio_purchase_currency = input.x_studio_purchase_currency;
   if (input.x_studio_insurance_included !== undefined) vals.x_studio_insurance_included = input.x_studio_insurance_included;
   if (input.x_studio_total_po_quantity_in_tons !== undefined) vals.x_studio_total_po_quantity_in_tons = input.x_studio_total_po_quantity_in_tons;
   if (input.x_studio_payment_terms !== undefined) vals.x_studio_payment_terms = input.x_studio_payment_terms;
   if (input.x_studio_notes !== undefined) vals.x_studio_notes = input.x_studio_notes;
   if (input.x_studio_supply_start_date !== undefined) vals.x_studio_supply_start_date = input.x_studio_supply_start_date;
-  if (input.x_studio_supply_end_date !== undefined) vals.x_studio_supply_end_date = input.x_studio_supply_end_date;
 
   const lineCommands: unknown[] = [];
   if (input.addLines) {
@@ -1048,7 +1026,6 @@ export async function createSalesAgreement(
   if (input.x_studio_insurance_included !== undefined) vals.x_studio_insurance_included = input.x_studio_insurance_included;
   if (input.x_studio_total_po_quantity_in_tons !== undefined) vals.x_studio_total_po_quantity_in_tons = input.x_studio_total_po_quantity_in_tons;
   if (input.x_studio_supply_start_date) vals.x_studio_supply_start_date = input.x_studio_supply_start_date;
-  if (input.x_studio_supply_end_date) vals.x_studio_supply_end_date = input.x_studio_supply_end_date;
   if (input.x_studio_notes) vals.x_studio_notes = input.x_studio_notes;
   if (input.x_studio_payment_terms) vals.x_studio_payment_terms = input.x_studio_payment_terms;
   if (input.number_of_days !== undefined) vals.number_of_days = input.number_of_days;
@@ -1114,7 +1091,6 @@ export async function updateSalesAgreement(
   if (input.x_studio_insurance_included !== undefined) vals.x_studio_insurance_included = input.x_studio_insurance_included;
   if (input.x_studio_total_po_quantity_in_tons !== undefined) vals.x_studio_total_po_quantity_in_tons = input.x_studio_total_po_quantity_in_tons;
   if (input.x_studio_supply_start_date !== undefined) vals.x_studio_supply_start_date = input.x_studio_supply_start_date;
-  if (input.x_studio_supply_end_date !== undefined) vals.x_studio_supply_end_date = input.x_studio_supply_end_date;
   if (input.x_studio_notes !== undefined) vals.x_studio_notes = input.x_studio_notes;
   if (input.x_studio_payment_terms !== undefined) vals.x_studio_payment_terms = input.x_studio_payment_terms;
   if (input.number_of_days !== undefined) vals.number_of_days = input.number_of_days;
