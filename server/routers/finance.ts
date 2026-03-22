@@ -204,7 +204,7 @@ export const financeRouter = router({
       const aging = { current: { amount: 0, count: 0 }, d31: { amount: 0, count: 0 }, d61: { amount: 0, count: 0 }, d90: { amount: 0, count: 0 } };
       const overdueList: Array<{
         id: number; ref: string; customer: string; amount: number;
-        dueDate: string; daysOverdue: number; risk: string; soRef: string; soId: number | null;
+        dueDate: string; daysOverdue: number; risk: string; soRef: string; soId: number | null; paymentTerm: string; refDate: string;
       }> = [];
 
       // ── Portal due-date logic: Payment Reference Date + payment term days ────
@@ -212,7 +212,7 @@ export const financeRouter = router({
 
       // Batch-fetch SOs to get x_payment_reference_date + payment_term_id + id
       const allSoNames = [...new Set(invoices.map(inv => (inv.invoice_origin as string)||"").filter(Boolean))];
-      const soMap: Record<string, { refDate: string; termId: number; soId: number }> = {};
+      const soMap: Record<string, { refDate: string; termId: number; soId: number; termName: string }> = {};
       if (allSoNames.length > 0) {
         const sos = await exKw<{id:number;name:string;x_payment_reference_date:string|false;payment_term_id:[number,string]|false}[]>(
           "sale.order","search_read",[[["name","in",allSoNames]]],
@@ -223,6 +223,7 @@ export const financeRouter = router({
             refDate: (so.x_payment_reference_date as string) || "",
             termId: Array.isArray(so.payment_term_id) ? so.payment_term_id[0] : 0,
             soId: so.id,
+            termName: Array.isArray(so.payment_term_id) ? so.payment_term_id[1] : "",
           };
         });
       }
@@ -286,6 +287,8 @@ export const financeRouter = router({
             risk: daysOld > 90 ? "high" : daysOld > 30 ? "medium" : "low",
             soRef: soName,
             soId: so ? so.soId : null,
+            paymentTerm: so ? so.termName : "",
+            refDate: so ? so.refDate : "",
           });
         }
       });
