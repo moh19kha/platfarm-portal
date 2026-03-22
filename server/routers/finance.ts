@@ -207,12 +207,73 @@ export const financeRouter = router({
         dueDate: string; daysOverdue: number; risk: string; soRef: string; soId: number | null;
       }> = [];
 
-      invoices.forEach(inv => {
-        const dueDate = inv.invoice_date_due || inv.date;
+      // ── Portal due-date logic: Payment Reference Date + payment term days ────
+      const { executeKw: exKw } = await import("../odoo");
+
+      // Batch-fetch SOs to get x_payment_reference_date + payment_term_id + id
+      const allSoNames = [...new Set(invoices.map(inv => (inv.invoice_origin as string)||"").filter(Boolean))];
+      const soMap: Record<string, { refDate: string; termId: number; soId: number }> = {};
+      if (allSoNames.length > 0) {
+        const sos = await exKw<{id:number;name:string;x_payment_reference_date:string|false;payment_term_id:[number,string]|false}[]>(
+          "sale.order","search_read",[[["name","in",allSoNames]]],
+          {fields:["id","name","x_payment_reference_date","payment_term_id"],limit:2000}
+        );
+        sos.forEach((so: any) => {
+          soMap[so.name] = {
+            refDate: (so.x_payment_reference_date as string) || "",
+            termId: Array.isArray(so.payment_term_id) ? so.payment_term_id[0] : 0,
+            soId: so.id,
+          };
+        });
+      }
+
+      // Batch-fetch payment term lines (use the line with the largest nb_days = balance payment)
+      const termIds = [...new Set(Object.values(soMap).map((s: any) => s.termId).filter(Boolean))];
+      const termMap: Record<number, { nb_days: number; delay_type: string }> = {};
+      if (termIds.length > 0) {
+        const lines = await exKw<{payment_id:[number,string];nb_days:number;delay_type:string}[]>(
+          "account.payment.term.line","search_read",[[["payment_id","in",termIds]]],
+          {fields:["payment_id","nb_days","delay_type"],limit:500}
+        );
+        lines.forEach((l: any) => {
+          const tid = Array.isArray(l.payment_id) ? l.payment_id[0] : 0;
+          if (!termMap[tid] || l.nb_days > termMap[tid].nb_days)
+            termMap[tid] = { nb_days: l.nb_days, delay_type: l.delay_type };
+        });
+      }
+
+      // Compute portal due date: refDate + nb_days adjusted for delay_type
+      function portalDueDate(refDate: string, nb_days: number, delay_type: string): string {
+        const d = new Date(refDate);
+        if (delay_type === "days_after_end_of_month") {
+          d.setMonth(d.getMonth() + 1, 0); // last day of current month
+        } else if (delay_type === "days_after_end_of_next_month") {
+          d.setMonth(d.getMonth() + 2, 0); // last day of next month
+        }
+        d.setDate(d.getDate() + nb_days);
+        return d.toISOString().slice(0, 10);
+      }
+
+      // Resolve effective due date for an invoice using portal logic first, Odoo as fallback
+      function effectiveDueDate(inv: any): string {
+        const soName = (inv.invoice_origin as string) || "";
+        const so = soName ? soMap[soName] : null;
+        if (so && so.refDate && so.termId && termMap[so.termId]) {
+          const { nb_days, delay_type } = termMap[so.termId];
+          return portalDueDate(so.refDate, nb_days, delay_type);
+        }
+        return (inv.invoice_date_due as string) || (inv.date as string);
+      }
+
+      invoices.forEach((inv: any) => {
+        const dueDate = effectiveDueDate(inv);
         const daysOld = daysBetween(dueDate, t);
         const bucket = daysOld <= 0 ? "current" : daysOld <= 30 ? "d31" : daysOld <= 60 ? "d61" : "d90";
         aging[bucket].amount += inv.amount_residual;
         aging[bucket].count++;
+
+        const soName = (inv.invoice_origin as string) || "";
+        const so = soName ? soMap[soName] : null;
 
         if (daysOld > 0) {
           overdueList.push({
@@ -223,21 +284,11 @@ export const financeRouter = router({
             dueDate,
             daysOverdue: daysOld,
             risk: daysOld > 90 ? "high" : daysOld > 30 ? "medium" : "low",
-            soRef: (inv.invoice_origin as string) || "",
-            soId: null,
+            soRef: soName,
+            soId: so ? so.soId : null,
           });
         }
       });
-
-      // Batch-lookup SO ids so we can link overdue rows to the portal shipment page
-      const { executeKw: exKw2 } = await import("../odoo");
-      const soNames2 = [...new Set(overdueList.map(o => o.soRef).filter(Boolean))];
-      if (soNames2.length > 0) {
-        const sos2 = await exKw2<{id:number;name:string}[]>("sale.order","search_read",[[["name","in",soNames2]]],{fields:["id","name"],limit:2000});
-        const soIdMap2: Record<string,number> = {};
-        sos2.forEach(s => { soIdMap2[s.name] = s.id; });
-        overdueList.forEach(o => { if (o.soRef && soIdMap2[o.soRef]) o.soId = soIdMap2[o.soRef]; });
-      }
 
       // Customer concentration
       const customerMap: Record<string, { name: string; amount: number; invoiceCount: number; oldestDays: number }> = {};
@@ -246,7 +297,7 @@ export const financeRouter = router({
         if (!customerMap[name]) customerMap[name] = { name, amount: 0, invoiceCount: 0, oldestDays: 0 };
         customerMap[name].amount += inv.amount_residual;
         customerMap[name].invoiceCount++;
-        const dueDate = inv.invoice_date_due || inv.date;
+        const dueDate = effectiveDueDate(inv);
         const daysOld = Math.max(0, daysBetween(dueDate, t));
         customerMap[name].oldestDays = Math.max(customerMap[name].oldestDays, daysOld);
       });
