@@ -35,7 +35,7 @@ const SectionError = () => (
     <div style={{ textAlign: "center" }}>
       <div style={{ fontSize: 28, marginBottom: 8 }}>⚠</div>
       <div style={{ fontSize: 13, fontWeight: 600, color: "#C94444", marginBottom: 4 }}>Failed to load data</div>
-      <div style={{ fontSize: 11, color: C.muted }}>Check your connection or refresh the page.</div>
+      <div style={{ fontSize: 11, color: "#95A09C" }}>Check your connection or refresh the page.</div>
     </div>
   </div>
 );
