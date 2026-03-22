@@ -333,6 +333,7 @@ export const financeRouter = router({
 
       return {
         total: Math.round(totalAR),
+        overdueTotal: Math.round(totalAR - aging.current.amount),
         dso,
         collectionRate,
         badDebt,
