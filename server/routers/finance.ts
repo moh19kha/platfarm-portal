@@ -289,9 +289,9 @@ export const financeRouter = router({
             soId: so ? so.soId : null,
             paymentTerm: so ? so.termName : "",
             refDate: so ? so.refDate : "",
-            paid: Math.round(inv.amount_total - inv.amount_residual_currency),
-            amountNative: Math.round(inv.amount_residual_currency),
-            paidNative: Math.round(inv.amount_total - inv.amount_residual_currency),
+            paid: Math.round(inv.amount_total_signed - inv.amount_residual),
+            amountNative: Math.round(inv.amount_total),
+            paidNative: Math.round(inv.amount_total_signed - inv.amount_residual),
             currencyCode: Array.isArray(inv.currency_id) ? (inv.currency_id as [number,string])[1] : "AED",
           });
         }
