@@ -197,7 +197,12 @@ export const financeRouter = router({
         fetchRevenueTotal(companyId, new Date(new Date().setFullYear(new Date().getFullYear() - 1)).toISOString().slice(0, 10), t),
       ]);
 
-      const totalAR = invoices.reduce((s, inv) => s + inv.amount_residual, 0);
+      // AED-equivalent outstanding for each invoice (amount_total_signed × outstanding_fraction)
+      const aedOut = (inv: any): number => {
+        const tot = Number(inv.amount_total) || 0;
+        return tot > 0 ? (Number(inv.amount_total_signed) || 0) * (Number(inv.amount_residual) / tot) : 0;
+      };
+      const totalAR = invoices.reduce((s, inv) => s + aedOut(inv), 0);
       const dso = revenue > 0 ? Math.round((totalAR / revenue) * 365) : 0;
 
       // Aging buckets
@@ -270,7 +275,7 @@ export const financeRouter = router({
         const dueDate = effectiveDueDate(inv);
         const daysOld = daysBetween(dueDate, t);
         const bucket = daysOld <= 0 ? "current" : daysOld <= 30 ? "d31" : daysOld <= 60 ? "d61" : "d90";
-        aging[bucket].amount += inv.amount_residual;
+        aging[bucket].amount += aedOut(inv);
         aging[bucket].count++;
 
         const soName = (inv.invoice_origin as string) || "";
@@ -281,7 +286,7 @@ export const financeRouter = router({
             id: inv.id,
             ref: inv.name,
             customer: inv.partner_id ? (inv.partner_id as [number, string])[1] : "Unknown",
-            amount: Math.round(inv.amount_residual),
+            amount: Math.round(aedOut(inv)),
             dueDate,
             daysOverdue: daysOld,
             risk: daysOld > 90 ? "high" : daysOld > 30 ? "medium" : "low",
@@ -289,9 +294,9 @@ export const financeRouter = router({
             soId: so ? so.soId : null,
             paymentTerm: so ? so.termName : "",
             refDate: so ? so.refDate : "",
-            paid: Math.round(inv.amount_total_signed - inv.amount_residual),
-            amountNative: Math.round(inv.amount_total),
-            paidNative: Math.round(inv.amount_total_signed - inv.amount_residual),
+            paid: Math.round(Number(inv.amount_total_signed) - aedOut(inv)),
+            amountNative: Math.round(Number(inv.amount_residual)),
+            paidNative: Math.round(Number(inv.amount_total) - Number(inv.amount_residual)),
             currencyCode: Array.isArray(inv.currency_id) ? (inv.currency_id as [number,string])[1] : "AED",
           });
         }
@@ -302,7 +307,7 @@ export const financeRouter = router({
       invoices.forEach(inv => {
         const name = inv.partner_id ? (inv.partner_id as [number, string])[1] : "Unknown";
         if (!customerMap[name]) customerMap[name] = { name, amount: 0, invoiceCount: 0, oldestDays: 0 };
-        customerMap[name].amount += inv.amount_residual;
+        customerMap[name].amount += aedOut(inv);
         customerMap[name].invoiceCount++;
         const dueDate = effectiveDueDate(inv);
         const daysOld = Math.max(0, daysBetween(dueDate, t));
