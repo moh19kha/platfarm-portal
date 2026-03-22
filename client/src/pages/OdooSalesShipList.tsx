@@ -124,6 +124,7 @@ export function OdooSalesShipList({ activeCompanyId, onSelectShipment, onNew, on
       case "loads": return row.numberOfLoads || 0;
       case "amount": return row.amountTotal;
       case "dateOrder": return row.dateOrder || "";
+      case "paymentOverdueDays": return (row as any).paymentOverdueDays ?? 9999;
       default: return "";
     }
   }, []);
@@ -295,7 +296,7 @@ export function OdooSalesShipList({ activeCompanyId, onSelectShipment, onNew, on
                   <SortTh column="loads" currentColumn={sort.column} currentDirection={sort.direction} onSort={toggleSort}>Loads</SortTh>
                   <SortTh column="amount" currentColumn={sort.column} currentDirection={sort.direction} onSort={toggleSort} right>Amount</SortTh>
                   <SortTh column="dateOrder" currentColumn={sort.column} currentDirection={sort.direction} onSort={toggleSort}>SO Date</SortTh>
-                  <th style={{ padding: "6px 10px", fontSize: 9, fontWeight: 700, color: "#4A7C59", textTransform: "uppercase", letterSpacing: 0.5, whiteSpace: "nowrap" }}>Payment Due</th>
+                  <SortTh column="paymentOverdueDays" currentColumn={sort.column} currentDirection={sort.direction} onSort={toggleSort}>Payment Due</SortTh>
                 </tr>
               </thead>
               <tbody>
