@@ -150,7 +150,13 @@ function vitePluginManusDebugCollector(): Plugin {
   };
 }
 
-const plugins = [react(), tailwindcss(), jsxLocPlugin(), vitePluginManusRuntime(), vitePluginManusDebugCollector()];
+// Only include Manus/Replit dev tools during development (not production builds)
+const isDevMode = process.env.NODE_ENV !== "production";
+const plugins = [
+  react(),
+  tailwindcss(),
+  ...(isDevMode ? [jsxLocPlugin(), vitePluginManusRuntime(), vitePluginManusDebugCollector()] : []),
+];
 
 export default defineConfig({
   plugins,
@@ -172,14 +178,13 @@ export default defineConfig({
       output: {
         manualChunks(id) {
           if (!id.includes("node_modules")) return;
-          // React core — hashed separately so redeploys dont bust react cache
-          if (id.includes("/react-dom/") || (id.includes("/react/") && !id.includes("recharts"))) return "vendor-react";
+          // React core + Radix UI in same chunk — avoids circular ESM dependency
+          // (vendor-react imports getDefault helper from radix at init time)
+          if (id.includes("/react-dom/") || (id.includes("/react/") && !id.includes("recharts")) || id.includes("/@radix-ui/")) return "vendor-react";
           // Data-fetching stack
           if (id.includes("/@tanstack/") || id.includes("/@trpc/") || id.includes("/superjson")) return "vendor-query";
           // Routing + toasts + icons
           if (id.includes("/wouter/") || id.includes("/sonner/") || id.includes("/lucide-react/")) return "vendor-ui";
-          // Radix-UI primitives — shared across all shadcn/ui components
-          if (id.includes("/@radix-ui/")) return "vendor-radix";
         },
       },
     },

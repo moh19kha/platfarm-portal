@@ -102,13 +102,16 @@ export const odooRouter = router({
       product: a.product_id ? a.product_id[1] : null,
       orderCount: a.order_count,
       totalQuantityTons: a.x_studio_total_po_quantity_in_tons || 0,
-      incoterm: null,
-      purchaseCurrency: null,
+      incoterm: a.x_studio_char_field_5f0_1j3mdeo77 || null,
+      purchaseCurrency: a.currency_id ? a.currency_id[1] : null,
       ultimateCustomer: a.x_studio_many2one_field_6iu_1j3mdo0jj
         ? a.x_studio_many2one_field_6iu_1j3mdo0jj[1]
         : null,
+      ultimateCustomerId: a.x_studio_many2one_field_6iu_1j3mdo0jj
+        ? a.x_studio_many2one_field_6iu_1j3mdo0jj[0]
+        : null,
       insuranceIncluded: a.x_studio_insurance_included || false,
-      paymentTerms: null,
+      paymentTerms: a.x_studio_payment_terms || null,
       notes: null,
       supplyStartDate: null,
       supplyEndDate: null,
@@ -158,14 +161,21 @@ export const odooRouter = router({
       insuranceIncluded: a.x_studio_insurance_included || false,
       totalQuantityTons: a.x_studio_total_po_quantity_in_tons || 0,
       supplyStartDate: a.x_studio_supply_start_date || null,
-      supplyEndDate: null,
+      supplyEndDate: a.x_studio_supply_end_date || null,
       notes: a.x_studio_notes || null,
       paymentTerms: a.x_studio_payment_term_1 || a.x_studio_payment_terms || null,
       salesOrderCount: a.sale_order_count,
       companyId: a.company_id ? a.company_id[0] : null,
       companyName: a.company_id ? a.company_id[1] : null,
       active: a.active,
-      durationDays: a.number_of_days,
+      durationDays: (() => {
+        const s = a.x_studio_supply_start_date;
+        const e = a.x_studio_supply_end_date;
+        if (s && e) {
+          return Math.round((new Date(e).getTime() - new Date(s).getTime()) / 86400000);
+        }
+        return a.number_of_days || 0;
+      })(),
       createdAt: a.create_date,
       lineIds: a.sale_order_template_line_ids,
       lines: (linesByTemplate.get(a.id) || []).map((l) => ({
@@ -256,7 +266,8 @@ export const odooRouter = router({
         reference: z.string().optional(),
         date_start: z.string().optional(),
         date_end: z.string().optional(),
-        x_studio_purchase_incoterm_condition: z.string().optional(),
+        x_studio_char_field_5f0_1j3mdeo77: z.string().optional(),
+        x_studio_many2one_field_6iu_1j3mdo0jj: z.number().optional(),
         x_studio_purchase_currency: z.string().optional(),
         x_studio_insurance_included: z.boolean().optional(),
         x_studio_total_po_quantity_in_tons: z.number().optional(),
@@ -288,7 +299,8 @@ export const odooRouter = router({
         date_start: z.string().optional(),
         date_end: z.string().optional(),
         currency_id: z.number().optional(),
-        x_studio_purchase_incoterm_condition: z.string().optional(),
+        x_studio_char_field_5f0_1j3mdeo77: z.string().optional(),
+        x_studio_many2one_field_6iu_1j3mdo0jj: z.number().optional(),
         x_studio_purchase_currency: z.string().optional(),
         x_studio_insurance_included: z.boolean().optional(),
         x_studio_total_po_quantity_in_tons: z.number().optional(),

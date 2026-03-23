@@ -1,4 +1,4 @@
-import { boolean, date, decimal, int, json, mysqlEnum, mysqlTable, text, timestamp, uniqueIndex, varchar } from "drizzle-orm/mysql-core";
+import { boolean, date, decimal, float, int, json, mysqlEnum, mysqlTable, text, timestamp, uniqueIndex, varchar } from "drizzle-orm/mysql-core";
 
 /**
  * Core user table backing auth flow.
@@ -701,3 +701,194 @@ export const salaryHistory = mysqlTable("salary_history", {
 });
 export type SalaryHistory = typeof salaryHistory.$inferSelect;
 export type InsertSalaryHistory = typeof salaryHistory.$inferInsert;
+
+// ── Property Portfolio Management ──────────────────────────────────────────────
+
+export const userSettings = mysqlTable("user_settings", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull().unique(),
+  egpToAedRate: decimal("egpToAedRate", { precision: 12, scale: 6 }).default("0.077000").notNull(),
+  defaultCurrency: mysqlEnum("defaultCurrency", ["AED", "EGP", "Aggregated"]).default("AED").notNull(),
+  emailNotifications: mysqlEnum("emailNotifications", ["on", "off"]).default("on").notNull(),
+  paymentReminders: mysqlEnum("paymentReminders", ["on", "off"]).default("on").notNull(),
+  reminderDaysBefore: int("reminderDaysBefore").default(7).notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+export type UserSettings = typeof userSettings.$inferSelect;
+export type InsertUserSettings = typeof userSettings.$inferInsert;
+
+export const properties = mysqlTable("properties", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull(),
+  propertyName: varchar("propertyName", { length: 255 }).notNull(),
+  developerName: varchar("developerName", { length: 255 }).notNull(),
+  projectName: varchar("projectName", { length: 255 }).notNull(),
+  country: mysqlEnum("country", ["UAE", "Egypt"]).notNull(),
+  city: varchar("city", { length: 128 }).notNull(),
+  district: varchar("district", { length: 128 }),
+  fullAddress: text("fullAddress"),
+  latitude: float("latitude"),
+  longitude: float("longitude"),
+  unitType: mysqlEnum("unitType", ["Apartment", "Villa", "Townhouse", "Twin House", "Duplex", "Chalet", "Penthouse", "Studio", "Land"]).notNull(),
+  bedrooms: int("bedrooms").default(0),
+  bathrooms: int("bathrooms"),
+  builtUpAreaSqm: float("builtUpAreaSqm"),
+  plotAreaSqm: float("plotAreaSqm"),
+  floorNumber: int("floorNumber"),
+  unitNumber: varchar("unitNumber", { length: 64 }),
+  buildingName: varchar("buildingName", { length: 255 }),
+  viewType: varchar("viewType", { length: 128 }),
+  furnishing: mysqlEnum("furnishing", ["Unfurnished", "Semi-Furnished", "Fully-Furnished"]),
+  parkingSpaces: int("parkingSpaces").default(0),
+  purchaseDate: varchar("purchaseDate", { length: 10 }).notNull(),
+  expectedDelivery: varchar("expectedDelivery", { length: 10 }),
+  actualDelivery: varchar("actualDelivery", { length: 10 }),
+  deliveryStatus: mysqlEnum("deliveryStatus", ["Off-Plan", "Under-Construction", "Delivered", "Handed-Over"]).notNull(),
+  totalPrice: decimal("totalPrice", { precision: 18, scale: 2 }),
+  currency: mysqlEnum("currency", ["AED", "EGP"]).notNull(),
+  currentMarketValue: decimal("currentMarketValue", { precision: 18, scale: 2 }),
+  valueLastUpdated: varchar("valueLastUpdated", { length: 10 }),
+  purpose: mysqlEnum("purpose", ["Primary Residence", "Investment", "Holiday Home", "Rental"]),
+  notes: text("notes"),
+  status: mysqlEnum("status", ["Active", "Sold", "Transferred"]).default("Active").notNull(),
+  purchaseType: mysqlEnum("purchaseType", ["Direct", "Mortgage", "Secondary Market"]),
+  originalContractValue: decimal("originalContractValue", { precision: 18, scale: 2 }),
+  premiumPaid: decimal("premiumPaid", { precision: 18, scale: 2 }),
+  sellerName: varchar("sellerName", { length: 255 }),
+  sellerContact: varchar("sellerContact", { length: 255 }),
+  saleDate: varchar("saleDate", { length: 10 }),
+  salePrice: decimal("salePrice", { precision: 18, scale: 2 }),
+  buyerName: varchar("buyerName", { length: 255 }),
+  buyerContact: varchar("buyerContact", { length: 255 }),
+  buyerEmail: varchar("buyerEmail", { length: 320 }),
+  premiumReceived: decimal("premiumReceived", { precision: 18, scale: 2 }),
+  saleNotes: text("saleNotes"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+export type Property = typeof properties.$inferSelect;
+export type InsertProperty = typeof properties.$inferInsert;
+
+export const activityLog = mysqlTable("activity_log", {
+  id: int("id").autoincrement().primaryKey(),
+  propertyId: int("propertyId").notNull(),
+  userId: int("userId").notNull(),
+  type: mysqlEnum("type", ["note", "visit", "payment", "document", "maintenance", "valuation", "other"]).notNull(),
+  title: varchar("title", { length: 255 }).notNull(),
+  description: text("description"),
+  date: varchar("date", { length: 10 }).notNull(),
+  amount: decimal("amount", { precision: 18, scale: 2 }),
+  currency: mysqlEnum("currency", ["AED", "EGP"]),
+  contactName: varchar("contactName", { length: 255 }),
+  contactPhone: varchar("contactPhone", { length: 64 }),
+  contactEmail: varchar("contactEmail", { length: 320 }),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+export type ActivityLog = typeof activityLog.$inferSelect;
+export type InsertActivityLog = typeof activityLog.$inferInsert;
+
+export const paymentSchedules = mysqlTable("payment_schedules", {
+  id: int("id").autoincrement().primaryKey(),
+  propertyId: int("propertyId").notNull(),
+  installmentLabel: varchar("installmentLabel", { length: 255 }).notNull(),
+  installmentNumber: int("installmentNumber").notNull(),
+  dueDate: varchar("dueDate", { length: 10 }).notNull(),
+  amountDue: decimal("amountDue", { precision: 18, scale: 2 }).notNull(),
+  amountPaid: decimal("amountPaid", { precision: 18, scale: 2 }).default("0").notNull(),
+  paymentDate: varchar("paymentDate", { length: 10 }),
+  paymentMethod: varchar("paymentMethod", { length: 128 }),
+  paymentReference: varchar("paymentReference", { length: 255 }),
+  paymentStatus: mysqlEnum("paymentStatus", ["Paid", "Pending", "Overdue", "Partially-Paid"]).default("Pending").notNull(),
+  percentageOfTotal: float("percentageOfTotal"),
+  notes: text("notes"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+export type PaymentSchedule = typeof paymentSchedules.$inferSelect;
+export type InsertPaymentSchedule = typeof paymentSchedules.$inferInsert;
+
+export const contracts = mysqlTable("contracts", {
+  id: int("id").autoincrement().primaryKey(),
+  propertyId: int("propertyId").notNull(),
+  contractType: mysqlEnum("contractType", ["SPA", "MOU", "Addendum", "NOC", "Title Deed", "Other"]).notNull(),
+  contractNumber: varchar("contractNumber", { length: 128 }),
+  signedDate: varchar("signedDate", { length: 10 }),
+  expiryDate: varchar("expiryDate", { length: 10 }),
+  counterpartyName: varchar("counterpartyName", { length: 255 }),
+  notes: text("notes"),
+  documentId: int("documentId"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+export type Contract = typeof contracts.$inferSelect;
+export type InsertContract = typeof contracts.$inferInsert;
+
+export const propDocuments = mysqlTable("prop_documents", {
+  id: int("id").autoincrement().primaryKey(),
+  propertyId: int("propertyId"),
+  userId: int("userId").notNull(),
+  documentType: varchar("documentType", { length: 128 }).notNull(),
+  fileName: varchar("fileName", { length: 255 }).notNull(),
+  fileUrl: text("fileUrl").notNull(),
+  fileSize: int("fileSize"),
+  mimeType: varchar("mimeType", { length: 128 }),
+  description: text("description"),
+  uploadDate: varchar("uploadDate", { length: 10 }),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+export type PropDocument = typeof propDocuments.$inferSelect;
+export type InsertPropDocument = typeof propDocuments.$inferInsert;
+
+export const rentals = mysqlTable("rentals", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull(),
+  propertyName: varchar("propertyName", { length: 255 }).notNull(),
+  unitRef: varchar("unitRef", { length: 128 }),
+  location: varchar("location", { length: 255 }),
+  landlord: varchar("landlord", { length: 255 }),
+  contractNumber: varchar("contractNumber", { length: 128 }),
+  contractStartDate: varchar("contractStartDate", { length: 10 }).notNull(),
+  contractEndDate: varchar("contractEndDate", { length: 10 }).notNull(),
+  annualRent: decimal("annualRent", { precision: 18, scale: 2 }).notNull(),
+  currency: mysqlEnum("currency", ["AED", "EGP"]).default("AED").notNull(),
+  securityDeposit: decimal("securityDeposit", { precision: 18, scale: 2 }),
+  numberOfCheques: int("numberOfCheques").default(4),
+  bankName: varchar("bankName", { length: 255 }),
+  status: mysqlEnum("status", ["Active", "Expired", "Terminated", "Renewed"]).default("Active").notNull(),
+  notes: text("notes"),
+  contractDocumentId: int("contractDocumentId"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+export type Rental = typeof rentals.$inferSelect;
+export type InsertRental = typeof rentals.$inferInsert;
+
+export const rentalPayments = mysqlTable("rental_payments", {
+  id: int("id").autoincrement().primaryKey(),
+  rentalId: int("rentalId").notNull(),
+  chequeNumber: varchar("chequeNumber", { length: 64 }),
+  installmentLabel: varchar("installmentLabel", { length: 255 }).notNull(),
+  installmentNumber: int("installmentNumber").notNull(),
+  dueDate: varchar("dueDate", { length: 10 }).notNull(),
+  amount: decimal("amount", { precision: 18, scale: 2 }).notNull(),
+  paymentStatus: mysqlEnum("paymentStatus", ["Paid", "Pending", "Overdue", "Bounced"]).default("Pending").notNull(),
+  paymentDate: varchar("paymentDate", { length: 10 }),
+  notes: text("notes"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+export type RentalPayment = typeof rentalPayments.$inferSelect;
+export type InsertRentalPayment = typeof rentalPayments.$inferInsert;
+
+export const reminderAlertsSent = mysqlTable("reminder_alerts_sent", {
+  id: int("id").autoincrement().primaryKey(),
+  entityType: mysqlEnum("entityType", ["payment_schedule", "rental_payment"]).notNull(),
+  entityId: int("entityId").notNull(),
+  daysBefore: int("daysBefore").notNull(),
+  sentAt: timestamp("sentAt").defaultNow().notNull(),
+});
+export type ReminderAlertSent = typeof reminderAlertsSent.$inferSelect;
+export type InsertReminderAlertSent = typeof reminderAlertsSent.$inferInsert;

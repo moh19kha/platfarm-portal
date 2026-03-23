@@ -23,6 +23,7 @@ import { invitationsRouter } from "./routers/invitations";
 import { offlineOpsRouter } from "./routers/offlineOps";
 import { companyDocumentsRouter } from "./routers/companyDocuments";
 import { pceRouter } from "./routers/pce";
+import { propertyRouter } from "./routers/property";
 
 export const appRouter = router({
   system: systemRouter,
@@ -100,6 +101,10 @@ export const appRouter = router({
   companyDocs: companyDocumentsRouter,
   // Petty Cash & Expenses
   pce: pceRouter,
+
+  // Property Portfolio
+  property: propertyRouter,
+
 });
 
 export type AppRouter = typeof appRouter;

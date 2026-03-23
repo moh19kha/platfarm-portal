@@ -38,11 +38,17 @@ async function startServer() {
     })
   );
 
-  // ── Other static files: normal caching ──────────────────────────────────
+  // ── Other static files: normal caching (index:false so catch-all handles HTML) ─
   app.use(express.static(staticPath, {
     maxAge: "1h",
     etag: true,
+    index: false,
   }));
+
+  // ── Missing hashed assets → 404 (prevents stale HTML being returned as JS) ─
+  app.get("/assets/*", (_req, res) => {
+    res.status(404).send("Asset not found");
+  });
 
   // ── HTML: always revalidate so new deploys are picked up immediately ─────
   app.get("*", (_req, res) => {

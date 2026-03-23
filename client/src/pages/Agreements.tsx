@@ -28,6 +28,8 @@ type PurchaseAgreement = {
   currencyId: number | null;
   product: string | null;
   orderCount: number;
+  ultimateCustomer: string | null;
+  ultimateCustomerId: number | null;
   totalQuantityTons: number;
   incoterm: string | null;
   purchaseCurrency: string | null;
@@ -158,6 +160,10 @@ const SalesAgreementCard = memo(({ agr, onClick }: {
   agr: SalesAgreement;
   onClick: () => void;
 }) => {
+  const totalQtyFromLines = agr.lines.reduce((s, l) => s + l.quantity, 0);
+  const cardUom = agr.lines[0]?.uom || "MT";
+  const displayQty = totalQtyFromLines > 0 ? totalQtyFromLines : agr.totalQuantityTons;
+  const displayQtyStr = `${displayQty.toLocaleString()} ${totalQtyFromLines > 0 ? cardUom : "MT"}`;
   return (
     <Card hover onClick={onClick} style={{ cursor: "pointer" }}>
       <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 7, flexWrap: "wrap", gap: 5 }}>
@@ -174,12 +180,12 @@ const SalesAgreementCard = memo(({ agr, onClick }: {
           )}
         </div>
         <div style={{ textAlign: "right" }}>
-          <Val mono big color={C.terra}>{agr.totalQuantityTons.toLocaleString()} MT</Val>
+          <Val mono big color={C.terra}>{displayQtyStr}</Val>
           <Badge v="terra">{agr.salesOrderCount} SO{agr.salesOrderCount !== 1 ? "s" : ""}</Badge>
         </div>
       </div>
       <div className="mob-detail-grid" style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 7, marginBottom: 7 }}>
-        <div><Lbl>Total Qty</Lbl><Val mono>{agr.totalQuantityTons.toLocaleString()} MT</Val></div>
+        <div><Lbl>Total Qty</Lbl><Val mono>{displayQtyStr}</Val></div>
         <div><Lbl>Duration</Lbl><Val mono>{agr.durationDays} days</Val></div>
         <div><Lbl>Company</Lbl><Val>{agr.companyName ? agr.companyName.split("-")[0] : "—"}</Val></div>
       </div>
@@ -355,12 +361,14 @@ function ViewPurchaseDetail({ agr, onClose, onEdit }: {
               <FieldRow label="Reference" value={agr.reference || "—"} mono />
               <FieldRow label="Vendor" value={agr.vendor || "—"} />
               <FieldRow label="Ultimate Customer" value={agr.ultimateCustomer || "—"} />
+              <FieldRow label="Incoterm" value={agr.incoterm || "—"} mono />
               <FieldRow label="Company" value={agr.companyName || "—"} />
               <FieldRow label="Type" value={agr.type ? agr.type.replace(/_/g, " ").replace(/\b\w/g, c => c.toUpperCase()) : "—"} />
               <FieldRow label="Start Date" value={fmtDateStr(agr.dateStart)} mono />
               <FieldRow label="End Date" value={fmtDateStr(agr.dateEnd)} mono />
               <FieldRow label="State" value={stateLabel(agr.state)} />
               <FieldRow label="Currency" value={agr.currency || "—"} mono />
+              <FieldRow label="Payment Terms" value={agr.paymentTerms || "—"} />
             </div>
           </div>
 
@@ -502,8 +510,10 @@ function ViewSalesDetail({ agr, onClose, onEdit }: {
   const { data: linkedSOs, isLoading: sosLoading } = trpc.salesShipments.list.useQuery(
     { templateId: agr.id, limit: 500 }
   );
-  // Calculate fulfillment using totalShipmentWeight from linked SOs (already in tons)
-  const agrQtyTons = agr.totalQuantityTons;
+  // Calculate total qty from product lines; fall back to x_studio field if lines are empty
+  const totalQtyFromLines = agr.lines.reduce((s, l) => s + l.quantity, 0);
+  const detailUom = agr.lines[0]?.uom || "MT";
+  const agrQtyTons = totalQtyFromLines > 0 ? totalQtyFromLines : agr.totalQuantityTons;
   const fulfilledTons = (linkedSOs || []).reduce((sum, so) => {
     return sum + (so.totalShipmentWeight || 0);
   }, 0);
@@ -558,7 +568,7 @@ function ViewSalesDetail({ agr, onClose, onEdit }: {
           {/* KPI Row */}
           <div className="mob-detail-grid" style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr 1fr", gap: 8 }}>
             {[
-              { label: "Total Qty", value: `${agr.totalQuantityTons.toLocaleString()} MT`, color: C.dark },
+              { label: "Total Qty", value: `${agrQtyTons.toLocaleString()} ${totalQtyFromLines > 0 ? detailUom : "MT"}`, color: C.dark },
               { label: "Duration", value: `${agr.durationDays} days`, color: C.dark },
               { label: "SO Count", value: String(agr.salesOrderCount), color: C.terra },
               { label: "Currency", value: agr.currency || "—", color: C.dark },
@@ -585,7 +595,6 @@ function ViewSalesDetail({ agr, onClose, onEdit }: {
               <FieldRow label="Ultimate Customer" value={agr.ultimateCustomer || "—"} />
               <FieldRow label="Company" value={agr.companyName || "—"} />
               <FieldRow label="Incoterm" value={agr.incoterm || "—"} mono />
-              <FieldRow label="Currency" value={agr.currency || "—"} mono />
               <FieldRow label="Insurance" value={agr.insuranceIncluded ? "Yes" : "No"} />
               <FieldRow label="Supply Start" value={fmtDateStr(agr.supplyStartDate)} mono />
               <FieldRow label="Payment Terms" value={agr.paymentTerms || "—"} />
@@ -788,7 +797,7 @@ export function AgrPage({ perms, activeCompanyId }: {
   const q = searchQuery.toLowerCase().trim();
   const filteredPA = companyFilteredPA.filter(a => {
     const matchesSearch = !q || [
-      a.name, a.reference, a.vendor, a.product, a.companyName,
+      a.name, a.reference, a.vendor, a.product, a.companyName, a.ultimateCustomer,
     ].some(f => f?.toLowerCase().includes(q));
     const matchesState = stateFilter === "all" || a.state === stateFilter;
     return matchesSearch && matchesState;
@@ -971,6 +980,8 @@ export function AgrPage({ perms, activeCompanyId }: {
             name: editPA.name,
             vendorId: editPA.vendorId,
             vendor: editPA.vendor,
+            ultimateCustomer: editPA.ultimateCustomer,
+            ultimateCustomerId: editPA.ultimateCustomerId,
             companyId: editPA.companyId,
             currencyId: editPA.currencyId,
             currency: editPA.currency,

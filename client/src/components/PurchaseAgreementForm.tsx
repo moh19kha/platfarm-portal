@@ -40,6 +40,8 @@ interface PurchaseAgreementFormProps {
     name: string;
     vendorId: number | null;
     vendor: string | null;
+    ultimateCustomer: string | null;
+    ultimateCustomerId: number | null;
     reference: string | null;
     dateStart: string | null;
     dateEnd: string | null;
@@ -134,7 +136,7 @@ export default function PurchaseAgreementForm({
   const [dateStart, setDateStart] = useState(editData?.dateStart ?? "");
   const [dateEnd, setDateEnd] = useState(editData?.dateEnd ?? "");
   const [incoterm, setIncoterm] = useState(editData?.incoterm ?? "");
-  const [purchaseCurrency, setPurchaseCurrency] = useState(editData?.purchaseCurrency ?? "");
+  const [purchaseCurrency, setPurchaseCurrency] = useState(editData?.purchaseCurrency ?? editData?.currency ?? "");
   const [insuranceIncluded, setInsuranceIncluded] = useState(editData?.insuranceIncluded ?? false);
   const [totalQuantityTons, setTotalQuantityTons] = useState(editData?.totalQuantityTons ?? 0);
   const [paymentTerms, setPaymentTerms] = useState(editData?.paymentTerms ?? "");
@@ -150,9 +152,22 @@ export default function PurchaseAgreementForm({
   const { data: vendors } = trpc.odoo.vendors.useQuery(
     effectiveVendorCompanyId ? { companyId: effectiveVendorCompanyId } : undefined
   );
+  const { data: customers } = trpc.odoo.customers.useQuery();
+
+  // ─── Ultimate Customer search ────────────────────────────────────────────
+  const [ucId, setUcId] = useState<number | null>(editData?.ultimateCustomerId ?? null);
+  const [ucSearch, setUcSearch] = useState(editData?.ultimateCustomer ?? "");
+  const [ucOpen, setUcOpen] = useState(false);
+  const ucRef = useRef<HTMLDivElement>(null);
+  const filteredUc = useMemo(() => {
+    if (!customers) return [];
+    if (!ucSearch) return customers.slice(0, 20);
+    const q = ucSearch.toLowerCase();
+    return customers.filter(c => c.name.toLowerCase().includes(q)).slice(0, 20);
+  }, [customers, ucSearch]);
 
   // ─── Vendor search ──────────────────────────────────────────────────────
-  const [vendorSearch, setVendorSearch] = useState("");
+  const [vendorSearch, setVendorSearch] = useState(editData?.vendor ?? "");
   const [vendorDropdownOpen, setVendorDropdownOpen] = useState(false);
   const vendorContainerRef = useRef<HTMLDivElement>(null);
   const [vendorDropdownPos, setVendorDropdownPos] = useState({ top: 0, left: 0, width: 300 });
@@ -309,7 +324,8 @@ export default function PurchaseAgreementForm({
           reference: reference || undefined,
           date_start: dateStart || undefined,
           date_end: dateEnd || undefined,
-          x_studio_purchase_incoterm_condition: incoterm || undefined,
+          x_studio_char_field_5f0_1j3mdeo77: incoterm || undefined,
+          x_studio_many2one_field_6iu_1j3mdo0jj: ucId || undefined,
           x_studio_purchase_currency: purchaseCurrency || undefined,
           x_studio_insurance_included: insuranceIncluded,
           x_studio_total_po_quantity_in_tons: totalQuantityTons || undefined,
@@ -357,7 +373,8 @@ export default function PurchaseAgreementForm({
           date_start: dateStart || undefined,
           date_end: dateEnd || undefined,
           currency_id: currencyId || undefined,
-          x_studio_purchase_incoterm_condition: incoterm || undefined,
+          x_studio_char_field_5f0_1j3mdeo77: incoterm || undefined,
+          x_studio_many2one_field_6iu_1j3mdo0jj: ucId || undefined,
           x_studio_purchase_currency: purchaseCurrency || undefined,
           x_studio_insurance_included: insuranceIncluded,
           x_studio_total_po_quantity_in_tons: totalQuantityTons || undefined,
@@ -504,6 +521,47 @@ export default function PurchaseAgreementForm({
                 ))}
               </div>,
               document.body
+            )}
+          </div>
+
+          {/* Row 2b: Ultimate Customer (searchable) */}
+          <div ref={ucRef} style={{ position: "relative" }}>
+            <div style={labelStyle}>Ultimate Customer</div>
+            <input
+              type="text"
+              placeholder="Search partners..."
+              value={ucId ? (customers?.find(c => c.id === ucId)?.name || ucSearch) : ucSearch}
+              onChange={e => { setUcSearch(e.target.value); setUcId(null); setUcOpen(true); }}
+              onFocus={() => setUcOpen(true)}
+              onBlur={() => setTimeout(() => setUcOpen(false), 180)}
+              style={inputStyle}
+            />
+            {ucId && (
+              <div style={{ fontSize: 10, color: C.forest, marginTop: 2, fontWeight: 600 }}>
+                Selected: {customers?.find(c => c.id === ucId)?.name}
+                <span
+                  onClick={() => { setUcId(null); setUcSearch(""); }}
+                  style={{ marginLeft: 6, color: C.red, cursor: "pointer", fontWeight: 400 }}
+                >clear</span>
+              </div>
+            )}
+            {ucOpen && filteredUc.length > 0 && (
+              <div style={{
+                position: "absolute", top: "100%", left: 0, right: 0, zIndex: 9000,
+                background: C.card, border: `1px solid ${C.border}`, borderRadius: 8,
+                boxShadow: "0 8px 24px rgba(0,0,0,0.12)", maxHeight: 200, overflowY: "auto",
+              }}>
+                {filteredUc.map(c => (
+                  <div key={c.id}
+                    onMouseDown={() => { setUcId(c.id); setUcSearch(""); setUcOpen(false); }}
+                    style={{
+                      padding: "8px 12px", fontSize: 11, cursor: "pointer",
+                      borderBottom: `1px solid ${C.border}`,
+                      background: c.id === ucId ? C.gBg2 : "transparent",
+                    }}
+                  >{c.name}</div>
+                ))}
+              </div>
             )}
           </div>
 

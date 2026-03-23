@@ -169,6 +169,13 @@
       "when": 1773916861532,
       "tag": "0023_heavy_true_believers",
       "breakpoints": true
+    },
+    {
+      "idx": 24,
+      "version": "5",
+      "when": 1774202377290,
+      "tag": "0024_nappy_stellaris",
+      "breakpoints": true
     }
   ]
 }

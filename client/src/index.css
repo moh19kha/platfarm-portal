@@ -235,3 +235,94 @@
   .mob-show-block { display: none !important; }
   .mob-bottom-bar { display: none !important; }
 }
+
+/* ── Property Portfolio CSS ─────────────────────────────────────────────────── */
+@layer utilities {
+  .font-currency {
+    font-family: 'JetBrains Mono', ui-monospace, monospace;
+  }
+
+  .metric-card {
+    background: #F8FAF8;
+    border: 1px solid #D5E5D5;
+    border-radius: 0.5rem;
+    padding: 1.25rem;
+  }
+
+  .badge-off-plan {
+    background: #FFF0E8;
+    color: #A8613F;
+    padding: 2px 8px;
+    border-radius: 9999px;
+    font-size: 0.75rem;
+    font-weight: 500;
+  }
+  .badge-under-construction {
+    background: #EEF5EE;
+    color: #4A7C59;
+    padding: 2px 8px;
+    border-radius: 9999px;
+    font-size: 0.75rem;
+    font-weight: 500;
+  }
+  .badge-delivered {
+    background: #2D5A3D;
+    color: #FFFFFF;
+    padding: 2px 8px;
+    border-radius: 9999px;
+    font-size: 0.75rem;
+    font-weight: 500;
+  }
+  .badge-handed-over {
+    background: #2D5A3D;
+    color: #FFFFFF;
+    padding: 2px 8px;
+    border-radius: 9999px;
+    font-size: 0.75rem;
+    font-weight: 500;
+  }
+  .badge-paid {
+    background: #EEF5EE;
+    color: #2D5A3D;
+    padding: 2px 8px;
+    border-radius: 9999px;
+    font-size: 0.75rem;
+    font-weight: 500;
+  }
+  .badge-pending {
+    background: #FFF8F0;
+    color: #666666;
+    padding: 2px 8px;
+    border-radius: 9999px;
+    font-size: 0.75rem;
+    font-weight: 500;
+  }
+  .badge-overdue {
+    background: #FFF0E8;
+    color: #C0714A;
+    padding: 2px 8px;
+    border-radius: 9999px;
+    font-size: 0.75rem;
+    font-weight: 500;
+  }
+  .badge-partially-paid {
+    background: #F0F8FF;
+    color: #4A7C59;
+    padding: 2px 8px;
+    border-radius: 9999px;
+    font-size: 0.75rem;
+    font-weight: 500;
+  }
+
+  .table-striped tr:nth-child(even) {
+    background: #F8FAF8;
+  }
+  .table-striped tr:nth-child(odd) {
+    background: #FFFFFF;
+  }
+
+  .accent-bar {
+    height: 2px;
+    background: linear-gradient(to right, #2D5A3D, #C0714A);
+  }
+}

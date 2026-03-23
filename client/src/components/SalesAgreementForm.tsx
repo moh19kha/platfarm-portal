@@ -171,7 +171,7 @@ export default function SalesAgreementForm({
   }, [mode, editData]);
 
   // ─── Customer search ────────────────────────────────────────────────────
-  const [customerSearch, setCustomerSearch] = useState("");
+  const [customerSearch, setCustomerSearch] = useState(editData?.customer ?? "");
   const [customerDropdownOpen, setCustomerDropdownOpen] = useState(false);
   const filteredCustomers = useMemo(() => {
     if (!customers) return [];
@@ -234,6 +234,9 @@ export default function SalesAgreementForm({
       // Build lines payload for create
       const validLines = lines.filter(l => l.product_id);
 
+      // Auto-calculate total qty from all valid product lines to write back to Odoo permanently
+      const totalQtyFromLines = lines.filter(l => l.product_id).reduce((s, l) => s + (l.product_uom_qty || 0), 0);
+
       if (mode === "create") {
         await createMutation.mutateAsync({
           name: name.trim(),
@@ -248,6 +251,7 @@ export default function SalesAgreementForm({
           x_studio_supply_end_date: supplyEndDate || undefined,
           x_studio_notes: notes || undefined,
           x_studio_payment_term_1: paymentTerms || undefined,
+          x_studio_total_po_quantity_in_tons: totalQtyFromLines > 0 ? totalQtyFromLines : undefined,
           lines: validLines.length > 0 ? validLines.map(l => ({
             product_id: l.product_id!,
             product_uom_qty: l.product_uom_qty,
@@ -292,6 +296,7 @@ export default function SalesAgreementForm({
           x_studio_supply_end_date: supplyEndDate || undefined,
           x_studio_notes: notes || undefined,
           x_studio_payment_term_1: paymentTerms || undefined,
+          x_studio_total_po_quantity_in_tons: totalQtyFromLines > 0 ? totalQtyFromLines : undefined,
           addLines: addLines.length > 0 ? addLines : undefined,
           updateLines: updateLines.length > 0 ? updateLines : undefined,
           deleteLineIds: deleteLineIds.length > 0 ? deleteLineIds : undefined,
@@ -496,8 +501,8 @@ export default function SalesAgreementForm({
                 style={inputStyle}
               >
                 <option value="">Select payment terms…</option>
-                {["Advance Payment","Cash Against Document","Cash Against Delivery","Letter of Credit","Post Dated Cheque","Cash Credit"].map(t => (
-                  <option key={t} value={t}>{t}</option>
+                {paymentTermsOptions.map(t => (
+                  <option key={t.id} value={t.name}>{t.name}</option>
                 ))}
               </select>
             </div>

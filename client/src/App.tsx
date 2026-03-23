@@ -25,6 +25,7 @@ const OperationsModule     = lazy(() => import("./pages/OperationsModule"));
 const PeriodicMeetingsHome = lazy(() => import("./pages/PeriodicMeetingsHome"));
 const OfflineOpsModule     = lazy(() => import("./pages/OfflineOpsModule"));
 const PCEHome              = lazy(() => import("./pages/PCEHome"));
+const PropertyPortal       = lazy(() => import("./pages/property/PropertyPortal"));
 // Named-export pages — wrap so lazy() receives a default export
 const Login          = lazy(() => import("./pages/Login").then(m => ({ default: m.Login })));
 const ForgotPassword = lazy(() => import("./pages/ForgotPassword").then(m => ({ default: m.ForgotPassword })));
@@ -117,6 +118,11 @@ function Router() {
         {/* Petty Cash & Expenses module */}
         <Route path="/pce" component={PCEHome} />
         <Route path="/pce/:rest*" component={PCEHome} />
+
+        {/* Property Portfolio module */}
+        <Route path="/property-mgmt" component={PropertyPortal} />
+        <Route path="/property-mgmt/:rest*" component={PropertyPortal} />
+
 
         {/* Standalone detail pages */}
         <Route path="/purchase/:id" component={PurchaseShipmentPage} />

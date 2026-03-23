@@ -71,7 +71,15 @@ export function serveStatic(app: Express) {
   );
 
   // Other static files (favicon, manifest, robots.txt, etc.)
-  app.use(express.static(distPath, { maxAge: 0, etag: true }));
+  // index:false prevents express.static from serving index.html so the
+  // no-cache catch-all below always handles HTML responses.
+  app.use(express.static(distPath, { maxAge: 0, etag: true, index: false }));
+
+  // Missing hashed asset → 404 (prevents stale HTML being executed as JS
+  // when a browser has cached an old index.html with outdated asset hashes).
+  app.use("/assets", (_req, res) => {
+    res.status(404).send("Asset not found");
+  });
 
   // SPA catch-all: always serve fresh index.html so new deploys are
   // picked up immediately. Skip API routes.

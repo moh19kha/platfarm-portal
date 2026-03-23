@@ -331,8 +331,7 @@ export default function Home() {
     { id: "purchase" as Page, label: "Purchase Shipments", icon: "↓", sub: "Incoming (Odoo)", access: "purchase" },
     { id: "sales" as Page, label: "Sales Shipments", icon: "↑", sub: "Outgoing (Odoo)", access: "sales" },
     { id: "agreements" as Page, label: "Agreements", icon: "◫", sub: "", access: "agreements" },
-    { id: "users" as Page, label: "User Management", icon: "⚙", sub: "Permissions", access: "users" },
-  ].filter(item => item.id === "users" ? isSystemAdmin : perms.canAccess(item.access));
+  ].filter(item => perms.canAccess(item.access));
 
   const pageTitle: Record<string, string> = {
     dashboard: "Dashboard",
