@@ -45,6 +45,8 @@ const MODULES = [
   { id: "crm",          title: "CRM" },
   { id: "reports",      title: "Reports & Analytics" },
   { id: "pce",          title: "Petty Cash & Expenses" },
+  { id: "property-mgmt", title: "Property Management" },
+  { id: "dakhla-farm",   title: "Dakhla Farm Management" },
 ];
 
 const CRUD = ["canView", "canCreate", "canEdit", "canDelete"] as const;

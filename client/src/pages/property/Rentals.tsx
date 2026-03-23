@@ -84,7 +84,7 @@ function RentalCard({ rental }: { rental: any }) {
 
   const recordPaymentMutation = trpc.property.rentals.recordPayment.useMutation({
     onSuccess: () => {
-      utils.rentals.payments.invalidate({ rentalId: rental.id });
+      utils.property.rentals.payments.invalidate({ rentalId: rental.id });
       setRecordingId(null);
       toast.success("Cheque status has been updated.");
     },
@@ -117,8 +117,8 @@ function RentalCard({ rental }: { rental: any }) {
             <div>
               <CardTitle className="text-lg font-semibold">{rental.propertyName}</CardTitle>
               <div className="flex flex-wrap items-center gap-2 mt-1">
-                {rental.unitNumber && (
-                  <span className="text-sm text-muted-foreground">Unit {rental.unitNumber}</span>
+                {rental.unitRef && (
+                  <span className="text-sm text-muted-foreground">Unit {rental.unitRef}</span>
                 )}
                 {rental.buildingName && (
                   <span className="text-sm text-muted-foreground">· {rental.buildingName}</span>
@@ -287,18 +287,18 @@ function RentalCard({ rental }: { rental: any }) {
         )}
 
         {/* Landlord / contract info */}
-        {expanded && (rental.landlordName || rental.contractNumber || rental.managingAgent) && (
+        {expanded && (rental.landlord || rental.contractNumber || null) && (
           <div className="mt-4 pt-3 border-t border-border/40 grid grid-cols-2 md:grid-cols-3 gap-3">
-            {rental.landlordName && (
+            {rental.landlord && (
               <div>
                 <p className="text-xs text-muted-foreground">Landlord</p>
-                <p className="text-sm font-medium">{rental.landlordName}</p>
+                <p className="text-sm font-medium">{rental.landlord}</p>
               </div>
             )}
-            {rental.managingAgent && (
+            {null && (
               <div>
                 <p className="text-xs text-muted-foreground">Managing Agent</p>
-                <p className="text-sm font-medium">{rental.managingAgent}</p>
+                <p className="text-sm font-medium">{null}</p>
               </div>
             )}
             {rental.contractNumber && (

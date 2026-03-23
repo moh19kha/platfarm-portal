@@ -47,21 +47,23 @@ export default function Documents() {
   });
 
   // Flatten the nested data structure from getAllDocuments
-  const docs = useMemo(() => rawDocs?.map((d: any) => ({
-    id: d.document?.id ?? d.id,
-    documentName: d.document?.documentName ?? d.documentName,
-    documentType: d.document?.documentType ?? d.documentType,
-    fileUrl: d.document?.fileUrl ?? d.fileUrl,
-    fileKey: d.document?.fileKey ?? d.fileKey,
-    mimeType: d.document?.mimeType ?? d.mimeType,
-    fileSizeKb: d.document?.fileSizeKb ?? d.fileSizeKb,
-    tags: d.document?.tags ?? d.tags,
-    notes: d.document?.notes ?? d.notes,
-    createdAt: d.document?.createdAt ?? d.createdAt,
-    updatedAt: d.document?.updatedAt ?? d.updatedAt,
-    propertyId: d.document?.propertyId ?? d.propertyId,
-    propertyName: d.propertyName,
-  })), [rawDocs]);
+  const docs = useMemo(() => rawDocs?.map((d: any) => {
+    // Server returns { doc, propertyName } — "doc" holds the actual document row
+    const row = d.doc ?? d;
+    return {
+      id: row.id,
+      documentName: row.fileName ?? row.documentName,
+      documentType: row.documentType,
+      fileUrl: row.fileUrl,
+      mimeType: row.mimeType,
+      fileSizeKb: row.fileSizeKb ?? row.fileSize,
+      notes: row.notes ?? row.description,
+      createdAt: row.createdAt,
+      updatedAt: row.updatedAt,
+      propertyId: row.propertyId,
+      propertyName: d.propertyName,
+    };
+  }), [rawDocs]);
 
   const uploadMut = trpc.property.documents.upload.useMutation({
     onSuccess: () => { refetch(); setShowUpload(false); toast.success("Document uploaded"); },
@@ -160,7 +162,7 @@ export default function Documents() {
                   {/* Property name */}
                   {d.propertyName && (
                     <p className="text-xs mt-2 truncate" style={{ color: "#4A7C59" }} title={d.propertyName}>
-                      \uD83D\uDCCD {d.propertyName}
+                      {"\uD83D\uDCCD"} {d.propertyName}
                     </p>
                   )}
 

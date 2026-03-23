@@ -454,13 +454,7 @@ export const propertyRouter = router({
   // ─── Rentals ──────────────────────────────────────────────
   rentals: router({
     list: protectedProcedure.query(async ({ ctx }) => {
-      const rentals = await db.getRentals(ctx.user.id);
-      const results = [];
-      for (const rental of rentals) {
-        const payments = await db.getRentalPayments(rental.id);
-        results.push({ rental, payments });
-      }
-      return results;
+      return db.getRentals(ctx.user.id);
     }),
 
     payments: protectedProcedure

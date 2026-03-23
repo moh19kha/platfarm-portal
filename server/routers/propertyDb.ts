@@ -322,6 +322,58 @@ export async function getDashboardMetrics(userId: number) {
   );
   const overdue = allPayments.filter(p => p.payment.paymentStatus === "Overdue");
 
+  // ── Aggregated metrics by currency ──────────────────────────────────────
+  let portfolioValueAED = 0;
+  let portfolioValueEGP = 0;
+  let marketValueAED = 0;
+  let marketValueEGP = 0;
+  for (const p of activeProps) {
+    const price = Number(p.totalPrice) || 0;
+    const marketVal = Number(p.currentMarketValue) || 0;
+    if (p.currency === "AED") {
+      portfolioValueAED += price;
+      marketValueAED += marketVal;
+    } else {
+      portfolioValueEGP += price;
+      marketValueEGP += marketVal;
+    }
+  }
+
+  let totalPaidAED = 0;
+  let totalPaidEGP = 0;
+  let totalOutstandingAED = 0;
+  let totalOutstandingEGP = 0;
+  let overdueAmountAED = 0;
+  let overdueAmountEGP = 0;
+  for (const item of allPayments) {
+    const paid = Number(item.payment.amountPaid) || 0;
+    const due = Number(item.payment.amountDue) || 0;
+    const balance = Math.max(due - paid, 0);
+    if (item.currency === "AED") {
+      totalPaidAED += paid;
+      if (item.payment.paymentStatus !== "Paid") totalOutstandingAED += balance;
+      if (item.payment.paymentStatus === "Overdue") overdueAmountAED += balance;
+    } else {
+      totalPaidEGP += paid;
+      if (item.payment.paymentStatus !== "Paid") totalOutstandingEGP += balance;
+      if (item.payment.paymentStatus === "Overdue") overdueAmountEGP += balance;
+    }
+  }
+
+  // Next upcoming payment: soonest by due date
+  const sortedUpcoming = [...upcoming].sort((a, b) =>
+    a.payment.dueDate.localeCompare(b.payment.dueDate)
+  );
+  const nextRaw = sortedUpcoming[0] ?? null;
+  const nextPayment = nextRaw ? {
+    id: nextRaw.payment.id,
+    propertyName: nextRaw.propertyName,
+    label: nextRaw.payment.installmentLabel || "Payment",
+    amount: Math.max(Number(nextRaw.payment.amountDue) - Number(nextRaw.payment.amountPaid), 0),
+    currency: nextRaw.currency,
+    dueDate: nextRaw.payment.dueDate,
+  } : null;
+
   return {
     properties: activeProps,
     payments: allPayments,
@@ -329,6 +381,18 @@ export async function getDashboardMetrics(userId: number) {
     overdue,
     totalProperties: userProps.length,
     activeProperties: activeProps.length,
+    portfolioValueAED,
+    portfolioValueEGP,
+    marketValueAED,
+    marketValueEGP,
+    totalPaidAED,
+    totalPaidEGP,
+    totalOutstandingAED,
+    totalOutstandingEGP,
+    overdueAmountAED,
+    overdueAmountEGP,
+    overdueCount: overdue.length,
+    nextPayment,
   };
 }
 

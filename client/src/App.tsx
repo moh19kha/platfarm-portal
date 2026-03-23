@@ -121,7 +121,7 @@ function Router() {
 
         {/* Property Portfolio module */}
         <Route path="/property-mgmt" component={PropertyPortal} />
-        <Route path="/property-mgmt/:rest*" component={PropertyPortal} />
+        <Route path="/property-mgmt/*" component={PropertyPortal} />
 
 
         {/* Standalone detail pages */}
